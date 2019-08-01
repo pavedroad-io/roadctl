@@ -21,31 +21,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pullCmd represents the pull command
-var pullCmd = &cobra.Command{
-	Use:   "pull",
-	Short: "Pull a template from a remote repository",
-	Long: `Pull a template from a remote repository
+// pushCmd represents the push command
+var templatePushCmd = &cobra.Command{
+	Use:   "push",
+	Short: "Push one or more templates to a remote repository",
+	Long: `Push one or more templates to a remote repository
+  Usage: roadctl template push [templatename]
 
-  By default, https://github.com/paveroad.io/tempaltes
   Options:
-    --repository: URL| pate`,
+    --repository: URL|path
+    --templateDir: path`,
 	Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Pulling from https://github.com/paveroad.io/tempaltes")
-    fmt.Println("Saving in: ./templates")
+    fmt.Println("Pushing ./templates to https://github.com/pavedroad.io/templates")
+    fmt.Println("go-api-gateway")
+    fmt.Println("go-datamanager")
+    fmt.Println("go-producer")
+    fmt.Println("Success")
+
 	},
 }
 
 func init() {
-	templateCmd.AddCommand(pullCmd)
+	templateCmd.AddCommand(pushCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// pullCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// pushCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// pullCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// pushCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

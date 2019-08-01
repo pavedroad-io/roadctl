@@ -15,6 +15,7 @@ limitations under the License.
 */
 package main
 
+//import "roadctl/cmd/template"
 import "roadctl/cmd"
 
 func main() {
