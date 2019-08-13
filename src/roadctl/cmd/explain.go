@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 John Scharber
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,32 +21,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// downCmd represents the down command
-var downCmd = &cobra.Command{
-	Use:   "down",
-	Short: "Stop and remove a service deployed on a kubernetes cluster",
-	Long: `Stop and remove a service deployed on a kubernetes cluster
-  Options:
-    --service:  default is current working directory`,
+// explainCmd represents the explain command
+var explainCmd = &cobra.Command{
+	Use:   "explain",
+	Short: "return documentation about a resource",
+	Long: `Return documentation on a resource
+  For example:
+    roadctl explain template datamgr`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Stopping service on local cluster")
-		fmt.Println("Draining")
-		fmt.Println("Stopped")
-		fmt.Println("Cleanup")
-		fmt.Println("Done")
+		fmt.Println("explain called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(downCmd)
+	rootCmd.AddCommand(explainCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// downCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// explainCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// downCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// explainCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

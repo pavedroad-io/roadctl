@@ -16,85 +16,79 @@ limitations under the License.
 package cmd
 
 import (
-  "fmt"
-  "os"
-  "github.com/spf13/cobra"
+	"fmt"
+	"github.com/spf13/cobra"
+	"os"
 
-  homedir "github.com/mitchellh/go-homedir"
-  "github.com/spf13/viper"
-
+	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/viper"
 )
 
-
 var cfgFile string
-
+var fmtFlag string = "text"
+var debugFlag string = "info"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-  Use:   "roadctl",
-  Short: "CLI for PavedRoad Development Kit (DevKit)",
-  Long: `roadctl allows you to work with the PavedRoad CNCF low-code environment and the associated CI/CD pipeline
+	Use:   "roadctl",
+	Short: "CLI for PavedRoad Development Kit (DevKit)",
+	Long: `roadctl allows you to work with the PavedRoad CNCF low-code environment and the associated CI/CD pipeline
 
-  Use templates to create new services such as; CRDs, serverless, or microservice
-es
-  To start and stop your services, us up and down
-  To deploy your service to a kubernetes cluster use deploy
-  Use push and pull to get or send docker images
-  Use doc to generate documentation for your code
-  Use build to compile, test, and package your service`,
-  // Uncomment the following line if your bare application
-  // has an action associated with it:
-  //	Run: func(cmd *cobra.Command, args []string) { },
+  Usage: roadctl [command] [TYPE] [NAME] [flags]
+
+  TYPE specifies a resource type
+  NAME is the name of a resource
+  flags specify options`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-  if err := rootCmd.Execute(); err != nil {
-    fmt.Println(err)
-    os.Exit(1)
-  }
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func init() {
-  cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConstants)
 
-  // Here you will define your flags and configuration settings.
-  // Cobra supports persistent flags, which, if defined here,
-  // will be global for your application.
-
-  rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.roadctl.yaml)")
-
-
-  // Cobra also supports local flags, which will only run
-  // when this action is called directly.
-  rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.roadctl.yaml)")
+	rootCmd.PersistentFlags().StringVar(&fmtFlag, "format", "f", "Output format: text(default)|json|yaml")
+	rootCmd.PersistentFlags().StringVar(&debugFlag, "debug", "d", "Debug level: info(default)|warm|error|critical")
 }
 
+// initConstants populates global slices of types
+func initConstants() {
+	// Types or resouces command can act on
+	initResourcetypes()
+
+	return
+}
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-  if cfgFile != "" {
-    // Use config file from the flag.
-    viper.SetConfigFile(cfgFile)
-  } else {
-    // Find home directory.
-    home, err := homedir.Dir()
-    if err != nil {
-      fmt.Println(err)
-      os.Exit(1)
-    }
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find home directory.
+		home, err := homedir.Dir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
-    // Search config in home directory with name ".roadctl" (without extension).
-    viper.AddConfigPath(home)
-    viper.SetConfigName(".roadctl")
-  }
+		// Search config in home directory with name ".roadctl" (without extension).
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".roadctl")
+	}
 
-  viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv() // read in environment variables that match
 
-  // If a config file is found, read it in.
-  if err := viper.ReadInConfig(); err == nil {
-    fmt.Println("Using config file:", viper.ConfigFileUsed())
-  }
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
 }
-

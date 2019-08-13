@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 John Scharber
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,34 +21,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// upCmd represents the up command
-var upCmd = &cobra.Command{
-	Use:   "up",
-	Short: "Start a service locally",
-	Long: `Start a service locally
-  Usage:
-  roadctl up myservcie
-  Options:
-`,
+// deleteCmd represents the delete command
+var deleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "delete a resource",
+	Long: `delete one or more resources
+For example:
+  roadctl delete environment test`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Using kubectl to start")
-		fmt.Println("Deployment started")
-		fmt.Println("Done")
-    fmt.Println("Use: kubectl get po,svc -A")
-    fmt.Println("To track progress")
+		fmt.Println("delete called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(upCmd)
+	rootCmd.AddCommand(deleteCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// upCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// upCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -24,9 +24,14 @@ import (
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "Deploy the name service to a kuberenetes cluster",
-	Long: `Deploy the name service to a kuberenetes cluster
-  The default cluster is your local microk8s instance.
+	Short: "deploy a service",
+	Long: `Deploy one or more service into a cluster.  If not specified,
+  cluster is the default specified in the global configuration.  For new
+  installs, it will be microk8s.
+
+  For example:
+    roadctl deploy service foo
+
   Options:
     --cluster
     --credentials
@@ -34,8 +39,8 @@ var deployCmd = &cobra.Command{
     --password`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("deploying to localcluster")
-    fmt.Println("run: kubectl get svs,po servicename")
-    fmt.Println("To track status")
+		fmt.Println("run: kubectl get svs,po servicename")
+		fmt.Println("To track status")
 	},
 }
 

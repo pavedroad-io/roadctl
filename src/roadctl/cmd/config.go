@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 John Scharber
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,15 +24,14 @@ import (
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Set global configuration options",
-	Long: `Use config to persist option in your $HOME/.roadctl/roadctl.yaml
-  Options:
-    --list-options`,
+	Short: "manage roadctl global configuration options",
+	Long: `Allows you to manage global configurations
+
+  For example:
+
+  roadctl config environment test`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("No .roadkill.yaml found")
-		fmt.Println("Initializing $HOME/.roadkill/.roadkill.yaml")
-    fmt.Println("Use: roadkill config --list-options")
-    fmt.Println("To see configuration options")
+		fmt.Println("config called")
 	},
 }
 

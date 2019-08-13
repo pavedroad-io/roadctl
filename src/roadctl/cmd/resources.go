@@ -13,10 +13,34 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package cmd
 
-import "roadctl/cmd"
+import (
+	"errors"
+	"fmt"
+)
 
-func main() {
-  cmd.Execute()
+var resourceTypes []string
+
+func initResourcetypes() {
+	resourceTypes = []string{"environments",
+		"builders",
+		"packagers",
+		"taggers",
+		"tests",
+		"templates",
+		"tool-network",
+		"artifacts",
+		"providers",
+		"deployments"}
+}
+
+func isValidResourceType(typeToCheck string) error {
+	for _, val := range resourceTypes {
+		if val == typeToCheck {
+			return nil
+		}
+	}
+	msg := fmt.Sprintf("resouce must be on of %v", resourceTypes)
+	return errors.New(msg)
 }

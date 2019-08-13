@@ -21,32 +21,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newCmd represents the new command
-var newCmd = &cobra.Command{
-	Use:   "new",
-	Short: "Create a new service",
-	Long: `Create a new service
+// createCmd represents the create command
+var createCmd = &cobra.Command{
+	Use:   "create",
+	Short: "create a new resource",
+	Long: `create a new resource taking input from stdin or a file
+For example:
 
-  Usage: roadctl new service-name --template=templatename`,
+roadctl create environment -f test.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Generate new service: userManager")
-    fmt.Println("Code created")
-    fmt.Println("Manifests created")
-    fmt.Println("Configs created")
-    fmt.Println("Done")
+		fmt.Println("create called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(newCmd)
+	rootCmd.AddCommand(createCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// newCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// newCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

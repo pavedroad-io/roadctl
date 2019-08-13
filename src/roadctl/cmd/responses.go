@@ -12,11 +12,24 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+response: defines mandatory response methods a resource MUST implement
+  RespondWithText:
+  RespondWithYAML:
+  RespondWithJSON:
+  TODO: define option flags to control output formatting
 */
-package main
+package cmd
 
-import "roadctl/cmd"
+import (
+	_ "errors"
+	_ "fmt"
+)
 
-func main() {
-  cmd.Execute()
+// Response must include all three
+type Response interface {
+  RespondWithJSON() string
+  RespondWithYAML() string
+  RespondWithText() string
 }
+

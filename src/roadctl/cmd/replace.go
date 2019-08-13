@@ -21,36 +21,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pushCmd represents the push command
-var templatePushCmd = &cobra.Command{
-	Use:   "push",
-	Short: "Push one or more templates to a remote repository",
-	Long: `Push one or more templates to a remote repository
-  Usage: roadctl template push [templatename]
-
-  Options:
-    --repository: URL|path
-    --templateDir: path`,
+// replaceCmd represents the replace command
+var replaceCmd = &cobra.Command{
+	Use:   "replace",
+	Short: "Delete and recreate the named resource",
+	Long: `Delete the resources and then recreate them.
+  For example:
+    roadctl replace environment test`,
 	Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Pushing ./templates to https://github.com/pavedroad.io/templates")
-    fmt.Println("go-api-gateway")
-    fmt.Println("go-datamanager")
-    fmt.Println("go-producer")
-    fmt.Println("Success")
-
+		fmt.Println("replace called")
 	},
 }
 
 func init() {
-	templateCmd.AddCommand(pushCmd)
+	rootCmd.AddCommand(replaceCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// pushCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// replaceCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// pushCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// replaceCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

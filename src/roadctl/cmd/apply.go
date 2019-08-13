@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 John Scharber
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,34 +21,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// buildCmd represents the build command
-var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Compile, test, and package your service",
-	Long: `Use roadctl build to compile, test, and package (docker image)
-  your servcice.
-  Options
-  --test: Just run the tests
-  --package: Just build the docker image`,
+// applyCmd represents the apply command
+var applyCmd = &cobra.Command{
+	Use:   "apply",
+	Short: "Apply configuration to named resource",
+	Long: `Apply or updated a configuration
+For example:
+
+roadctl apply environment -f config.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("building userManager")
-		fmt.Println("executing tests")
-		fmt.Println("creating docker image")
-		fmt.Println("executing container tests")
-		fmt.Println("tagging")
+		fmt.Println("apply called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(applyCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// buildCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// applyCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// buildCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// applyCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 John Scharber
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,29 +21,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// templateCmd represents the template command
-var templateCmd = &cobra.Command{
-	Use:   "template",
-	Short: "Work with local or remote templates",
-	Long: `Work with local or remote templates`,
+// describeCmd represents the describe command
+var describeCmd = &cobra.Command{
+	Use:   "describe",
+	Short: "describe provides detailed information about a resource",
+	Long: `Provided detailed information about one or more resources.
+For example:
+
+  roadctl describe template datamgr`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("No options supplied, defaulting to list")
-		fmt.Println("go-datamanger")
-		fmt.Println("go-APIGeatway")
-		fmt.Println("go-producer")
+		fmt.Println("describe called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(templateCmd)
+	rootCmd.AddCommand(describeCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// templateCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// describeCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// templateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// describeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
