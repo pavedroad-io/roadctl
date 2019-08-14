@@ -28,8 +28,7 @@ import (
 
 // Response must include all three
 type Response interface {
-  RespondWithJSON() string
-  RespondWithYAML() string
-  RespondWithText() string
+	RespondWithJSON() string
+	RespondWithYAML() string
+	RespondWithText() string
 }
-

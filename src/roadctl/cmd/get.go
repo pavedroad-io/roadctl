@@ -19,7 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-  "strings"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -44,53 +44,52 @@ var getCmd = &cobra.Command{
 
 // runGet validates and then executes a get command
 func runGet(cmd *cobra.Command, args []string) {
-  //var replies Response
-  replies := []Response{}
-  var reply Response
+	replies := []Response{}
+	var reply Response
 
 	// See if we need to update or initialize the template repository
 	initTrue := cmd.Flag("init")
 	if initTrue.Value.String() == "true" {
 		initTemplates()
 	}
-  cmd.SetUsageTemplate("usage: foobar")
-  cmd.SetUsageFunc(func(cmd *cobra.Command) error {
-    return  errors.New("Usage: roadctl VERB NOUN NAME")
-  })
+	cmd.SetUsageTemplate("usage: foobar")
+	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
+		return errors.New("Usage: roadctl VERB NOUN NAME")
+	})
 
-  resources := strings.Split(args[0],",")
-  
-  for _, r := range resources {
-	  if err := isValidResourceType(r); err == nil {
-	  	if len(args) > 1 {
-        reply = getByResource(r, args[1])
-	  	} else {
-        reply = getByResource(r, "")
-	  	}
-	  } else {
-	  	fmt.Println(err)
-	  }
-    replies = append(replies, reply)
-  }
+	resources := strings.Split(args[0], ",")
 
-  for _, r := range replies {
-    //Hack until all assets return a Response type
-    if r != nil {
-      switch strings.ToLower(fmtFlag) {
-      case "text":
-        r.RespondWithText()
-        break
-      case "yaml":
-        r.RespondWithYAML()
-        break
-      case "json":
-        r.RespondWithJSON()
-        break
-      default:
-        r.RespondWithText()
-      }
-    }
-  }
+	for _, r := range resources {
+		if err := isValidResourceType(r); err == nil {
+			if len(args) > 1 {
+				reply = getByResource(r, args[1])
+			} else {
+				reply = getByResource(r, "")
+			}
+		} else {
+			fmt.Println(err)
+		}
+		replies = append(replies, reply)
+	}
+
+	for _, r := range replies {
+		//Hack until all assets return a Response type
+		if r != nil {
+			switch strings.ToLower(fmtFlag) {
+			case "text":
+				r.RespondWithText()
+				break
+			case "yaml":
+				r.RespondWithYAML()
+				break
+			case "json":
+				r.RespondWithJSON()
+				break
+			default:
+				r.RespondWithText()
+			}
+		}
+	}
 }
 
 // initTemplates: Download templates from GitHub
@@ -104,38 +103,38 @@ func initTemplates() {
 }
 
 func getByResource(r, n string) Response {
-  var rsp Response
+	var rsp Response
 	switch r {
 	case "environments":
 		fmt.Println("no environments found")
-    return nil
+		return nil
 	case "builders":
 		fmt.Println("no builders found")
-    return nil
+		return nil
 	case "taggers":
 		fmt.Println("no taggers found")
-    return nil
+		return nil
 	case "tests":
 		fmt.Println("no tests found")
-    return nil
+		return nil
 	case "templates":
-     rsp = tplGet("all")
-     return rsp
+		rsp = tplGet("all", n)
+		return rsp
 	case "tool-network":
 		fmt.Println("no tool-network found")
-    return nil
+		return nil
 	case "artifacts":
 		fmt.Println("no artifacts found")
-    return nil
+		return nil
 	case "providers":
 		fmt.Println("no providers found")
-    return nil
+		return nil
 	case "deployments":
 		fmt.Println("no deployments found")
-    return nil
+		return nil
 	}
 
-  return nil
+	return nil
 }
 
 func init() {
