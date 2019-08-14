@@ -18,5 +18,5 @@ package main
 import "roadctl/cmd"
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }

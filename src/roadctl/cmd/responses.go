@@ -17,7 +17,6 @@ response: defines mandatory response methods a resource MUST implement
   RespondWithText:
   RespondWithYAML:
   RespondWithJSON:
-  TODO: define option flags to control output formatting
 */
 package cmd
 

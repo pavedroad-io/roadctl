@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	_ "errors"
+  _ "strings"
 	"fmt"
 	"github.com/google/go-github/github"
 	"gopkg.in/yaml.v2"
@@ -36,6 +37,7 @@ var defaultPath string = ""
 var defaultTemplateDir string = "templates"
 var repoType string = "GitHub"
 
+const tplResourceName = "templates"
 //
 type tplListItem struct {
 	Type         string // Type of template, i.e. serverless
@@ -44,10 +46,19 @@ type tplListItem struct {
 	Path         string // Path to the template
 }
 
+type tplExplainItem struct {
+	Name    string // Name of resource
+	Content string // Text for explain document
+}
+
 type tplDescribeItem struct {
 	Type    string // Type of template, i.e. serverless
 	Name    string // Name of template == directory name
 	Content string // YAML configuration data
+}
+
+type tplExplainResponse struct {
+	Templates []tplExplainItem
 }
 
 type tplDescribeResponse struct {
@@ -56,10 +67,6 @@ type tplDescribeResponse struct {
 
 type tplListResponse struct {
 	Templates []tplListItem
-}
-
-func (t tplDescribeResponse) RespondWithYAML() string {
-	return t.RespondWithText() // One in the same for this type
 }
 
 func convert(i interface{}) interface{} {
@@ -76,6 +83,32 @@ func convert(i interface{}) interface{} {
 		}
 	}
 	return i
+}
+
+func (t tplExplainResponse) RespondWithYAML() string {
+	return t.RespondWithText() // One in the same for this type
+}
+
+func (t tplExplainResponse) RespondWithJSON() string {
+	return t.RespondWithText() // One in the same for this type
+}
+
+func (t tplExplainResponse) RespondWithText() string {
+	nl := ""
+	for _, val := range t.Templates {
+    nl += fmt.Sprintf("Name: %v\n", val.Name)
+    //line := strings.Repeat("-", 80)
+    //nl += fmt.Println(string(line))
+		nl += fmt.Sprintf("%v\n", val.Content)
+	}
+  nl += "\n"
+	fmt.Println(nl)
+	return nl
+}
+
+
+func (t tplDescribeResponse) RespondWithYAML() string {
+	return t.RespondWithText() // One in the same for this type
 }
 
 func (t tplDescribeResponse) RespondWithJSON() string {
@@ -153,6 +186,7 @@ func (t tplListResponse) RespondWithYAML() string {
 //  repo: GitHub repository
 //  path: path to start in repository
 func tplPull(pullOptions, org, repo, path, outdir string) error {
+  //TODO: make this an authenticated request/client
 	client := github.NewClient(nil)
 
 	opts := github.RepositoryContentGetOptions{}
@@ -207,8 +241,7 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 	return nil
 }
 
-//
-
+// tplDescribe
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
 
@@ -232,27 +265,56 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 
 		byteValue, _ := ioutil.ReadAll(jf)
 		/*
-			Type         string // Type of template, i.e. serverless
-			Name         string // Name of template == directory name
-		  Content      string // YAML configuration data
+				Type         string // Type of template, i.e. serverless
+				Name         string // Name of template == directory name
+			  Content      string // YAML configuration data
 		*/
 		nItem := tplDescribeItem{item.Type, item.Name, string(byteValue)}
 		response.Templates = append(response.Templates, nItem)
 		/*
-		    //fmt.Println(string(byteValue))
+			    //fmt.Println(string(byteValue))
 
-		    //var body interface{}
-		    body := make(map[interface{}]interface{})
-				yaml.Unmarshal([]byte(byteValue), &body)
+			    //var body interface{}
+			    body := make(map[interface{}]interface{})
+					yaml.Unmarshal([]byte(byteValue), &body)
 
-				//fmt.Println(result)
-				fmt.Println(body["id"])
-				fmt.Println(body["api-version"])
+					//fmt.Println(result)
+					fmt.Println(body["id"])
+					fmt.Println(body["api-version"])
 		*/
 	}
 
 	return response
 }
+
+// tplExplain
+//   is stored in docs/explain.txt
+//   docs is defined by eTLD
+//   explain is tplResourceName
+func tplExplain(tplListOption string, rn string) tplExplainResponse {
+	var response tplExplainResponse
+
+	// Load explaination 
+  fn := defaultTemplateDir + "/" + eTLD + "/" + tplResourceName+ ".txt"
+	if _, err := os.Stat(fn); os.IsNotExist(err) {
+		return response
+	}
+
+  tf, err := os.Open(fn)
+	if err != nil {
+  	fmt.Printf("failed to open: %v err %v", tf, err)
+			return response
+	}
+	defer tf.Close()
+
+	byteValue, _ := ioutil.ReadAll(tf)
+  fmt.Println(string(fn))
+	nItem := tplExplainItem{tplResourceName, string(byteValue)}
+	response.Templates = append(response.Templates, nItem)
+
+	return response
+}
+
 
 // List available templates
 //  tplListOption: tBD
