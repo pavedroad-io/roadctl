@@ -28,22 +28,69 @@ var createCmd = &cobra.Command{
 	Long: `create a new resource taking input from stdin or a file
 For example:
 
-roadctl create environment -f test.yaml`,
+roadctl create templates -t template-name -d option-directory`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("create called")
+		runCreate(cmd, args)
 	},
+}
+
+// runCreate validates and then executes a creation
+// of resources.  For now, it only supports creating
+// one resource at at time
+func runCreate(cmd *cobra.Command, args []string) string {
+	msg := "Failed creating resource"
+	r := args[0]
+
+	if err := isValidResourceType(r); err == nil {
+		if tplFile == "" {
+			fmt.Println("Usage: roadctl create emplates -t templateName")
+			fmt.Println("       --template or -t option is required")
+			return msg
+		}
+		return createResource(r)
+	}
+	return msg
+}
+
+func createResource(rn string) string {
+
+	switch rn {
+	case "environments":
+		fmt.Println("no environments found")
+		return ""
+	case "builders":
+		fmt.Println("no builders found")
+		return ""
+	case "taggers":
+		fmt.Println("no taggers found")
+		return ""
+	case "tests":
+		fmt.Println("no tests found")
+		return ""
+	case "templates":
+		return tplCreate(rn)
+	case "tool-network":
+		fmt.Println("no tool-network found")
+		return ""
+	case "artifacts":
+		fmt.Println("no artifacts found")
+		return ""
+	case "providers":
+		fmt.Println("no providers found")
+		return ""
+	case "deployments":
+		fmt.Println("no deployments found")
+		return ""
+	}
+
+	return ""
 }
 
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	createCmd.Flags().StringVar(&tplFile, "template", "t",
+		"Template file name to use")
+	createCmd.Flags().StringVar(&tplDir, "directory", "dn",
+		"Directory to generate output to")
 }

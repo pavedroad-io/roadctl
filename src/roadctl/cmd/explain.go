@@ -16,9 +16,9 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
-  "errors"
-  "strings"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -40,22 +40,13 @@ var explainCmd = &cobra.Command{
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-    runExplain(cmd, args)
+		runExplain(cmd, args)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(explainCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// explainCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// explainCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func explainResource(r, n string) Response {
@@ -93,7 +84,6 @@ func explainResource(r, n string) Response {
 	return nil
 }
 
-
 // runExplain validates and then executes a describe command
 //
 func runExplain(cmd *cobra.Command, args []string) {
@@ -117,25 +107,24 @@ func runExplain(cmd *cobra.Command, args []string) {
 
 	for _, r := range replies {
 		//Hack until all assets return a Response type
-    // fmtFlag is just "f" if not specified
+		// fmtFlag is just "f" if not specified
 		if r != nil {
 			switch strings.ToLower(fmtFlag) {
 			case "text":
 				r.RespondWithText()
 				break
-        // Only support text replies for now
-        /*
-			case "yaml":
-				r.RespondWithYAML()
-				break
-			case "json":
-				r.RespondWithJSON()
-				break
-        */
-      default:
+				// Only support text replies for now
+				/*
+					case "yaml":
+						r.RespondWithYAML()
+						break
+					case "json":
+						r.RespondWithJSON()
+						break
+				*/
+			default:
 				r.RespondWithText()
 			}
 		}
 	}
 }
-

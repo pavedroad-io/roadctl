@@ -19,15 +19,17 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	_ "errors"
-  _ "strings"
+	"errors"
 	"fmt"
 	"github.com/google/go-github/github"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	_ "reflect"
+	_ "strings"
+	"text/template"
 )
 
 // Default template repository
@@ -36,9 +38,44 @@ var defaultRepo string = "templates"
 var defaultPath string = ""
 var defaultTemplateDir string = "templates"
 var repoType string = "GitHub"
+var tplFile string = "" // Name of the template file to use
+var tplDir string = "." // Directory for generated code output
 
 const tplResourceName = "templates"
-//
+const tplDefinition = "definition.yaml"
+
+var templates *template.Template
+
+type tplData struct {
+  // Information about company and project
+  version string
+  orginzation string // Name of orginization
+  orginazationInfo string //Org lic/copyright
+  projectInfo string // Project/service description
+  maintain string 
+  maintainerEmail string
+  maintainer string
+
+  // Service and tpl-names
+  name string //service name
+  nameExported string //camal case with first letter cap
+  tplName string //template name
+
+  //PR lic/copyright should be a function
+  pavedroadInfo string //PR lic/copyright
+
+  //Swagger headers probably turn these into functions
+  allRoutesSwaggerDoc string
+  getAllSwaggerDoc string // swagger for list method
+  getSwaggerDoc string // swagger for get method
+  putSswaggerDoc string // swagger for put method
+  postSswaggerDoc string // swagger for post method
+  deleteSswaggerDoc string // swagger for delete method
+  swaggerSgeneratedStructs string //swagger doc and go structs
+}
+
+// tplListItem provides information about a template location
+// and status
 type tplListItem struct {
 	Type         string // Type of template, i.e. serverless
 	Availability string // Availability ga, ....
@@ -96,16 +133,15 @@ func (t tplExplainResponse) RespondWithJSON() string {
 func (t tplExplainResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Templates {
-    nl += fmt.Sprintf("Name: %v\n", val.Name)
-    //line := strings.Repeat("-", 80)
-    //nl += fmt.Println(string(line))
+		nl += fmt.Sprintf("Name: %v\n", val.Name)
+		//line := strings.Repeat("-", 80)
+		//nl += fmt.Println(string(line))
 		nl += fmt.Sprintf("%v\n", val.Content)
 	}
-  nl += "\n"
+	nl += "\n"
 	fmt.Println(nl)
 	return nl
 }
-
 
 func (t tplDescribeResponse) RespondWithYAML() string {
 	return t.RespondWithText() // One in the same for this type
@@ -167,13 +203,13 @@ func (t tplListResponse) RespondWithJSON() string {
 
 func (t tplListResponse) RespondWithYAML() string {
 
-	jb, err := yaml.Marshal(t)
+	yb, err := yaml.Marshal(t)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(jb))
+	fmt.Println(string(yb))
 
-	return string(jb)
+	return string(yb)
 }
 
 //tplPull pulls templates from a remote repository
@@ -186,7 +222,7 @@ func (t tplListResponse) RespondWithYAML() string {
 //  repo: GitHub repository
 //  path: path to start in repository
 func tplPull(pullOptions, org, repo, path, outdir string) error {
-  //TODO: make this an authenticated request/client
+	//TODO: make this an authenticated request/client
 	client := github.NewClient(nil)
 
 	opts := github.RepositoryContentGetOptions{}
@@ -241,6 +277,76 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 	return nil
 }
 
+// tplCreate
+func tplCreate(rn string) string {
+	var filenames []string
+	var defFile = ""
+
+	//Get back a list of templates for requrested template name
+	tplRsp, err := tplRead(tplFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// Get a list of the files names
+	for _, rec := range tplRsp {
+		nm := filepath.Base(rec)
+		// If definitions file, save it, otherwise add to filenames
+		// to process as templates
+		if nm == tplDefinition {
+			defFile = rec
+		} else {
+			filenames = append(filenames, nm)
+		}
+	}
+
+  // Read the definition file
+  yamlMap := tplReadDefinitions(defFile)
+	fmt.Println(yamlMap["id"])
+	fmt.Println(yamlMap["api-version"])
+
+	// Build the template cache
+	templates, err = template.New("").ParseFiles(tplRsp...)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(filenames)
+	//fmt.Println(tplRsp)
+	return ""
+}
+
+// tplReadDefinitions
+//
+// Read the definition file
+// TODO: add command line option to specify a different
+//       definitions.yaml file
+func tplReadDefinitions(fileName string) (yamlData map[interface{}]interface{}) {
+	df, err := os.Open(fileName)
+	if err != nil {
+		fmt.Println("failed to open: %v err %v", df, err)
+	}
+	defer df.Close()
+	byteValue, e := ioutil.ReadAll(df)
+  if e != nil {
+    fmt.Println("read failed for " + fileName)
+    os.Exit(-1)
+  }
+
+	defData := make(map[interface{}]interface{})
+	yaml.Unmarshal([]byte(byteValue), &defData)
+
+  return defData
+}
+
+
+/*
+// tplGenerate
+func tplGenerate(tplList []string)(genFileList []string, err error) {
+  tplList := buildTplCache(tplList)
+}
+*/
+
 // tplDescribe
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
@@ -294,30 +400,70 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 func tplExplain(tplListOption string, rn string) tplExplainResponse {
 	var response tplExplainResponse
 
-	// Load explaination 
-  fn := defaultTemplateDir + "/" + eTLD + "/" + tplResourceName+ ".txt"
+	// Load explaination
+	fn := defaultTemplateDir + "/" + eTLD + "/" + tplResourceName + ".txt"
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		return response
 	}
 
-  tf, err := os.Open(fn)
+	tf, err := os.Open(fn)
 	if err != nil {
-  	fmt.Printf("failed to open: %v err %v", tf, err)
-			return response
+		fmt.Printf("failed to open: %v err %v", tf, err)
+		return response
 	}
 	defer tf.Close()
 
 	byteValue, _ := ioutil.ReadAll(tf)
-  fmt.Println(string(fn))
+	fmt.Println(string(fn))
 	nItem := tplExplainItem{tplResourceName, string(byteValue)}
 	response.Templates = append(response.Templates, nItem)
 
 	return response
 }
 
+// tplRead(name)
+//   read all files for the named template
+//   return a slice of paths with file names
+//   "tplDir/TLD/SLD/templateFiles......."
+func tplRead(tplName string) ([]string, error) {
+	var tplFlLst []string
+
+	tplRsp := tplGet(tplResourceName, tplFile)
+	if len(tplRsp.Templates) == 0 {
+		em := errors.New("Template " + tplName + " not found")
+		return tplFlLst, em
+	}
+
+	if len(tplRsp.Templates) > 1 {
+		em := errors.New("Error: Template " + tplName + " not unique")
+		return tplFlLst, em
+	}
+
+	tplItem := tplRsp.Templates[0]
+	td := tplItem.Path + "/" + tplItem.Name
+
+	err := filepath.Walk(td,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			// Don't include directories, just their contents
+			if info.IsDir() == false {
+				tplFlLst = append(tplFlLst, path)
+			}
+			return nil
+		})
+
+	if err != nil {
+		em := errors.New("Error: Unable to walk directory" + td)
+		return tplFlLst, em
+	}
+
+	return tplFlLst, nil
+}
 
 // List available templates
-//  tplListOption: tBD
+//  tplListOption: TBD
 //  rn: resource name if specified on the command line
 func tplGet(tplListOption string, rn string) tplListResponse {
 	tplTLD := []string{"crd", "microservices", "serverless"}
