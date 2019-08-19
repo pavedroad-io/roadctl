@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -28,7 +29,8 @@ import (
 	"os"
 	"path/filepath"
 	_ "reflect"
-	_ "strings"
+	"strings"
+  "github.com/iancoleman/strcase"
 	"text/template"
 )
 
@@ -43,35 +45,59 @@ var tplDir string = "." // Directory for generated code output
 
 const tplResourceName = "templates"
 const tplDefinition = "definition.yaml"
+const prCopyright = `
+//
+// Copyright (c) PavedRoad. All rights reserved.
+// Licensed under the Apache2. See LICENSE file in the project root for full license information.
+//`
 
 var templates *template.Template
 
 type tplData struct {
   // Information about company and project
-  version string
-  orginzation string // Name of orginization
-  orginazationInfo string //Org lic/copyright
-  projectInfo string // Project/service description
-  maintain string 
-  maintainerEmail string
-  maintainer string
+  Version string
+  Organization string // Name of Organization
+  OrganazationInfo string // Name of Organization
+  OrganizationLicense string //Org lic/copyright
+  ProjectInfo string // Project/service description
+  Maintain string 
+  MaintainerEmail string
+  Maintainer string
 
   // Service and tpl-names
-  name string //service name
-  nameExported string //camal case with first letter cap
-  tplName string //template name
+  Name string //service name
+  NameExported string //camal case with first letter cap
+  TplName string //template name
 
   //PR lic/copyright should be a function
-  pavedroadInfo string //PR lic/copyright
+  PavedroadInfo string //PR lic/copyright
 
   //Swagger headers probably turn these into functions
-  allRoutesSwaggerDoc string
-  getAllSwaggerDoc string // swagger for list method
-  getSwaggerDoc string // swagger for get method
-  putSswaggerDoc string // swagger for put method
-  postSswaggerDoc string // swagger for post method
-  deleteSswaggerDoc string // swagger for delete method
-  swaggerSgeneratedStructs string //swagger doc and go structs
+  AllRoutesSwaggerDoc string
+  GetAllSwaggerDoc string // swagger for list method
+  GetSwaggerDoc string // swagger for get method
+  PutSwaggerDoc string // swagger for put method
+  PostSwaggerDoc string // swagger for post method
+  DeleteSwaggerDoc string // swagger for delete method
+  SwaggerGeneratedStructs string //swagger doc and go structs
+  DumpStructs string //Generic dumb of given object type
+}
+
+//tplDataMapper() error{
+func tplDataMapper(defs tplDef, output *tplData) error {
+  output.Name = defs.Name
+  output.NameExported = strcase.ToCamel(defs.Name)
+  output.TplName = defs.ID
+  output.Version = defs.Version
+  output.OrganizationLicense = defs.Project.License
+  output.Organization = defs.Organization
+  output.ProjectInfo = defs.Project.Description
+  output.Maintain = "Contant: "
+  output.MaintainerEmail = defs.Project.MaintainerEmail
+  output.Maintainer = defs.Project.Maintainer
+  output.PavedroadInfo = prCopyright
+
+  return nil
 }
 
 // tplListItem provides information about a template location
@@ -301,17 +327,48 @@ func tplCreate(rn string) string {
 	}
 
   // Read the definition file
-  yamlMap := tplReadDefinitions(defFile)
-	fmt.Println(yamlMap["id"])
-	fmt.Println(yamlMap["api-version"])
+  defs := tplDef{} 
+  err = tplReadDefinitions(defFile, &defs)
+  if err != nil {
+    fmt.Println(err)
+    return(err.Error())
+  }
+  tplInputData := tplData{}
+  err = tplDataMapper(defs, &tplInputData)
 
 	// Build the template cache
-	templates, err = template.New("").ParseFiles(tplRsp...)
-	if err != nil {
-		fmt.Println(err)
-	}
+	//templates, err = template.New("").ParseFiles(tplRsp...)
+	templates, err = template.ParseFiles(tplRsp...)
+  if err != nil {
+    fmt.Println("Template parsing failed: ", err)
+    os.Exit(-1)
+  }
+  //templates = template.Must(template.ParseFiles(tplRsp...))
+  
+  //TODO: turn into a function
+  fmt.Println(filenames)
+  var fn string
+  for _, v := range filenames {
+    // Replace generic string "template" with the name of the service
+    fn = strings.Replace(v, "template", tplInputData.Name, 1)
 
-	fmt.Println(filenames)
+    // TODO: take an option location
+    file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0666)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    bw := bufio.NewWriter(file)
+
+    fmt.Printf("executing %v using template %v\n", fn, v)
+    err = templates.ExecuteTemplate(bw, v, tplInputData)
+    if err != nil {
+      fmt.Printf("Template execution failed for: %v with error %v", v, err)
+      os.Exit(-1)
+    }
+    bw.Flush()
+    file.Close()
+  }
 	//fmt.Println(tplRsp)
 	return ""
 }
@@ -321,7 +378,9 @@ func tplCreate(rn string) string {
 // Read the definition file
 // TODO: add command line option to specify a different
 //       definitions.yaml file
-func tplReadDefinitions(fileName string) (yamlData map[interface{}]interface{}) {
+func tplReadDefinitions(fileName string, definitionsStruct *tplDef) (error) {
+
+
 	df, err := os.Open(fileName)
 	if err != nil {
 		fmt.Println("failed to open: %v err %v", df, err)
@@ -333,10 +392,15 @@ func tplReadDefinitions(fileName string) (yamlData map[interface{}]interface{}) 
     os.Exit(-1)
   }
 
-	defData := make(map[interface{}]interface{})
-	yaml.Unmarshal([]byte(byteValue), &defData)
+	//defData := make(map[interface{}]interface{})
+  //err = yaml.Unmarshal(yamlMap, defs)
+	//yaml.Unmarshal([]byte(byteValue), &defData)
+  err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
+  if err != nil {
+    return err
+  }
 
-  return defData
+  return nil
 }
 
 
@@ -441,6 +505,8 @@ func tplRead(tplName string) ([]string, error) {
 
 	tplItem := tplRsp.Templates[0]
 	td := tplItem.Path + "/" + tplItem.Name
+
+  fmt.Println("Tpl dir", td)
 
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
