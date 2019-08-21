@@ -25,16 +25,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/go-github/github"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	_ "reflect"
 	"strings"
-  "github.com/iancoleman/strcase"
 	"text/template"
+
+	"github.com/google/go-github/github"
+	"github.com/iancoleman/strcase"
+	"gopkg.in/yaml.v2"
 )
 
 // Default template repository
@@ -43,8 +44,8 @@ var defaultRepo string = "templates"
 var defaultPath string = ""
 var defaultTemplateDir string = "templates"
 var repoType string = "GitHub"
-var tplFile string = "" // Name of the template file to use
-var tplDir string = "." // Directory for generated code output
+var tplFile string = ""    // Name of the template file to use
+var tplDir string = "."    // Directory for generated code output
 var tplDefFile string = "" // Directory for generated code output
 
 const tplResourceName = "templates"
@@ -58,33 +59,33 @@ const prCopyright = `
 var templates *template.Template
 
 type tplData struct {
-  // Information about company and project
-  Version string
-  Organization string // Name of Organization
-  OrganazationInfo string // Name of Organization
-  OrganizationLicense string //Org lic/copyright
-  ProjectInfo string // Project/service description
-  Maintain string 
-  MaintainerEmail string
-  Maintainer string
+	// Information about company and project
+	Version             string
+	Organization        string // Name of Organization
+	OrganazationInfo    string // Name of Organization
+	OrganizationLicense string //Org lic/copyright
+	ProjectInfo         string // Project/service description
+	Maintain            string
+	MaintainerEmail     string
+	Maintainer          string
 
-  // Service and tpl-names
-  Name string //service name
-  NameExported string //camal case with first letter cap
-  TplName string //template name
+	// Service and tpl-names
+	Name         string //service name
+	NameExported string //camal case with first letter cap
+	TplName      string //template name
 
-  //PR lic/copyright should be a function
-  PavedroadInfo string //PR lic/copyright
+	//PR lic/copyright should be a function
+	PavedroadInfo string //PR lic/copyright
 
-  //Swagger headers probably turn these into functions
-  AllRoutesSwaggerDoc string
-  GetAllSwaggerDoc string // swagger for list method
-  GetSwaggerDoc string // swagger for get method
-  PutSwaggerDoc string // swagger for put method
-  PostSwaggerDoc string // swagger for post method
-  DeleteSwaggerDoc string // swagger for delete method
-  SwaggerGeneratedStructs string //swagger doc and go structs
-  DumpStructs string //Generic dumb of given object type
+	//Swagger headers probably turn these into functions
+	AllRoutesSwaggerDoc     string
+	GetAllSwaggerDoc        string // swagger for list method
+	GetSwaggerDoc           string // swagger for get method
+	PutSwaggerDoc           string // swagger for put method
+	PostSwaggerDoc          string // swagger for post method
+	DeleteSwaggerDoc        string // swagger for delete method
+	SwaggerGeneratedStructs string // swagger doc and go structs
+	DumpStructs             string // Generic dumb of given object type
 }
 
 //  tplDataMapper
@@ -92,19 +93,20 @@ type tplData struct {
 //    return error if required mappings are missing
 //
 func tplDataMapper(defs tplDef, output *tplData) error {
-  output.Name = defs.Name
-  output.NameExported = strcase.ToCamel(defs.Name)
-  output.TplName = defs.ID
-  output.Version = defs.Version
-  output.OrganizationLicense = defs.Project.License
-  output.Organization = defs.Organization
-  output.ProjectInfo = defs.Project.Description
-  output.Maintain = "Contant: "
-  output.MaintainerEmail = defs.Project.MaintainerEmail
-  output.Maintainer = defs.Project.Maintainer
-  output.PavedroadInfo = prCopyright
+	//fmt.Println(defs)
+	output.Name = defs.Name
+	output.NameExported = strcase.ToCamel(defs.Name)
+	output.TplName = defs.ID
+	output.Version = defs.Version
+	output.OrganizationLicense = defs.Project.License
+	output.Organization = defs.Organization
+	output.ProjectInfo = defs.Project.Description
+	output.Maintain = "Contant: "
+	output.MaintainerEmail = defs.Project.MaintainerEmail
+	output.Maintainer = defs.Project.Maintainer
+	output.PavedroadInfo = prCopyright
 
-  return nil
+	return nil
 }
 
 //  tplGenerateStructurs
@@ -112,13 +114,12 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 //    Go structures and assign to tplData.SwaggerGeneratedStructs
 //
 //    Use the same schema to generate a formated dump
-//    command to aid developer debugging and assign it to 
+//    command to aid developer debugging and assign it to
 //    tplData.DumpStructs
 //
 func tplGenerateStructurs(defs tplDef, output *tplData) error {
 
-
-  return nil
+	return nil
 }
 
 // tplListItem provides information about a template location
@@ -181,8 +182,6 @@ func (t tplExplainResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Templates {
 		nl += fmt.Sprintf("Name: %v\n", val.Name)
-		//line := strings.Repeat("-", 80)
-		//nl += fmt.Println(string(line))
 		nl += fmt.Sprintf("%v\n", val.Content)
 	}
 	nl += "\n"
@@ -326,13 +325,13 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 
 // tplCreate
 //   Reads all the templates for a given type/name and then
-//   extracts just the file names.  If not specified on the 
+//   extracts just the file names.  If not specified on the
 //   command line, use the default definition.yaml file
 //   associated this template.
 //
 //   Next, it reads the definitions file and maps the data
 //   attributes to the input structure, tplData, used by all templates
-//   
+//
 //   Before templates can be executed, the dynamic code components
 //   must be compiled and also mapped to tplData for:
 //     - Go structs for user defined objects
@@ -341,7 +340,7 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 //
 //   Next, iterate over the templates to generate
 //
-//   Last, run goimport to check for missing or unused import 
+//   Last, run goimport to check for missing or unused import
 //   statements and clean up any code formating issues
 //
 func tplCreate(rn string) string {
@@ -358,68 +357,69 @@ func tplCreate(rn string) string {
 		nm := filepath.Base(rec)
 		// If definitions file, save it, otherwise add to filenames
 		// to process as templates
-		if nm == tplDefinition && tplDefFile == ""{
-      fmt.Println("rec", rec)
+		if nm == tplDefinition && tplDefFile == "" {
+			fmt.Println("rec", rec)
 			tplDefFile = rec
 		} else {
 			filenames = append(filenames, nm)
 		}
 	}
 
-  // Read the definition file
-  defs := tplDef{}
-  err = tplReadDefinitions(&defs)
-  if err != nil {
-    fmt.Println(err)
-    return(err.Error())
-  }
-  tplInputData := tplData{}
-  err = tplDataMapper(defs, &tplInputData)
+	// Read the definition file
+	defs := tplDef{}
+	err = tplReadDefinitions(&defs)
+	if err != nil {
+		fmt.Println(err)
+		return (err.Error())
+	}
+	tplInputData := tplData{}
+	err = tplDataMapper(defs, &tplInputData)
 
-  // Generate internal structures
-  err = tplGenerateStructurs(defs, &tplInputData)
-  if err != nil {
-    fmt.Println("Generating structures failed: ", err)
-    os.Exit(-1)
-  }
+	// Generate internal structures
+	err = tplGenerateStructurs(defs, &tplInputData)
+	if err != nil {
+		fmt.Println("Generating structures failed: ", err)
+		os.Exit(-1)
+	}
 
-  // Generate SQL scripts
+	// Generate SQL scripts
+	defs.devineOrder()
 
-  // Generate SQL code functions
+	// Generate SQL code functions
 
 	// Build the template cache
 	//templates, err = template.New("").ParseFiles(tplRsp...)
 	templates, err = template.ParseFiles(tplRsp...)
-  if err != nil {
-    fmt.Println("Template parsing failed: ", err)
-    os.Exit(-1)
-  }
+	if err != nil {
+		fmt.Println("Template parsing failed: ", err)
+		os.Exit(-1)
+	}
 
-  //templates = template.Must(template.ParseFiles(tplRsp...))
-  //TODO: turn into a function
-  var fn string
-  for _, v := range filenames {
-    // Replace generic string "template" with the name of the service
-    fn = strings.Replace(v, "template", tplInputData.Name, 1)
+	//templates = template.Must(template.ParseFiles(tplRsp...))
+	//TODO: turn into a function
+	var fn string
+	for _, v := range filenames {
+		// Replace generic string "template" with the name of the service
+		fn = strings.Replace(v, "template", tplInputData.Name, 1)
 
-    file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0666)
-    if err != nil {
-        log.Fatal(err)
-    }
+		file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-    bw := bufio.NewWriter(file)
+		bw := bufio.NewWriter(file)
 
-    fmt.Printf("executing %v using template %v\n", fn, v)
-    err = templates.ExecuteTemplate(bw, v, tplInputData)
-    if err != nil {
-      fmt.Printf("Template execution failed for: %v with error %v", v, err)
-      os.Exit(-1)
-    }
-    bw.Flush()
-    file.Close()
-  }
-  
-  // Execut goimport
+		fmt.Printf("executing %v using template %v\n", fn, v)
+		err = templates.ExecuteTemplate(bw, v, tplInputData)
+		if err != nil {
+			fmt.Printf("Template execution failed for: %v with error %v", v, err)
+			os.Exit(-1)
+		}
+		bw.Flush()
+		file.Close()
+	}
+
+	// Execute goimport for code formatgin
 
 	//fmt.Println(tplRsp)
 	return ""
@@ -428,31 +428,30 @@ func tplCreate(rn string) string {
 // tplReadDefinitions
 //   Read the definition file
 //
-func tplReadDefinitions(definitionsStruct *tplDef) (error) {
+func tplReadDefinitions(definitionsStruct *tplDef) error {
 
-  fmt.Println("Reading defintions from: ", tplDefFile)
+	fmt.Println("Reading defintions from: ", tplDefFile)
 	df, err := os.Open(tplDefFile)
 	if err != nil {
 		fmt.Println("failed to open: %v err %v", df, err)
 	}
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
-  if e != nil {
-    fmt.Println("read failed for " + tplDefFile)
-    os.Exit(-1)
-  }
+	if e != nil {
+		fmt.Println("read failed for " + tplDefFile)
+		os.Exit(-1)
+	}
 
 	//defData := make(map[interface{}]interface{})
-  //err = yaml.Unmarshal(yamlMap, defs)
+	//err = yaml.Unmarshal(yamlMap, defs)
 	//yaml.Unmarshal([]byte(byteValue), &defData)
-  err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
-  if err != nil {
-    return err
-  }
+	err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
+	if err != nil {
+		return err
+	}
 
-  return nil
+	return nil
 }
-
 
 // tplDescribe
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
@@ -549,7 +548,7 @@ func tplRead(tplName string) ([]string, error) {
 	tplItem := tplRsp.Templates[0]
 	td := tplItem.Path + "/" + tplItem.Name
 
-  fmt.Println("Tpl dir", td)
+	fmt.Println("Tpl dir", td)
 
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
