@@ -13,6 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+//TODO: create standard error messages as const
+
 package cmd
 
 import (
@@ -42,6 +45,7 @@ var defaultTemplateDir string = "templates"
 var repoType string = "GitHub"
 var tplFile string = "" // Name of the template file to use
 var tplDir string = "." // Directory for generated code output
+var tplDefFile string = "" // Directory for generated code output
 
 const tplResourceName = "templates"
 const tplDefinition = "definition.yaml"
@@ -83,7 +87,10 @@ type tplData struct {
   DumpStructs string //Generic dumb of given object type
 }
 
-//tplDataMapper() error{
+//  tplDataMapper
+//    Map data from definitions file to tplData structure
+//    return error if required mappings are missing
+//
 func tplDataMapper(defs tplDef, output *tplData) error {
   output.Name = defs.Name
   output.NameExported = strcase.ToCamel(defs.Name)
@@ -96,6 +103,20 @@ func tplDataMapper(defs tplDef, output *tplData) error {
   output.MaintainerEmail = defs.Project.MaintainerEmail
   output.Maintainer = defs.Project.Maintainer
   output.PavedroadInfo = prCopyright
+
+  return nil
+}
+
+//  tplGenerateStructurs
+//    Use the schema definition found in tplDefs to create
+//    Go structures and assign to tplData.SwaggerGeneratedStructs
+//
+//    Use the same schema to generate a formated dump
+//    command to aid developer debugging and assign it to 
+//    tplData.DumpStructs
+//
+func tplGenerateStructurs(defs tplDef, output *tplData) error {
+
 
   return nil
 }
@@ -304,9 +325,27 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 }
 
 // tplCreate
+//   Reads all the templates for a given type/name and then
+//   extracts just the file names.  If not specified on the 
+//   command line, use the default definition.yaml file
+//   associated this template.
+//
+//   Next, it reads the definitions file and maps the data
+//   attributes to the input structure, tplData, used by all templates
+//   
+//   Before templates can be executed, the dynamic code components
+//   must be compiled and also mapped to tplData for:
+//     - Go structs for user defined objects
+//     - SQL Scripts for developer use
+//     - SQL functions for testing
+//
+//   Next, iterate over the templates to generate
+//
+//   Last, run goimport to check for missing or unused import 
+//   statements and clean up any code formating issues
+//
 func tplCreate(rn string) string {
 	var filenames []string
-	var defFile = ""
 
 	//Get back a list of templates for requrested template name
 	tplRsp, err := tplRead(tplFile)
@@ -319,22 +358,34 @@ func tplCreate(rn string) string {
 		nm := filepath.Base(rec)
 		// If definitions file, save it, otherwise add to filenames
 		// to process as templates
-		if nm == tplDefinition {
-			defFile = rec
+		if nm == tplDefinition && tplDefFile == ""{
+      fmt.Println("rec", rec)
+			tplDefFile = rec
 		} else {
 			filenames = append(filenames, nm)
 		}
 	}
 
   // Read the definition file
-  defs := tplDef{} 
-  err = tplReadDefinitions(defFile, &defs)
+  defs := tplDef{}
+  err = tplReadDefinitions(&defs)
   if err != nil {
     fmt.Println(err)
     return(err.Error())
   }
   tplInputData := tplData{}
   err = tplDataMapper(defs, &tplInputData)
+
+  // Generate internal structures
+  err = tplGenerateStructurs(defs, &tplInputData)
+  if err != nil {
+    fmt.Println("Generating structures failed: ", err)
+    os.Exit(-1)
+  }
+
+  // Generate SQL scripts
+
+  // Generate SQL code functions
 
 	// Build the template cache
 	//templates, err = template.New("").ParseFiles(tplRsp...)
@@ -343,16 +394,14 @@ func tplCreate(rn string) string {
     fmt.Println("Template parsing failed: ", err)
     os.Exit(-1)
   }
+
   //templates = template.Must(template.ParseFiles(tplRsp...))
-  
   //TODO: turn into a function
-  fmt.Println(filenames)
   var fn string
   for _, v := range filenames {
     // Replace generic string "template" with the name of the service
     fn = strings.Replace(v, "template", tplInputData.Name, 1)
 
-    // TODO: take an option location
     file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0666)
     if err != nil {
         log.Fatal(err)
@@ -369,26 +418,27 @@ func tplCreate(rn string) string {
     bw.Flush()
     file.Close()
   }
+  
+  // Execut goimport
+
 	//fmt.Println(tplRsp)
 	return ""
 }
 
 // tplReadDefinitions
+//   Read the definition file
 //
-// Read the definition file
-// TODO: add command line option to specify a different
-//       definitions.yaml file
-func tplReadDefinitions(fileName string, definitionsStruct *tplDef) (error) {
+func tplReadDefinitions(definitionsStruct *tplDef) (error) {
 
-
-	df, err := os.Open(fileName)
+  fmt.Println("Reading defintions from: ", tplDefFile)
+	df, err := os.Open(tplDefFile)
 	if err != nil {
 		fmt.Println("failed to open: %v err %v", df, err)
 	}
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
   if e != nil {
-    fmt.Println("read failed for " + fileName)
+    fmt.Println("read failed for " + tplDefFile)
     os.Exit(-1)
   }
 
@@ -403,13 +453,6 @@ func tplReadDefinitions(fileName string, definitionsStruct *tplDef) (error) {
   return nil
 }
 
-
-/*
-// tplGenerate
-func tplGenerate(tplList []string)(genFileList []string, err error) {
-  tplList := buildTplCache(tplList)
-}
-*/
 
 // tplDescribe
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {

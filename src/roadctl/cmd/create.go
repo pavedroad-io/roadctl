@@ -89,8 +89,10 @@ func createResource(rn string) string {
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	createCmd.Flags().StringVar(&tplFile, "template", "t",
+	createCmd.Flags().StringVar(&tplFile, "template", "",
 		"Template file name to use")
-	createCmd.Flags().StringVar(&tplDir, "directory", "dn",
+	createCmd.Flags().StringVar(&tplDir, "directory", "",
 		"Directory to generate output to")
+	createCmd.Flags().StringVar(&tplDefFile, "definition", "",
+		"Service definition file to use")
 }
