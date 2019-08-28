@@ -56,6 +56,29 @@ const prCopyright = `
 // Licensed under the Apache2. See LICENSE file in the project root for full license information.
 //`
 
+const strcutComment = `
+//
+//
+//`
+
+const swaggerRoute = "// swagger:response %s\n"
+const structOpen = "type %s struct {\n"
+
+// structUUID
+// name of table, type of data json|yaml
+const structUUID = "\t%sUUID string `%s:%suuid`\n"
+const structClose = "}\n\n"
+
+// structField
+//  name, type, encoding, json|yaml, encoding options
+const structField = "\t%s %s\t`%s:%s`\n"
+
+// structSubStruct
+// Same as structField except:
+//  type will be the subtable
+//  No options
+const structSubstruct = "\t%s %s\t`%s:%s`\n"
+
 var templates *template.Template
 
 type tplData struct {
@@ -118,9 +141,79 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 //    tplData.DumpStructs
 //
 func tplGenerateStructurs(defs tplDef, output *tplData) error {
-
+	order := defs.devineOrder()
+  tplAddStruct(order, defs, output)
+  //fmt.Println(output.SwaggerGeneratedStructs)
 	return nil
 }
+
+func tplAddStruct(item tplTableItem , defs tplDef, output *tplData) {
+  table, _ := defs.table(item.Name)
+
+  // Start this table
+  tableString := fmt.Sprintf(swaggerRoute, item.Name) 
+  tableString += fmt.Sprintf(structOpen, item.Name) 
+  tableString += fmt.Sprintf("// %sUUID into JSONB\n\n", strcase.ToCamel(item.Name))
+  tableString += fmt.Sprintf(structUUID, 
+    strcase.ToCamel(item.Name), "json",
+    strings.ToLower(item.Name))
+
+
+  // See if there are any children
+  if  len(item.Children) >0 {
+   // Add child tables first
+   for _, child := range item.Children {
+     tplAddStruct(*child, defs, output)
+    // Same as structField except type with be the subtable
+    tableString += fmt.Sprintf(structSubstruct,
+      strcase.ToCamel(child.Name), 
+      strings.ToLower(child.Name), 
+      "json", 
+      strings.ToLower(child.Name))
+   }
+ }
+
+  // Add this tables attributes
+  for _, col := range table.Columns {
+    //TODO: validate column attributes
+    // required attribute
+    // no reserved go words
+
+    // build json / yaml string
+    importLine := col.MappedName
+    if col.Modifiers != "" {
+      importLine += ","+col.Modifiers
+    }
+
+    if col.Constraints != "" {
+      importLine += ","+col.Constraints
+    }
+
+    tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
+    tableString += fmt.Sprintf(structField,
+      strcase.ToCamel(col.Name), 
+      strings.ToLower(col.Type), 
+      "json", 
+      importLine)
+      //fmt.Println(col)
+  }
+  
+  // Close and append to tplData.SwaggerGeneratedStructs
+  tableString += fmt.Sprintf(structClose)
+  output.SwaggerGeneratedStructs += tableString
+
+  return
+}
+
+
+/*
+const structClose = "}\n"
+// structField
+//  name, type, encoding, json|yaml, encoded name, options
+const structField = "\t%s %s\t`%s:%s%s`\n"
+
+
+*/
 
 // tplListItem provides information about a template location
 // and status
@@ -383,13 +476,12 @@ func tplCreate(rn string) string {
 	}
 
 	// Generate SQL scripts
-	defs.devineOrder()
 
 	// Generate SQL code functions
 
 	// Build the template cache
 	//templates, err = template.New("").ParseFiles(tplRsp...)
-	templates, err = template.ParseFiles(tplRsp...)
+	templates, err = template.New("").ParseFiles(tplRsp...)
 	if err != nil {
 		fmt.Println("Template parsing failed: ", err)
 		os.Exit(-1)

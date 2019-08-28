@@ -4,36 +4,36 @@ tables:
     parent-tables: ""
     columns:
     - name: id
-      mapped-name: ''
+      mapped-name: 'id'
       modifiers: ''
-      contraints: ''
-      type: uuid
+      constraints: ''
+      type: string
     - name: updated
-      mapped-name: ''
+      mapped-name: 'updated'
       modifiers: ''
-      contraints: ''
-      type: data-time
+      constraints: ''
+      type: string
     - name: created
-      mapped-name: ''
+      mapped-name: 'created'
       modifiers: ''
-      contraints: ''
-      type: data-time
+      constraints: ''
+      type: string
   - table-name: metadata
     parent-tables: "users"
     columns:
     - name: id
-      json-handling: ''
-      json-name: ''
-      contraints: ''
-      type: ''
+      modifiers: ''
+      mapped-name: 'id'
+      constraints: ''
+      type: 'string'
   - table-name: test
     parent-tables: "metadata"
     columns:
     - name: key
-      json-handling: ''
-      json-name: ''
-      contraints: ''
-      type: ''
+      modifiers: ''
+      mapped-name: 'key'
+      constraints: ''
+      type: 'string'
 project:
   maintainer-email: support@pavedroad.io
   integrations:

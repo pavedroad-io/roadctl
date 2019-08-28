@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"fmt"
+	"errors"
 	"os"
 )
 
@@ -40,7 +41,7 @@ type Tables struct {
 		MappedName string `yaml:"mapped-name"`
 
 		// Contraints such as required
-		Contraints string `yaml:"contraints"`
+		Constraints string `yaml:"constraints"`
 
 		// TODO: need to map this to array/map for validation
 		// Type such as boolen, string, float, or integer
@@ -140,7 +141,7 @@ type tplTableItem struct {
 // found or more than one primary is found
 // TODO: The above logic needs to be specific to
 //       the type of service build built
-func (d *tplDef) devineOrder() {
+func (d *tplDef) devineOrder() tplTableItem {
   ptName := ""
 
   // Get primary table and make sure this is only one
@@ -157,10 +158,9 @@ func (d *tplDef) devineOrder() {
   }
 
   d.addChildren(&x[0])
-  fmt.Println("Dump tables")
-  d.walkOrder(x[0])
+  //d.walkOrder(x[0])
 
-  return
+  return x[0]
 }
 
 // walkOrder: Given a parent, print out all of its
@@ -212,7 +212,20 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	return rlist
 }
 
-// talbes(): return a pointer to definitions Tables
+// tables(): return a pointer to definitions Tables
 func (d *tplDef) tables() []Tables {
 	return d.TableList
 }
+
+// 
+func (d *tplDef) table(name string) (Tables, error) {
+  e := Tables{}
+  for _, v := range d.TableList { 
+    if v.TableName == name {
+      return v, nil
+    }
+  }
+	return e, errors.New("table not found")
+}
+
+
