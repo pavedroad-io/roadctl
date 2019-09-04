@@ -3,8 +3,8 @@
 package cmd
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -56,83 +56,110 @@ type Tables struct {
 	} `yaml:"columns"`
 }
 
-type tplDef struct {
-	TableList []Tables `yaml:"tables"`
-	Project   struct {
-		MaintainerEmail string `yaml:"maintainer-email"`
-		Integrations    []struct {
-			Config struct {
-				Options struct {
-					Coverage struct {
-						Report string `yaml:"report"`
-						Enable bool   `yaml:"enable"`
-					} `yaml:"coverage"`
-					Lint struct {
-						Report string `yaml:"report"`
-						Enable bool   `yaml:"enable"`
-					} `yaml:"lint"`
-					GoSec struct {
-						Report string `yaml:"report"`
-						Enable bool   `yaml:"enable"`
-					} `yaml:"go-sec"`
-				} `yaml:"options"`
-				ConfigurationFile struct {
-					Path         string `yaml:"path"`
-					Name         string `yaml:"name"`
-					ArtifactsDir string `yaml:"artifacts-dir"`
-					Src          string `yaml:"src"`
-				} `yaml:"configuration-file"`
-			} `yaml:"config,omitempty"`
-			Name        string `yaml:"name"`
-			Path        string `yaml:"path,omitempty"`
-			Description string `yaml:"description,omitempty"`
-			Src         string `yaml:"src,omitempty"`
-		} `yaml:"integrations"`
-		Maintainer   string `yaml:"maintainer"`
-		Dependencies []struct {
-			DockerInfo struct {
-				Image   string `yaml:"image"`
-				Command string `yaml:"command"`
-				Ports   []struct {
-					Internal string `yaml:"internal"`
-					External string `yaml:"external"`
-				} `yaml:"ports"`
-				Comments string `yaml:"comments"`
-				Volumes  []struct {
-					Path  string  `yaml:"path"`
-					Mount float64 `yaml:"mount"`
-				} `yaml:"volumes"`
-			} `yaml:"docker-info"`
-			Name string `yaml:"name"`
-		} `yaml:"dependencies"`
-		MaintainerSlack string `yaml:"maintainer-slack"`
-		License         string `yaml:"license"`
-		Description     string `yaml:"description"`
-	} `yaml:"project"`
+type Community struct {
+	CommunityFiles []struct {
+		Name string `yaml:"name"`
+		Path string `yaml:"path"`
+		Src  string `yaml:"src"`
+		Md5  string `yaml:"md5,omitempty"`
+	} `yaml:"community-files"`
+	Description string `yaml:"description"`
+}
+
+type Info struct {
+	APIVersion    string `yaml:"api-version"`
+	ID            string `yaml:"id"`
 	Name          string `yaml:"name"`
 	Organization  string `yaml:"organization"`
-	APIVersion    string `yaml:"api-version"`
-	Version       string `yaml:"version"`
-	ID            string `yaml:"id"`
 	ReleaseStatus string `yaml:"release-status"`
-	Community     struct {
-		CommunityFiles []struct {
-			Path string `yaml:"path"`
-			Name string `yaml:"name"`
-			Src  string `yaml:"src"`
-			Md5  string `yaml:"md5,omitempty"`
-		} `yaml:"community-files"`
-		Description string `yaml:"description"`
-	} `yaml:"community"`
+	Version       string `yaml:"version"`
+}
+type Dependencies []struct {
+	Command          string      `yaml:"command"`
+	Comments         string      `yaml:"comments"`
+	DockerCockroahdb interface{} `yaml:"docker-cockroahdb,omitempty"`
+	Image            string      `yaml:"image"`
+	Name             string      `yaml:"name"`
+	Ports            []struct {
+		External string `yaml:"external"`
+		Internal string `yaml:"internal"`
+	} `yaml:"ports"`
+	Volumes     []interface{} `yaml:"volumes"`
+	DockerKafka interface{}   `yaml:"docker-kafka,omitempty"`
+	Topics      []string      `yaml:"topics,omitempty"`
+}
+type Maintainer struct {
+	Email string `yaml:"email"`
+	Name  string `yaml:"name"`
+	Slack string `yaml:"slack"`
+	Web   string `yaml:"web"`
+}
+type ProjectFiles struct {
+	Description string `yaml:"description"`
+	Name        string `yaml:"name"`
+	Path        string `yaml:"path"`
+	Src         string `yaml:"src"`
+}
+
+type Badges struct {
+	Enable bool   `yaml:"enable"`
+	Link   string `yaml:"link"`
+	Name   string `yaml:"name"`
+}
+
+type ConfigurationFile struct {
+	ArtifactsDir string `yaml:"artifacts-dir"`
+	Name         string `yaml:"name"`
+	Path         string `yaml:"path"`
+	Src          string `yaml:"src"`
+}
+
+type Project struct {
+	Description  string         `yaml:"description"`
+	Dependencies Dependencies   `yaml:"dependencies"`
+	License      string         `yaml:"license"`
+	Maintainer   Maintainer     `yaml:"maintainer"`
+	ProjectFiles []ProjectFiles `yaml:"project-files"`
+
+	Integrations []struct {
+		Badges []Badges `yaml:"badges,omitempty"`
+		Name   string   `yaml:"name"`
+    // Needs to be more generic
+		Config struct {
+			Options struct {
+				Badges   []Badges `yaml:"badges"`
+				Coverage struct {
+					Enable bool   `yaml:"enable"`
+					Report string `yaml:"report"`
+				} `yaml:"coverage"`
+				GoSec struct {
+					Enable bool   `yaml:"enable"`
+					Report string `yaml:"report"`
+				} `yaml:"go-sec"`
+				Lint struct {
+					Enable bool   `yaml:"enable"`
+					Report string `yaml:"report"`
+				} `yaml:"lint"`
+			} `yaml:"options"`
+		} `yaml:"config,omitempty"`
+		ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
+	} `yaml:"integrations"`
+}
+
+type tplDef struct {
+	TableList []Tables  `yaml:"tables"`
+	Commuity  Community `yaml:"community"`
+	Info      Info      `yaml:"info"`
+	Project   Project   `yaml:"project"`
 }
 
 // tplTableItem
 type tplTableItem struct {
-  // The name of this table
-	Name     string
+	// The name of this table
+	Name string
 
-  // Children: a list of table items containing
-  //           child tables
+	// Children: a list of table items containing
+	//           child tables
 	Children []*tplTableItem
 }
 
@@ -142,58 +169,58 @@ type tplTableItem struct {
 // TODO: The above logic needs to be specific to
 //       the type of service build built
 func (d *tplDef) devineOrder() tplTableItem {
-  ptName := ""
+	ptName := ""
 
-  // Get primary table and make sure this is only one
-  x := d.findTables(ptName)
-  if len(x) == 0 {
-    fmt.Println("No primary table found")
-    os.Exit(-1)
-  } else if len(x) > 1 {
-    fmt.Println("More than primary table found: ", len(x))
-    os.Exit(-1)
-  } else {
-    pt := x[0]
-    ptName = pt.Name
-  }
+	// Get primary table and make sure this is only one
+	x := d.findTables(ptName)
+	if len(x) == 0 {
+		fmt.Println("No primary table found")
+		os.Exit(-1)
+	} else if len(x) > 1 {
+		fmt.Println("More than primary table found: ", len(x))
+		os.Exit(-1)
+	} else {
+		pt := x[0]
+		ptName = pt.Name
+	}
 
-  d.addChildren(&x[0])
-  //d.walkOrder(x[0])
+	d.addChildren(&x[0])
+	//d.walkOrder(x[0])
 
-  return x[0]
+	return x[0]
 }
 
 // walkOrder: Given a parent, print out all of its
 //   children
-func (d *tplDef)walkOrder(item tplTableItem) {
+func (d *tplDef) walkOrder(item tplTableItem) {
 
-    if len(item.Children) > 0 {
-      for _, v := range item.Children {
-        fmt.Printf("Parent: %v Child: %v\n",item.Name, v.Name)
-        d.walkOrder(*v)
-      }
-      } else {
-        fmt.Printf("Parent: %v Child: no children\n",item.Name)
-      }
-  return
+	if len(item.Children) > 0 {
+		for _, v := range item.Children {
+			fmt.Printf("Parent: %v Child: %v\n", item.Name, v.Name)
+			d.walkOrder(*v)
+		}
+	} else {
+		fmt.Printf("Parent: %v Child: no children\n", item.Name)
+	}
+	return
 }
 
-// addChildren: Add children to a parent, then 
+// addChildren: Add children to a parent, then
 //  add any children they may have recursivley
-func (d *tplDef)addChildren(parent *tplTableItem) {
+func (d *tplDef) addChildren(parent *tplTableItem) {
 
-  c := d.findTables(parent.Name)
+	c := d.findTables(parent.Name)
 
-  if len(c) == 0 {
-    return
-  } else {
-    for _, v := range c {
-      parent.Children = append(parent.Children, &v)
-      d.addChildren(&v)
-    }
-  }
+	if len(c) == 0 {
+		return
+	} else {
+		for _, v := range c {
+			parent.Children = append(parent.Children, &v)
+			d.addChildren(&v)
+		}
+	}
 
-  return
+	return
 }
 
 // findTables: Given a parent, see if they have children
@@ -203,7 +230,7 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 
 	for _, t := range tlist {
 		if t.ParentTable == parent {
-      c := make([]*tplTableItem, 0, 20)
+			c := make([]*tplTableItem, 0, 20)
 			newrec := tplTableItem{t.TableName, c}
 			rlist = append(rlist, newrec)
 		}
@@ -217,15 +244,13 @@ func (d *tplDef) tables() []Tables {
 	return d.TableList
 }
 
-// 
+//
 func (d *tplDef) table(name string) (Tables, error) {
-  e := Tables{}
-  for _, v := range d.TableList { 
-    if v.TableName == name {
-      return v, nil
-    }
-  }
+	e := Tables{}
+	for _, v := range d.TableList {
+		if v.TableName == name {
+			return v, nil
+		}
+	}
 	return e, errors.New("table not found")
 }
-
-

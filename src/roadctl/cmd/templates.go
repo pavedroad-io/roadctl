@@ -47,6 +47,7 @@ var repoType string = "GitHub"
 var tplFile string = ""    // Name of the template file to use
 var tplDir string = "."    // Directory for generated code output
 var tplDefFile string = "" // Directory for generated code output
+var tplDirSelected = ""
 
 const tplResourceName = "templates"
 const tplDefinition = "definition.yaml"
@@ -88,9 +89,13 @@ type tplData struct {
 	OrganazationInfo    string // Name of Organization
 	OrganizationLicense string //Org lic/copyright
 	ProjectInfo         string // Project/service description
-	Maintain            string
+	MaintainerName     string
 	MaintainerEmail     string
-	Maintainer          string
+	MaintainerSlack     string
+	MaintainerWeb     string
+
+  // Integrations
+  Badges        string // badges to include docs
 
 	// Service and tpl-names
 	Name         string //service name
@@ -117,16 +122,17 @@ type tplData struct {
 //
 func tplDataMapper(defs tplDef, output *tplData) error {
 	//fmt.Println(defs)
-	output.Name = defs.Name
-	output.NameExported = strcase.ToCamel(defs.Name)
-	output.TplName = defs.ID
-	output.Version = defs.Version
+	output.Name = defs.Info.Name
+	output.NameExported = strcase.ToCamel(defs.Info.Name)
+	output.TplName = defs.Info.ID
+	output.Version = defs.Info.Version
 	output.OrganizationLicense = defs.Project.License
-	output.Organization = defs.Organization
+	output.Organization = defs.Info.Organization
 	output.ProjectInfo = defs.Project.Description
-	output.Maintain = "Contant: "
-	output.MaintainerEmail = defs.Project.MaintainerEmail
-	output.Maintainer = defs.Project.Maintainer
+	output.MaintainerName = defs.Project.Maintainer.Name
+	output.MaintainerEmail = defs.Project.Maintainer.Email
+	output.MaintainerWeb = defs.Project.Maintainer.Web
+	output.MaintainerSlack = defs.Project.Maintainer.Slack
 	output.PavedroadInfo = prCopyright
 
 	return nil
@@ -211,8 +217,6 @@ const structClose = "}\n"
 // structField
 //  name, type, encoding, json|yaml, encoded name, options
 const structField = "\t%s %s\t`%s:%s%s`\n"
-
-
 */
 
 // tplListItem provides information about a template location
@@ -222,6 +226,11 @@ type tplListItem struct {
 	Availability string // Availability ga, ....
 	Name         string // Name of template == directory name
 	Path         string // Path to the template
+}
+// tplLocation
+type tplLocation struct {
+  Name string //Name of the template file
+  RelativePath string // Path realative to the current directory
 }
 
 type tplExplainItem struct {
@@ -437,7 +446,8 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 //   statements and clean up any code formating issues
 //
 func tplCreate(rn string) string {
-	var filenames []string
+  var filelist []tplLocation
+	//var filenames []string
 
 	//Get back a list of templates for requrested template name
 	tplRsp, err := tplRead(tplFile)
@@ -448,13 +458,16 @@ func tplCreate(rn string) string {
 	// Get a list of the files names
 	for _, rec := range tplRsp {
 		nm := filepath.Base(rec)
+    di := rec[len(tplDirSelected)+1:len(rec)-len(nm)]
+    li := tplLocation{Name: nm, RelativePath: di}
+
 		// If definitions file, save it, otherwise add to filenames
 		// to process as templates
 		if nm == tplDefinition && tplDefFile == "" {
 			fmt.Println("rec", rec)
 			tplDefFile = rec
 		} else {
-			filenames = append(filenames, nm)
+			filelist = append(filelist, li)
 		}
 	}
 
@@ -489,20 +502,22 @@ func tplCreate(rn string) string {
 
 	//templates = template.Must(template.ParseFiles(tplRsp...))
 	//TODO: turn into a function
-	var fn string
-	for _, v := range filenames {
+	var fn  string = ""
+	for _, v := range filelist {
+    if v.Name ==  tplDefinition {
+      continue
+    }
 		// Replace generic string "template" with the name of the service
-		fn = strings.Replace(v, "template", tplInputData.Name, 1)
-
-		file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0666)
+		fn = strings.Replace(v.Name, "template", tplInputData.Name, 1)
+		file, err := os.OpenFile(v.RelativePath+fn, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		bw := bufio.NewWriter(file)
 
-		fmt.Printf("executing %v using template %v\n", fn, v)
-		err = templates.ExecuteTemplate(bw, v, tplInputData)
+		fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
+		err = templates.ExecuteTemplate(bw, v.Name, tplInputData)
 		if err != nil {
 			fmt.Printf("Template execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
@@ -641,7 +656,7 @@ func tplRead(tplName string) ([]string, error) {
 	td := tplItem.Path + "/" + tplItem.Name
 
 	fmt.Println("Tpl dir", td)
-
+  tplDirSelected = td
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
