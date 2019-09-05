@@ -39,16 +39,18 @@ project:
     - {enable: true, link: '<img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpavedroad-io%2Fkevlar-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpavedroad-io%2Fkevlar-web?ref=badge_shield">',
       name: FOSSA}
     name: fossa
-  - config:
+  - sonar-cloud-config:
+      key: "pavedroad-io_users"
+      login: "3faaf04fd0f66a33ced5dea109847fa3dc6d40a4"
       options:
         badges:
         - {enable: true, link: '<img src="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=alert_status">',
           name: Alert status}
         - {enable: true, link: '<img src="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=bugs">',
           name: bugs}
-        - {enable: true, link: '<img src="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=complexity">',
+        - {enable: true, link: '<a href="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=complexity">Complexity</a>',
           name: Complexity}
-        - {enable: true, link: '<img src="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=cognitive_complexity">',
+        - {enable: true, link: '<a href="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=cognitive_complexity">Cognitive Complexity</a>',
           name: Cognitive complexity}
         - {enable: true, link: '<img src="https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_kevlar-web&metric=code_smells">',
           name: Code smells}

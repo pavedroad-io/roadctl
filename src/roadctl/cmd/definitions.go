@@ -115,18 +115,16 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
-type Project struct {
-	Description  string         `yaml:"description"`
-	Dependencies Dependencies   `yaml:"dependencies"`
-	License      string         `yaml:"license"`
-	Maintainer   Maintainer     `yaml:"maintainer"`
-	ProjectFiles []ProjectFiles `yaml:"project-files"`
-
-	Integrations []struct {
+type	Integrations struct {
 		Badges []Badges `yaml:"badges,omitempty"`
 		Name   string   `yaml:"name"`
-    // Needs to be more generic
-		Config struct {
+    // TODO: Needs to be more generic
+    //  
+		SonarCloudConfig struct {
+      // A sonarcloud access token
+      Login string `yaml:login`
+      // Project key should be same a the name
+      Key string `yaml:key`
 			Options struct {
 				Badges   []Badges `yaml:"badges"`
 				Coverage struct {
@@ -142,9 +140,17 @@ type Project struct {
 					Report string `yaml:"report"`
 				} `yaml:"lint"`
 			} `yaml:"options"`
-		} `yaml:"config,omitempty"`
+		} `yaml:"sonar-cloud-config,omitempty"`
 		ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
-	} `yaml:"integrations"`
+	}
+
+type Project struct {
+	Description  string         `yaml:"description"`
+	Dependencies Dependencies   `yaml:"dependencies"`
+	License      string         `yaml:"license"`
+	Maintainer   Maintainer     `yaml:"maintainer"`
+	ProjectFiles []ProjectFiles `yaml:"project-files"`
+  Integrations []Integrations `yaml:"integrations"`
 }
 
 type tplDef struct {
@@ -263,12 +269,23 @@ func (d *tplDef) badges() ([]Badges) {
       badgelist = append(badgelist, rec.Badges...)
     }
     if strings.ToLower(rec.Name) ==  "sonarcloud" &&
-    len(rec.Config.Options.Badges) >0 {
-      badgelist = append(badgelist, rec.Config.Options.Badges...)
+    len(rec.SonarCloudConfig.Options.Badges) >0 {
+      badgelist = append(badgelist, rec.SonarCloudConfig.Options.Badges...)
     }
   }
   return badgelist
 }
+
+func (d *tplDef) findIntegration(name string) (Integrations) {
+  for _, rec := range d.Project.Integrations {
+    if strings.ToLower(rec.Name) ==  strings.ToLower(name) {
+      return rec
+    }
+  }
+  a := Integrations{}
+  return  a
+}
+
 func (d *tplDef) BadgesToString() string {
   badges := ""
   for _, b := range d.badges() {

@@ -96,6 +96,8 @@ type tplData struct {
 
   // Integrations
   Badges        string // badges to include docs
+  SonarKey string
+  SonarLogin string
 
 	// Service and tpl-names
 	Name         string //service name
@@ -136,7 +138,15 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.MaintainerWeb = defs.Project.Maintainer.Web
 	output.MaintainerSlack = defs.Project.Maintainer.Slack
 	output.PavedroadInfo = prCopyright
+
+  // CI integrations
   output.Badges = defs.BadgesToString()
+
+  //Sonarcloud
+  si := defs.findIntegration("sonarcloud")
+  
+  output.SonarKey = si.SonarCloudConfig.Key
+  output.SonarLogin = si.SonarCloudConfig.Login
 	return nil
 }
 
