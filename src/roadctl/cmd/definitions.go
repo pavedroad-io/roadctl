@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Tables struct {
@@ -253,4 +254,27 @@ func (d *tplDef) table(name string) (Tables, error) {
 		}
 	}
 	return e, errors.New("table not found")
+}
+
+func (d *tplDef) badges() ([]Badges) {
+  var badgelist []Badges
+  for _, rec := range d.Project.Integrations {
+    if len(rec.Badges) >0 {
+      badgelist = append(badgelist, rec.Badges...)
+    }
+    if strings.ToLower(rec.Name) ==  "sonarcloud" &&
+    len(rec.Config.Options.Badges) >0 {
+      badgelist = append(badgelist, rec.Config.Options.Badges...)
+    }
+  }
+  return badgelist
+}
+func (d *tplDef) BadgesToString() string {
+  badges := ""
+  for _, b := range d.badges() {
+    if b.Enable == true {
+      badges += b.Link+"\n"
+    }
+  }
+  return badges
 }

@@ -89,10 +89,10 @@ type tplData struct {
 	OrganazationInfo    string // Name of Organization
 	OrganizationLicense string //Org lic/copyright
 	ProjectInfo         string // Project/service description
-	MaintainerName     string
+	MaintainerName      string
 	MaintainerEmail     string
 	MaintainerSlack     string
-	MaintainerWeb     string
+	MaintainerWeb       string
 
   // Integrations
   Badges        string // badges to include docs
@@ -101,6 +101,7 @@ type tplData struct {
 	Name         string //service name
 	NameExported string //camal case with first letter cap
 	TplName      string //template name
+	DefFile      string //definition file used
 
 	//PR lic/copyright should be a function
 	PavedroadInfo string //PR lic/copyright
@@ -125,6 +126,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.Name = defs.Info.Name
 	output.NameExported = strcase.ToCamel(defs.Info.Name)
 	output.TplName = defs.Info.ID
+  output.DefFile = tplDefFile
 	output.Version = defs.Info.Version
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
@@ -134,7 +136,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.MaintainerWeb = defs.Project.Maintainer.Web
 	output.MaintainerSlack = defs.Project.Maintainer.Slack
 	output.PavedroadInfo = prCopyright
-
+  output.Badges = defs.BadgesToString()
 	return nil
 }
 
