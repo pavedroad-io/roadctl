@@ -520,7 +520,19 @@ func tplCreate(rn string) string {
       continue
     }
 		// Replace generic string "template" with the name of the service
+    // If it is not in the name, the unmodified file name is used
 		fn = strings.Replace(v.Name, "template", tplInputData.Name, 1)
+
+    // Ensure the path to the file exissts
+    if v.RelativePath != "" {
+      if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
+        err := os.MkdirAll(v.RelativePath, 0766) 
+        if err != nil {
+          fmt.Println("Failed to make directory: ", v.RelativePath)
+          fmt.Println("Failed to make directory: ", v.RelativePath)
+        }
+      }
+    }
 		file, err := os.OpenFile(v.RelativePath+fn, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			log.Fatal(err)
