@@ -49,14 +49,18 @@ var tplDir string = "."    // Directory for generated code output
 var tplDefFile string = "" // Directory for generated code output
 var tplDirSelected = ""
 
-const tplResourceName = "templates"
-const tplDefinition = "definition.yaml"
-const prCopyright = `
+const (
+    tplResourceName = "templates"
+    tplDefinition = "definition.yaml"
+    TEMPLATE = "template"
+    ORGANIZATION = "organization"
+    prCopyright = `
 //
 // Copyright (c) PavedRoad. All rights reserved.
 // Licensed under the Apache2. See LICENSE file in the project root for full license information.
 //`
 
+)
 const strcutComment = `
 //
 //
@@ -521,7 +525,13 @@ func tplCreate(rn string) string {
     }
 		// Replace generic string "template" with the name of the service
     // If it is not in the name, the unmodified file name is used
-		fn = strings.Replace(v.Name, "template", tplInputData.Name, 1)
+    if strings.HasPrefix(v.Name, TEMPLATE) {
+	  	fn = strings.Replace(v.Name, TEMPLATE, tplInputData.Name, 1)
+    } else if strings.HasPrefix(v.Name, ORGANIZATION) {
+	  	fn = strings.Replace(v.Name, ORGANIZATION, tplInputData.Organization, 1)
+    } else {
+      fn = v.Name
+    }
 
     // Ensure the path to the file exissts
     if v.RelativePath != "" {
@@ -535,7 +545,7 @@ func tplCreate(rn string) string {
     }
 		file, err := os.OpenFile(v.RelativePath+fn, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(err, v.RelativePath+fn)
 		}
 
 		bw := bufio.NewWriter(file)
