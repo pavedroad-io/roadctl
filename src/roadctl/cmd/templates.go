@@ -19,6 +19,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"bufio"
 	"context"
 	"encoding/base64"
@@ -32,7 +33,9 @@ import (
 	_ "reflect"
 	"strings"
 	"text/template"
+  "time"
 
+  _ "github.com/ompluscator/dynamic-struct"
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
 	"gopkg.in/yaml.v2"
@@ -65,6 +68,17 @@ const strcutComment = `
 //
 //
 //`
+
+// JSON formaters
+const (
+  jsonObjectStart = "{\n"
+  jsonObjectEnd = "}"
+  jsonListStart = "["
+  jsonListEnd = "]"
+  jsonSeperator = ",\n"
+  jsonField = "\"%v\": "
+  jsonValue = "\"%v\""   // If new object, or last field strip the comma
+)
 
 const swaggerRoute = "// swagger:response %s\n"
 const structOpen = "type %s struct {\n"
@@ -121,6 +135,9 @@ type tplData struct {
 	DeleteSwaggerDoc        string // swagger for delete method
 	SwaggerGeneratedStructs string // swagger doc and go structs
 	DumpStructs             string // Generic dumb of given object type
+
+  //JSON data
+  PostJSON                string // Smaple data for a post
 }
 
 //  tplDataMapper
@@ -154,6 +171,96 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	return nil
 }
 
+//  tplJsonData
+//    Use the schema definition found in tplDefs to create
+//    Sample JSON data files
+//
+func tplJsonData(defs tplDef, output *tplData) error {
+  var jsonString string
+	order := defs.devineOrder()
+  tplAddJSON(order, defs, &jsonString)
+  
+  //Make it pretty
+  var pj bytes.Buffer
+  err := json.Indent(&pj, []byte(jsonString), "", "\t")
+  if err != nil {
+    log.Fatal("Failed to generaet json data with ", jsonString)
+  }
+  output.PostJSON = string(pj.String())
+	return nil
+}
+
+// tplAddJSON
+//
+//   Creates JSON sample data
+//
+func tplAddJSON(item tplTableItem , defs tplDef, jsonString *string) {
+  table, _ := defs.table(item.Name)
+
+  // Start this table
+  if item.Root {
+    *jsonString = fmt.Sprintf(jsonObjectStart)
+  } else {
+    *jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
+    *jsonString += fmt.Sprintf(jsonObjectStart)
+  }
+
+  // Only add the UUID if this is the parent table
+  if item.Root {
+    *jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
+    *jsonString += fmt.Sprintf(jsonValue, RandomUUID())
+    *jsonString += fmt.Sprintf(jsonSeperator)
+  }
+
+  // Add this tables attributes
+  numCol := len(table.Columns)
+  for idx , col := range table.Columns {
+    //TODO: validate column attributes
+    // required attribute
+    // no reserved go words
+
+    // Add it to the dynamic struct
+
+    var sample interface{}
+    switch col.Type {
+    case "string":
+      sample = RandomString(15)
+    case "int", "integer", "int32", "int64":
+      sample = RandomInteger(0,254)
+    case "number","float", "float32", "float64":
+      sample = RandomFloat()
+    case "bool":
+      sample = RandomBool()
+    case "time":
+      sample = time.Now().Format(time.RFC3339)
+    }
+
+    *jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
+    *jsonString += fmt.Sprintf(jsonValue, sample)
+    if idx < numCol-1 {
+      *jsonString += fmt.Sprintf(jsonSeperator)
+    } else {
+      *jsonString += fmt.Sprintf("\n")
+    }
+  }
+
+  // See if there are any children
+  if  len(item.Children) >0 {
+   *jsonString += fmt.Sprintf(jsonSeperator)
+   // Add child tables first
+   for _, child := range item.Children {
+     tplAddJSON(*child, defs, jsonString)
+   }
+ }
+
+  
+  // Close and append to tplData.SwaggerGeneratedStructs
+  *jsonString += jsonObjectEnd
+
+  return
+}
+
+
 //  tplGenerateStructurs
 //    Use the schema definition found in tplDefs to create
 //    Go structures and assign to tplData.SwaggerGeneratedStructs
@@ -169,23 +276,39 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 	return nil
 }
 
+// tplAddStruct
+//
+// Performs two tasks
+//    - 1 Generates the structure as a string that is inserted
+//        into the code template.  This is the tableString 
+//        variable
+//
+//    - 2 Creates JSON sample data
+//        One for insert, and one for updates
+//
 func tplAddStruct(item tplTableItem , defs tplDef, output *tplData) {
   table, _ := defs.table(item.Name)
 
   // Start this table
   tableString := fmt.Sprintf(swaggerRoute, item.Name) 
   tableString += fmt.Sprintf(structOpen, item.Name) 
-  tableString += fmt.Sprintf("// %sUUID into JSONB\n\n", strcase.ToCamel(item.Name))
-  tableString += fmt.Sprintf(structUUID, 
-    strcase.ToCamel(item.Name), "json",
-    strings.ToLower(item.Name))
 
+  // Only add the UUID if this is the parent table
+  if item.Root {
+    tableString += fmt.Sprintf("// %sUUID into JSONB\n\n", 
+      strcase.ToCamel(item.Name))
+
+    tableString += fmt.Sprintf(structUUID, 
+      strcase.ToCamel(item.Name), "json",
+      strings.ToLower(item.Name))
+  }
 
   // See if there are any children
   if  len(item.Children) >0 {
    // Add child tables first
    for _, child := range item.Children {
      tplAddStruct(*child, defs, output)
+
     // Same as structField except type with be the subtable
     tableString += fmt.Sprintf(structSubstruct,
       strcase.ToCamel(child.Name), 
@@ -217,8 +340,8 @@ func tplAddStruct(item tplTableItem , defs tplDef, output *tplData) {
       strings.ToLower(col.Type), 
       "json", 
       importLine)
-      //fmt.Println(col)
-  }
+
+    }
   
   // Close and append to tplData.SwaggerGeneratedStructs
   tableString += fmt.Sprintf(structClose)
@@ -504,9 +627,12 @@ func tplCreate(rn string) string {
 		os.Exit(-1)
 	}
 
-	// Generate SQL scripts
-
-	// Generate SQL code functions
+	// Generate JSON test data
+	err = tplJsonData(defs, &tplInputData)
+	if err != nil {
+		fmt.Println("Generating JSON failed: ", err)
+		os.Exit(-1)
+	}
 
 	// Build the template cache
 	//templates, err = template.New("").ParseFiles(tplRsp...)

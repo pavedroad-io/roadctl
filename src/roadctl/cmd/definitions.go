@@ -36,12 +36,18 @@ type Tables struct {
 		Name string `yaml:"name"`
 
 		// Modifiers to apply when marshalling
+    // omitempty or string
+    // 
 		Modifiers string `yaml:"modifiers"`
 
 		// MappedName to use when marshalling
+    // If empty, map to lowercase of name
+    //
 		MappedName string `yaml:"mapped-name"`
 
 		// Contraints such as required
+    // Valid swagger 2.0 validation
+    //
 		Constraints string `yaml:"constraints"`
 
 		// TODO: need to map this to array/map for validation
@@ -165,6 +171,7 @@ type tplTableItem struct {
 	// The name of this table
 	Name string
 
+  Root bool
 	// Children: a list of table items containing
 	//           child tables
 	Children []*tplTableItem
@@ -238,7 +245,12 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	for _, t := range tlist {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
-			newrec := tplTableItem{t.TableName, c}
+      var isRoot bool = false
+      if parent == "" {
+        isRoot = true 
+      }
+			newrec := tplTableItem{t.TableName, isRoot, c}
+      //fmt.Println(newrec)
 			rlist = append(rlist, newrec)
 		}
 	}
