@@ -49,7 +49,7 @@ var defaultTemplateDir string = "templates"
 var repoType string = "GitHub"
 var tplFile string = ""    // Name of the template file to use
 var tplDir string = "."    // Directory for generated code output
-var tplDefFile string = "" // Directory for generated code output
+var tplDefFile string = "" // Name of the definitions file used to generated tempaltes
 var tplDirSelected = ""
 
 const (
@@ -335,9 +335,16 @@ func tplAddStruct(item tplTableItem , defs tplDef, output *tplData) {
     }
 
     tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
+    var fieldType string
+    if col.Type == "time" {
+      fieldType = "time.Time"
+    } else {
+      fieldType = strings.ToLower(col.Type)
+    }
+    //Deal with time types
     tableString += fmt.Sprintf(structField,
       strcase.ToCamel(col.Name), 
-      strings.ToLower(col.Type), 
+      fieldType, 
       "json", 
       importLine)
 
@@ -519,6 +526,7 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 	fileContent, directoryContent, _, err := client.Repositories.GetContents(context.Background(), org, repo, path, &opts)
 
 	if err != nil {
+    //TODO: change to proper logging method
 		fmt.Println(err)
 		return err
 	} else {
@@ -612,6 +620,7 @@ func tplCreate(rn string) string {
 
 	// Read the definition file
 	defs := tplDef{}
+  //TODO: should be a method not a function
 	err = tplReadDefinitions(&defs)
 	if err != nil {
 		fmt.Println(err)
@@ -665,11 +674,18 @@ func tplCreate(rn string) string {
         err := os.MkdirAll(v.RelativePath, 0766) 
         if err != nil {
           fmt.Println("Failed to make directory: ", v.RelativePath)
-          fmt.Println("Failed to make directory: ", v.RelativePath)
         }
       }
     }
-		file, err := os.OpenFile(v.RelativePath+fn, os.O_WRONLY|os.O_CREATE, 0666)
+
+    var defaultMode os.FileMode = 0666
+    // Make sure shell scripts are created execuatble
+    if strings.Contains(fn, ".sh") {
+       defaultMode = 0755
+    }
+
+		file, err := os.OpenFile(v.RelativePath+fn, 
+       os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultMode)
 		if err != nil {
 			log.Fatal(err, v.RelativePath+fn)
 		}
@@ -686,7 +702,7 @@ func tplCreate(rn string) string {
 		file.Close()
 	}
 
-	// Execute goimport for code formatgin
+	// Execute goimport for code formating
 
 	//fmt.Println(tplRsp)
 	return ""

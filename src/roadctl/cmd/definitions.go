@@ -57,6 +57,7 @@ type Tables struct {
 		//     number
 		//     integer
 		//     boolen
+		//     time
 		//     null
 
 		Type string `yaml:"type"`

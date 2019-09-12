@@ -52,6 +52,7 @@ func runGet(cmd *cobra.Command, args []string) {
 	if initTrue.Value.String() == "true" {
 		initTemplates()
 	}
+  //TODO: move to init function
 	cmd.SetUsageTemplate("usage: foobar")
 	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
 		return errors.New("Usage: roadctl VERB NOUN NAME")
@@ -93,6 +94,10 @@ func runGet(cmd *cobra.Command, args []string) {
 }
 
 // initTemplates: Download templates from GitHub
+// If the template dir is location, you can prefix
+// with "_" or "." to have go skip them when compiling
+// TODO: suggest using "." so things work as expected
+//
 func initTemplates() {
 	fmt.Println("Initializing template repository")
 	// Create template dir if necessary
