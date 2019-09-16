@@ -65,7 +65,7 @@ func runDescribe(cmd *cobra.Command, args []string) {
 
 	for _, r := range replies {
 		//Hack until all assets return a Response type
-    // fmtFlag is just "f" if not specified
+		// fmtFlag is just "f" if not specified
 		if r != nil {
 			switch strings.ToLower(fmtFlag) {
 			case "text":
@@ -77,7 +77,7 @@ func runDescribe(cmd *cobra.Command, args []string) {
 			case "json":
 				r.RespondWithJSON()
 				break
-      default:
+			default:
 				r.RespondWithText()
 			}
 		}

@@ -17,19 +17,30 @@ package cmd
 
 import (
 	"fmt"
+  "errors"
+  "strings"
 
 	"github.com/spf13/cobra"
 )
+
+var eTLD = "docs"
 
 // explainCmd represents the explain command
 var explainCmd = &cobra.Command{
 	Use:   "explain",
 	Short: "return documentation about a resource",
-	Long: `Return documentation on a resource
+	Long: `Return documentation about the structure of a resource
   For example:
-    roadctl explain template datamgr`,
+    roadctl explain template`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("requires a resource type with an optional resource name")
+		}
+		return nil
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("explain called")
+    runExplain(cmd, args)
 	},
 }
 
@@ -46,3 +57,85 @@ func init() {
 	// is called directly, e.g.:
 	// explainCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
+
+func explainResource(r, n string) Response {
+	var rsp Response
+	switch r {
+	case "environments":
+		fmt.Println("no environments found")
+		return nil
+	case "builders":
+		fmt.Println("no builders found")
+		return nil
+	case "taggers":
+		fmt.Println("no taggers found")
+		return nil
+	case "tests":
+		fmt.Println("no tests found")
+		return nil
+	case "templates":
+		rsp = tplExplain("all", n)
+		return rsp
+	case "tool-network":
+		fmt.Println("no tool-network found")
+		return nil
+	case "artifacts":
+		fmt.Println("no artifacts found")
+		return nil
+	case "providers":
+		fmt.Println("no providers found")
+		return nil
+	case "deployments":
+		fmt.Println("no deployments found")
+		return nil
+	}
+
+	return nil
+}
+
+
+// runExplain validates and then executes a describe command
+//
+func runExplain(cmd *cobra.Command, args []string) {
+	replies := []Response{}
+	var reply Response
+
+	resources := strings.Split(args[0], ",")
+
+	for _, r := range resources {
+		if err := isValidResourceType(r); err == nil {
+			if len(args) > 1 {
+				reply = explainResource(r, args[1])
+			} else {
+				reply = explainResource(r, "")
+			}
+		} else {
+			fmt.Println(err)
+		}
+		replies = append(replies, reply)
+	}
+
+	for _, r := range replies {
+		//Hack until all assets return a Response type
+    // fmtFlag is just "f" if not specified
+		if r != nil {
+			switch strings.ToLower(fmtFlag) {
+			case "text":
+				r.RespondWithText()
+				break
+        // Only support text replies for now
+        /*
+			case "yaml":
+				r.RespondWithYAML()
+				break
+			case "json":
+				r.RespondWithJSON()
+				break
+        */
+      default:
+				r.RespondWithText()
+			}
+		}
+	}
+}
+
