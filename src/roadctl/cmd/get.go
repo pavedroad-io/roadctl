@@ -52,7 +52,7 @@ func runGet(cmd *cobra.Command, args []string) {
 	if initTrue.Value.String() == "true" {
 		initTemplates()
 	}
-  //TODO: move to init function
+	//TODO: move to init function
 	cmd.SetUsageTemplate("usage: foobar")
 	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
 		return errors.New("Usage: roadctl VERB NOUN NAME")
@@ -102,6 +102,7 @@ func initTemplates() {
 	fmt.Println("Initializing template repository")
 	// Create template dir if necessary
 	if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
+		fmt.Println("defaultTemplateDir")
 		os.MkdirAll(defaultTemplateDir, os.ModePerm)
 	}
 	tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir)

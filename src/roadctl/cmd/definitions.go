@@ -36,18 +36,18 @@ type Tables struct {
 		Name string `yaml:"name"`
 
 		// Modifiers to apply when marshalling
-    // omitempty or string
-    // 
+		// omitempty or string
+		//
 		Modifiers string `yaml:"modifiers"`
 
 		// MappedName to use when marshalling
-    // If empty, map to lowercase of name
-    //
+		// If empty, map to lowercase of name
+		//
 		MappedName string `yaml:"mapped-name"`
 
 		// Contraints such as required
-    // Valid swagger 2.0 validation
-    //
+		// Valid swagger 2.0 validation
+		//
 		Constraints string `yaml:"constraints"`
 
 		// TODO: need to map this to array/map for validation
@@ -122,34 +122,34 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
-type	Integrations struct {
-		Badges []Badges `yaml:"badges,omitempty"`
-		Name   string   `yaml:"name"`
-    // TODO: Needs to be more generic
-    //  
-		SonarCloudConfig struct {
-      // A sonarcloud access token
-      Login string `yaml:login`
-      // Project key should be same a the name
-      Key string `yaml:key`
-			Options struct {
-				Badges   []Badges `yaml:"badges"`
-				Coverage struct {
-					Enable bool   `yaml:"enable"`
-					Report string `yaml:"report"`
-				} `yaml:"coverage"`
-				GoSec struct {
-					Enable bool   `yaml:"enable"`
-					Report string `yaml:"report"`
-				} `yaml:"go-sec"`
-				Lint struct {
-					Enable bool   `yaml:"enable"`
-					Report string `yaml:"report"`
-				} `yaml:"lint"`
-			} `yaml:"options"`
-		} `yaml:"sonar-cloud-config,omitempty"`
-		ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
-	}
+type Integrations struct {
+	Badges []Badges `yaml:"badges,omitempty"`
+	Name   string   `yaml:"name"`
+	// TODO: Needs to be more generic
+	//
+	SonarCloudConfig struct {
+		// A sonarcloud access token
+		Login string `yaml:login`
+		// Project key should be same a the name
+		Key     string `yaml:key`
+		Options struct {
+			Badges   []Badges `yaml:"badges"`
+			Coverage struct {
+				Enable bool   `yaml:"enable"`
+				Report string `yaml:"report"`
+			} `yaml:"coverage"`
+			GoSec struct {
+				Enable bool   `yaml:"enable"`
+				Report string `yaml:"report"`
+			} `yaml:"go-sec"`
+			Lint struct {
+				Enable bool   `yaml:"enable"`
+				Report string `yaml:"report"`
+			} `yaml:"lint"`
+		} `yaml:"options"`
+	} `yaml:"sonar-cloud-config,omitempty"`
+	ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
+}
 
 type Project struct {
 	Description  string         `yaml:"description"`
@@ -157,7 +157,7 @@ type Project struct {
 	License      string         `yaml:"license"`
 	Maintainer   Maintainer     `yaml:"maintainer"`
 	ProjectFiles []ProjectFiles `yaml:"project-files"`
-  Integrations []Integrations `yaml:"integrations"`
+	Integrations []Integrations `yaml:"integrations"`
 }
 
 type tplDef struct {
@@ -172,7 +172,7 @@ type tplTableItem struct {
 	// The name of this table
 	Name string
 
-  Root bool
+	Root bool
 	// Children: a list of table items containing
 	//           child tables
 	Children []*tplTableItem
@@ -246,12 +246,12 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	for _, t := range tlist {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
-      var isRoot bool = false
-      if parent == "" {
-        isRoot = true 
-      }
+			var isRoot bool = false
+			if parent == "" {
+				isRoot = true
+			}
 			newrec := tplTableItem{t.TableName, isRoot, c}
-      //fmt.Println(newrec)
+			//fmt.Println(newrec)
 			rlist = append(rlist, newrec)
 		}
 	}
@@ -275,36 +275,36 @@ func (d *tplDef) table(name string) (Tables, error) {
 	return e, errors.New("table not found")
 }
 
-func (d *tplDef) badges() ([]Badges) {
-  var badgelist []Badges
-  for _, rec := range d.Project.Integrations {
-    if len(rec.Badges) >0 {
-      badgelist = append(badgelist, rec.Badges...)
-    }
-    if strings.ToLower(rec.Name) ==  "sonarcloud" &&
-    len(rec.SonarCloudConfig.Options.Badges) >0 {
-      badgelist = append(badgelist, rec.SonarCloudConfig.Options.Badges...)
-    }
-  }
-  return badgelist
+func (d *tplDef) badges() []Badges {
+	var badgelist []Badges
+	for _, rec := range d.Project.Integrations {
+		if len(rec.Badges) > 0 {
+			badgelist = append(badgelist, rec.Badges...)
+		}
+		if strings.ToLower(rec.Name) == "sonarcloud" &&
+			len(rec.SonarCloudConfig.Options.Badges) > 0 {
+			badgelist = append(badgelist, rec.SonarCloudConfig.Options.Badges...)
+		}
+	}
+	return badgelist
 }
 
-func (d *tplDef) findIntegration(name string) (Integrations) {
-  for _, rec := range d.Project.Integrations {
-    if strings.ToLower(rec.Name) ==  strings.ToLower(name) {
-      return rec
-    }
-  }
-  a := Integrations{}
-  return  a
+func (d *tplDef) findIntegration(name string) Integrations {
+	for _, rec := range d.Project.Integrations {
+		if strings.ToLower(rec.Name) == strings.ToLower(name) {
+			return rec
+		}
+	}
+	a := Integrations{}
+	return a
 }
 
 func (d *tplDef) BadgesToString() string {
-  badges := ""
-  for _, b := range d.badges() {
-    if b.Enable == true {
-      badges += b.Link+"\n"
-    }
-  }
-  return badges
+	badges := ""
+	for _, b := range d.badges() {
+		if b.Enable == true {
+			badges += b.Link + "\n"
+		}
+	}
+	return badges
 }

@@ -1,36 +1,36 @@
 package cmd
 
 import (
-  "math/rand"
-  "time"
-  "github.com/google/uuid"
+	"github.com/google/uuid"
+	"math/rand"
+	"time"
 )
+
 const charset = "abcdefghijklmnopqrstuvwxyz" +
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func RandomString(length int ) string {
-  var seed *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+func RandomString(length int) string {
+	var seed *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-  b := make([]byte, length)
-  for idx := range b {
-    b[idx] = charset[seed.Intn(len(charset))]
-  }
-  return string(b)
+	b := make([]byte, length)
+	for idx := range b {
+		b[idx] = charset[seed.Intn(len(charset))]
+	}
+	return string(b)
 }
 
-func RandomInteger(min, max int ) int {
-  return min + rand.Intn(max-min)
+func RandomInteger(min, max int) int {
+	return min + rand.Intn(max-min)
 }
 
 func RandomBool() bool {
-  return rand.Intn(2) == 0
+	return rand.Intn(2) == 0
 }
 
 func RandomFloat() float64 {
-  return rand.Float64()
+	return rand.Float64()
 }
 
 func RandomUUID() uuid.UUID {
-  return uuid.New()
+	return uuid.New()
 }
-

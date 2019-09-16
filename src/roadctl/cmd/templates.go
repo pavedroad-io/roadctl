@@ -19,8 +19,8 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -33,19 +33,23 @@ import (
 	_ "reflect"
 	"strings"
 	"text/template"
-  "time"
+	"time"
 
-  _ "github.com/ompluscator/dynamic-struct"
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
+	_ "github.com/ompluscator/dynamic-struct"
 	"gopkg.in/yaml.v2"
 )
 
 // Default template repository
 var defaultOrg string = "pavedroad-io"
+
+// Default template directory on GitHub
 var defaultRepo string = "templates"
 var defaultPath string = ""
-var defaultTemplateDir string = "templates"
+
+// Default template directory on local machine
+var defaultTemplateDir string = ".templates"
 var repoType string = "GitHub"
 var tplFile string = ""    // Name of the template file to use
 var tplDir string = "."    // Directory for generated code output
@@ -53,16 +57,15 @@ var tplDefFile string = "" // Name of the definitions file used to generated tem
 var tplDirSelected = ""
 
 const (
-    tplResourceName = "templates"
-    tplDefinition = "definition.yaml"
-    TEMPLATE = "template"
-    ORGANIZATION = "organization"
-    prCopyright = `
+	tplResourceName = "templates"
+	tplDefinition   = "definition.yaml"
+	TEMPLATE        = "template"
+	ORGANIZATION    = "organization"
+	prCopyright     = `
 //
 // Copyright (c) PavedRoad. All rights reserved.
 // Licensed under the Apache2. See LICENSE file in the project root for full license information.
 //`
-
 )
 const strcutComment = `
 //
@@ -71,13 +74,13 @@ const strcutComment = `
 
 // JSON formaters
 const (
-  jsonObjectStart = "{\n"
-  jsonObjectEnd = "}"
-  jsonListStart = "["
-  jsonListEnd = "]"
-  jsonSeperator = ",\n"
-  jsonField = "\"%v\": "
-  jsonValue = "\"%v\""   // If new object, or last field strip the comma
+	jsonObjectStart = "{\n"
+	jsonObjectEnd   = "}"
+	jsonListStart   = "["
+	jsonListEnd     = "]"
+	jsonSeperator   = ",\n"
+	jsonField       = "\"%v\": "
+	jsonValue       = "\"%v\"" // If new object, or last field strip the comma
 )
 
 const swaggerRoute = "// swagger:response %s\n"
@@ -112,10 +115,10 @@ type tplData struct {
 	MaintainerSlack     string
 	MaintainerWeb       string
 
-  // Integrations
-  Badges        string // badges to include docs
-  SonarKey string
-  SonarLogin string
+	// Integrations
+	Badges     string // badges to include docs
+	SonarKey   string
+	SonarLogin string
 
 	// Service and tpl-names
 	Name         string //service name
@@ -136,8 +139,8 @@ type tplData struct {
 	SwaggerGeneratedStructs string // swagger doc and go structs
 	DumpStructs             string // Generic dumb of given object type
 
-  //JSON data
-  PostJSON                string // Smaple data for a post
+	//JSON data
+	PostJSON string // Smaple data for a post
 }
 
 //  tplDataMapper
@@ -149,7 +152,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.Name = defs.Info.Name
 	output.NameExported = strcase.ToCamel(defs.Info.Name)
 	output.TplName = defs.Info.ID
-  output.DefFile = tplDefFile
+	output.DefFile = tplDefFile
 	output.Version = defs.Info.Version
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
@@ -160,14 +163,14 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.MaintainerSlack = defs.Project.Maintainer.Slack
 	output.PavedroadInfo = prCopyright
 
-  // CI integrations
-  output.Badges = defs.BadgesToString()
+	// CI integrations
+	output.Badges = defs.BadgesToString()
 
-  //Sonarcloud
-  si := defs.findIntegration("sonarcloud")
-  
-  output.SonarKey = si.SonarCloudConfig.Key
-  output.SonarLogin = si.SonarCloudConfig.Login
+	//Sonarcloud
+	si := defs.findIntegration("sonarcloud")
+
+	output.SonarKey = si.SonarCloudConfig.Key
+	output.SonarLogin = si.SonarCloudConfig.Login
 	return nil
 }
 
@@ -176,17 +179,17 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 //    Sample JSON data files
 //
 func tplJsonData(defs tplDef, output *tplData) error {
-  var jsonString string
+	var jsonString string
 	order := defs.devineOrder()
-  tplAddJSON(order, defs, &jsonString)
-  
-  //Make it pretty
-  var pj bytes.Buffer
-  err := json.Indent(&pj, []byte(jsonString), "", "\t")
-  if err != nil {
-    log.Fatal("Failed to generaet json data with ", jsonString)
-  }
-  output.PostJSON = string(pj.String())
+	tplAddJSON(order, defs, &jsonString)
+
+	//Make it pretty
+	var pj bytes.Buffer
+	err := json.Indent(&pj, []byte(jsonString), "", "\t")
+	if err != nil {
+		log.Fatal("Failed to generaet json data with ", jsonString)
+	}
+	output.PostJSON = string(pj.String())
 	return nil
 }
 
@@ -194,72 +197,70 @@ func tplJsonData(defs tplDef, output *tplData) error {
 //
 //   Creates JSON sample data
 //
-func tplAddJSON(item tplTableItem , defs tplDef, jsonString *string) {
-  table, _ := defs.table(item.Name)
+func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
+	table, _ := defs.table(item.Name)
 
-  // Start this table
-  if item.Root {
-    *jsonString = fmt.Sprintf(jsonObjectStart)
-  } else {
-    *jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
-    *jsonString += fmt.Sprintf(jsonObjectStart)
-  }
+	// Start this table
+	if item.Root {
+		*jsonString = fmt.Sprintf(jsonObjectStart)
+	} else {
+		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
+		*jsonString += fmt.Sprintf(jsonObjectStart)
+	}
 
-  // Only add the UUID if this is the parent table
-  if item.Root {
-    *jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
-    *jsonString += fmt.Sprintf(jsonValue, RandomUUID())
-    *jsonString += fmt.Sprintf(jsonSeperator)
-  }
+	// Only add the UUID if this is the parent table
+	if item.Root {
+		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
+		*jsonString += fmt.Sprintf(jsonValue, RandomUUID())
+		*jsonString += fmt.Sprintf(jsonSeperator)
+	}
 
-  // Add this tables attributes
-  numCol := len(table.Columns)
-  for idx , col := range table.Columns {
-    //TODO: validate column attributes
-    // required attribute
-    // no reserved go words
+	// Add this tables attributes
+	numCol := len(table.Columns)
+	for idx, col := range table.Columns {
+		//TODO: validate column attributes
+		// required attribute
+		// no reserved go words
 
-    // Add it to the dynamic struct
+		// Add it to the dynamic struct
 
-    var sample interface{}
-    switch col.Type {
-    case "string":
-      sample = RandomString(15)
-    case "int", "integer", "int32", "int64":
-      sample = RandomInteger(0,254)
-    case "number","float", "float32", "float64":
-      sample = RandomFloat()
-    case "bool":
-      sample = RandomBool()
-    case "time":
-      sample = time.Now().Format(time.RFC3339)
-    }
+		var sample interface{}
+		switch col.Type {
+		case "string":
+			sample = RandomString(15)
+		case "int", "integer", "int32", "int64":
+			sample = RandomInteger(0, 254)
+		case "number", "float", "float32", "float64":
+			sample = RandomFloat()
+		case "bool":
+			sample = RandomBool()
+		case "time":
+			sample = time.Now().Format(time.RFC3339)
+		}
 
-    *jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
-    *jsonString += fmt.Sprintf(jsonValue, sample)
-    if idx < numCol-1 {
-      *jsonString += fmt.Sprintf(jsonSeperator)
-    } else {
-      *jsonString += fmt.Sprintf("\n")
-    }
-  }
+		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
+		*jsonString += fmt.Sprintf(jsonValue, sample)
+		if idx < numCol-1 {
+			*jsonString += fmt.Sprintf(jsonSeperator)
+		} else {
+			*jsonString += fmt.Sprintf("\n")
+		}
+	}
 
-  // See if there are any children
-  if  len(item.Children) >0 {
-   *jsonString += fmt.Sprintf(jsonSeperator)
-   // Add child tables first
-   for _, child := range item.Children {
-     tplAddJSON(*child, defs, jsonString)
-   }
- }
+	// See if there are any children
+	if len(item.Children) > 0 {
+		*jsonString += fmt.Sprintf(jsonSeperator)
+		// Add child tables first
+		for _, child := range item.Children {
+			tplAddJSON(*child, defs, jsonString)
+		}
+	}
 
-  
-  // Close and append to tplData.SwaggerGeneratedStructs
-  *jsonString += jsonObjectEnd
+	// Close and append to tplData.SwaggerGeneratedStructs
+	*jsonString += jsonObjectEnd
 
-  return
+	return
 }
-
 
 //  tplGenerateStructurs
 //    Use the schema definition found in tplDefs to create
@@ -271,8 +272,8 @@ func tplAddJSON(item tplTableItem , defs tplDef, jsonString *string) {
 //
 func tplGenerateStructurs(defs tplDef, output *tplData) error {
 	order := defs.devineOrder()
-  tplAddStruct(order, defs, output)
-  //fmt.Println(output.SwaggerGeneratedStructs)
+	tplAddStruct(order, defs, output)
+	//fmt.Println(output.SwaggerGeneratedStructs)
 	return nil
 }
 
@@ -280,83 +281,82 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 //
 // Performs two tasks
 //    - 1 Generates the structure as a string that is inserted
-//        into the code template.  This is the tableString 
+//        into the code template.  This is the tableString
 //        variable
 //
 //    - 2 Creates JSON sample data
 //        One for insert, and one for updates
 //
-func tplAddStruct(item tplTableItem , defs tplDef, output *tplData) {
-  table, _ := defs.table(item.Name)
+func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
+	table, _ := defs.table(item.Name)
 
-  // Start this table
-  tableString := fmt.Sprintf(swaggerRoute, item.Name) 
-  tableString += fmt.Sprintf(structOpen, item.Name) 
+	// Start this table
+	tableString := fmt.Sprintf(swaggerRoute, item.Name)
+	tableString += fmt.Sprintf(structOpen, item.Name)
 
-  // Only add the UUID if this is the parent table
-  if item.Root {
-    tableString += fmt.Sprintf("// %sUUID into JSONB\n\n", 
-      strcase.ToCamel(item.Name))
+	// Only add the UUID if this is the parent table
+	if item.Root {
+		tableString += fmt.Sprintf("// %sUUID into JSONB\n\n",
+			strcase.ToCamel(item.Name))
 
-    tableString += fmt.Sprintf(structUUID, 
-      strcase.ToCamel(item.Name), "json",
-      strings.ToLower(item.Name))
-  }
+		tableString += fmt.Sprintf(structUUID,
+			strcase.ToCamel(item.Name), "json",
+			strings.ToLower(item.Name))
+	}
 
-  // See if there are any children
-  if  len(item.Children) >0 {
-   // Add child tables first
-   for _, child := range item.Children {
-     tplAddStruct(*child, defs, output)
+	// See if there are any children
+	if len(item.Children) > 0 {
+		// Add child tables first
+		for _, child := range item.Children {
+			tplAddStruct(*child, defs, output)
 
-    // Same as structField except type with be the subtable
-    tableString += fmt.Sprintf(structSubstruct,
-      strcase.ToCamel(child.Name), 
-      strings.ToLower(child.Name), 
-      "json", 
-      strings.ToLower(child.Name))
-   }
- }
+			// Same as structField except type with be the subtable
+			tableString += fmt.Sprintf(structSubstruct,
+				strcase.ToCamel(child.Name),
+				strings.ToLower(child.Name),
+				"json",
+				strings.ToLower(child.Name))
+		}
+	}
 
-  // Add this tables attributes
-  for _, col := range table.Columns {
-    //TODO: validate column attributes
-    // required attribute
-    // no reserved go words
+	// Add this tables attributes
+	for _, col := range table.Columns {
+		//TODO: validate column attributes
+		// required attribute
+		// no reserved go words
 
-    // build json / yaml string
-    importLine := col.MappedName
-    if col.Modifiers != "" {
-      importLine += ","+col.Modifiers
-    }
+		// build json / yaml string
+		importLine := col.MappedName
+		if col.Modifiers != "" {
+			importLine += "," + col.Modifiers
+		}
 
-    if col.Constraints != "" {
-      importLine += ","+col.Constraints
-    }
+		if col.Constraints != "" {
+			importLine += "," + col.Constraints
+		}
 
-    tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
-    var fieldType string
-    if col.Type == "time" {
-      fieldType = "time.Time"
-    } else {
-      fieldType = strings.ToLower(col.Type)
-    }
-    //Deal with time types
-    tableString += fmt.Sprintf(structField,
-      strcase.ToCamel(col.Name), 
-      fieldType, 
-      "json", 
-      importLine)
+		tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
+		var fieldType string
+		if col.Type == "time" {
+			fieldType = "time.Time"
+		} else {
+			fieldType = strings.ToLower(col.Type)
+		}
+		//Deal with time types
+		tableString += fmt.Sprintf(structField,
+			strcase.ToCamel(col.Name),
+			fieldType,
+			"json",
+			importLine)
 
-    }
-  
-  // Close and append to tplData.SwaggerGeneratedStructs
-  tableString += fmt.Sprintf(structClose)
-  output.SwaggerGeneratedStructs += tableString
+	}
 
-  return
+	// Close and append to tplData.SwaggerGeneratedStructs
+	tableString += fmt.Sprintf(structClose)
+	output.SwaggerGeneratedStructs += tableString
+
+	return
 }
-
 
 /*
 const structClose = "}\n"
@@ -373,10 +373,11 @@ type tplListItem struct {
 	Name         string // Name of template == directory name
 	Path         string // Path to the template
 }
+
 // tplLocation
 type tplLocation struct {
-  Name string //Name of the template file
-  RelativePath string // Path realative to the current directory
+	Name         string //Name of the template file
+	RelativePath string // Path realative to the current directory
 }
 
 type tplExplainItem struct {
@@ -526,7 +527,7 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 	fileContent, directoryContent, _, err := client.Repositories.GetContents(context.Background(), org, repo, path, &opts)
 
 	if err != nil {
-    //TODO: change to proper logging method
+		//TODO: change to proper logging method
 		fmt.Println(err)
 		return err
 	} else {
@@ -593,7 +594,7 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 //   statements and clean up any code formating issues
 //
 func tplCreate(rn string) string {
-  var filelist []tplLocation
+	var filelist []tplLocation
 	//var filenames []string
 
 	//Get back a list of templates for requrested template name
@@ -605,8 +606,8 @@ func tplCreate(rn string) string {
 	// Get a list of the files names
 	for _, rec := range tplRsp {
 		nm := filepath.Base(rec)
-    di := rec[len(tplDirSelected)+1:len(rec)-len(nm)]
-    li := tplLocation{Name: nm, RelativePath: di}
+		di := rec[len(tplDirSelected)+1 : len(rec)-len(nm)]
+		li := tplLocation{Name: nm, RelativePath: di}
 
 		// If definitions file, save it, otherwise add to filenames
 		// to process as templates
@@ -620,7 +621,7 @@ func tplCreate(rn string) string {
 
 	// Read the definition file
 	defs := tplDef{}
-  //TODO: should be a method not a function
+	//TODO: should be a method not a function
 	err = tplReadDefinitions(&defs)
 	if err != nil {
 		fmt.Println(err)
@@ -653,39 +654,39 @@ func tplCreate(rn string) string {
 
 	//templates = template.Must(template.ParseFiles(tplRsp...))
 	//TODO: turn into a function
-	var fn  string = ""
+	var fn string = ""
 	for _, v := range filelist {
-    if v.Name ==  tplDefinition {
-      continue
-    }
+		if v.Name == tplDefinition {
+			continue
+		}
 		// Replace generic string "template" with the name of the service
-    // If it is not in the name, the unmodified file name is used
-    if strings.HasPrefix(v.Name, TEMPLATE) {
-	  	fn = strings.Replace(v.Name, TEMPLATE, tplInputData.Name, 1)
-    } else if strings.HasPrefix(v.Name, ORGANIZATION) {
-	  	fn = strings.Replace(v.Name, ORGANIZATION, tplInputData.Organization, 1)
-    } else {
-      fn = v.Name
-    }
+		// If it is not in the name, the unmodified file name is used
+		if strings.HasPrefix(v.Name, TEMPLATE) {
+			fn = strings.Replace(v.Name, TEMPLATE, tplInputData.Name, 1)
+		} else if strings.HasPrefix(v.Name, ORGANIZATION) {
+			fn = strings.Replace(v.Name, ORGANIZATION, tplInputData.Organization, 1)
+		} else {
+			fn = v.Name
+		}
 
-    // Ensure the path to the file exissts
-    if v.RelativePath != "" {
-      if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
-        err := os.MkdirAll(v.RelativePath, 0766) 
-        if err != nil {
-          fmt.Println("Failed to make directory: ", v.RelativePath)
-        }
-      }
-    }
+		// Ensure the path to the file exissts
+		if v.RelativePath != "" {
+			if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
+				err := os.MkdirAll(v.RelativePath, 0766)
+				if err != nil {
+					fmt.Println("Failed to make directory: ", v.RelativePath)
+				}
+			}
+		}
 
-    var defaultMode os.FileMode = 0666
-    // Make sure shell scripts are created execuatble
-    if strings.Contains(fn, ".sh") {
-       defaultMode = 0755
-    }
+		var defaultMode os.FileMode = 0666
+		// Make sure shell scripts are created execuatble
+		if strings.Contains(fn, ".sh") {
+			defaultMode = 0755
+		}
 
-		file, err := os.OpenFile(v.RelativePath+fn, 
-       os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultMode)
+		file, err := os.OpenFile(v.RelativePath+fn,
+			os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultMode)
 		if err != nil {
 			log.Fatal(err, v.RelativePath+fn)
 		}
@@ -832,7 +833,7 @@ func tplRead(tplName string) ([]string, error) {
 	td := tplItem.Path + "/" + tplItem.Name
 
 	fmt.Println("Tpl dir", td)
-  tplDirSelected = td
+	tplDirSelected = td
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
