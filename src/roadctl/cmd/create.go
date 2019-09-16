@@ -69,8 +69,8 @@ func createResource(rn string) string {
 		return ""
 	case "templates":
 		return tplCreate(rn)
-	case "tool-network":
-		fmt.Println("no tool-network found")
+	case "integrations":
+		fmt.Println("no integrations found")
 		return ""
 	case "artifacts":
 		fmt.Println("no artifacts found")
