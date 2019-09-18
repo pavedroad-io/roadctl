@@ -29,7 +29,7 @@ func initResourcetypes() {
 		"taggers",
 		"tests",
 		"templates",
-		"tool-network",
+		"integrations",
 		"artifacts",
 		"providers",
 		"deployments"}

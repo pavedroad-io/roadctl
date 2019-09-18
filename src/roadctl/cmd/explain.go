@@ -67,8 +67,8 @@ func explainResource(r, n string) Response {
 	case "templates":
 		rsp = tplExplain("all", n)
 		return rsp
-	case "tool-network":
-		fmt.Println("no tool-network found")
+	case "integrations":
+		fmt.Println("no integrations found")
 		return nil
 	case "artifacts":
 		fmt.Println("no artifacts found")
