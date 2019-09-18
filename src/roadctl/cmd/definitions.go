@@ -167,6 +167,37 @@ type tplDef struct {
 	Project   Project   `yaml:"project"`
 }
 
+// Define constants for error types
+//
+const (
+  INVALIDTYPE = iota
+  INVALIDCONTENT
+  BADTABLENAME
+  NOPARENT
+  BADTABLETYPE
+  UNKOWN 
+)
+
+// tblDefError
+// structure for returning table defintion errors
+//
+type tblDefError struct {
+  errorType  int
+  errorMessage string
+}
+
+// tlbDefError
+// implements error.Error() interface
+//
+func (d *tblDefError) Error() string {
+
+  e := fmt.Sprintf("Error number %v, %v\n", 
+    d.errorType,
+    d.errorMessage)
+
+  return e
+}
+
 // tplTableItem
 type tplTableItem struct {
 	// The name of this table
@@ -264,6 +295,7 @@ func (d *tplDef) tables() []Tables {
 	return d.TableList
 }
 
+// table
 //
 func (d *tplDef) table(name string) (Tables, error) {
 	e := Tables{}
@@ -307,4 +339,120 @@ func (d *tplDef) BadgesToString() string {
 		}
 	}
 	return badges
+}
+
+func (d *tplDef) Validate() []tblDefError {
+  var errList  []tblDefError
+
+  // validateTables
+  for _, t := range d.tables() {
+    // Metadata validation
+    e := d.validateTableMetaData(t)
+    if len(e) > 0  {
+      for _, x := range e {
+         errList = append(errList, x)
+      }
+    }
+
+    // Column validation
+    e = d.validateTableColumns(t)
+    if len(e) > 0  {
+      for _, x := range e {
+         errList = append(errList, x)
+      }
+    }
+
+  }
+  return errList
+}
+
+// validateTableMetaData
+// name not blank, type is supported, parent table exists
+//
+func (d *tplDef) validateTableMetaData(t Tables) []tblDefError {
+  var eList []tblDefError
+  var validTypes = []string{"JSONB"}
+
+  // Make sure table name is set
+  if t.TableName == "" {
+    e := tblDefError{
+      errorType: BADTABLENAME,
+      errorMessage: "Bad or missing table name: [" + t.TableName + "]",
+    }
+    eList = append(eList, e)
+  }
+
+  // Make sure it is a valid type
+  isValidType := false
+  for _, m := range validTypes {
+    if t.TableType == m {
+      isValidType = true
+      break;
+    }
+  }
+
+  if !isValidType {
+    e := tblDefError{
+      errorType: BADTABLETYPE,
+      errorMessage: "Bad table type: [" + t.TableType +"]",
+    }
+    eList = append(eList, e)
+  }
+
+  // If a parent is specified make sure it exists
+  if t.ParentTable != "" {
+    _, e := d.table(t.ParentTable)
+    if e != nil {
+      em := tblDefError{
+        errorType: NOPARENT,
+        errorMessage: "Parent table not found: [" + t.ParentTable +"]",
+      }
+      eList = append(eList, em)
+    }
+  }
+  return eList
+}
+
+func (d *tplDef) validateTableColumns(t Tables) []tblDefError {
+  var eList []tblDefError
+  var validColTypes = []string{
+    "string",
+    "number",
+    "integer",
+    "boolean",
+    "time",
+    "uuid",
+    "null",
+  }
+
+  // validate:
+  //  - Name
+  //  - Modifiers
+  //  - MappedName
+  //  - Constraints
+  //  - Type
+  // 
+  for _,v := range t.Columns {
+    if !isStringInList(validColTypes, v.Type){
+    e := tblDefError{
+      errorType: INVALIDTYPE,
+      errorMessage: "Invalid column type: [" + v.Type +"]",
+    }
+    eList = append(eList, e)
+
+    }
+  }
+  return eList
+}
+
+// isStringInList
+// Should move to a generic function list
+//
+func isStringInList(l []string, s string) bool {
+  for _, v := range l {
+    if v == s {
+      return true
+    }
+  }
+  return false
 }

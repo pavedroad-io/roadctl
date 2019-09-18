@@ -710,8 +710,8 @@ func tplCreate(rn string) string {
 }
 
 // tplReadDefinitions
-//   Read the definition file
-//
+//   Read the definition file and then validate it
+//   
 func tplReadDefinitions(definitionsStruct *tplDef) error {
 
 	fmt.Println("Reading defintions from: ", tplDefFile)
@@ -733,6 +733,18 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	if err != nil {
 		return err
 	}
+
+  // definitionsStruct.Validate()
+  // will return a list of validation errors
+  // exit after priting
+  //
+  errs := definitionsStruct.Validate()
+  if len(errs) > 0 {
+    for _, v := range errs {
+      v.Error()
+		  os.Exit(-1)
+    }
+  }
 
 	return nil
 }
