@@ -734,6 +734,25 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 		return err
 	}
 
+	//definitionsStruct.Validate()
+	//will return a list of validation errors
+	//exit after printing
+
+	errs := definitionsStruct.Validate()
+
+	//if lens(errs) > 0 {
+	//	for _, v := range errs {
+	//		v.Error()
+	//	}
+	//	os.Exit(-1)
+	//}
+	if errs != nil {
+		for errs != nil {
+			errs.Error()
+			errs = errs.NextError
+		}
+		os.Exit(-1)
+	}
 	return nil
 }
 
