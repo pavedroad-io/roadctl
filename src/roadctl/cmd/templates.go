@@ -710,7 +710,7 @@ func tplCreate(rn string) string {
 }
 
 // tplReadDefinitions
-//   Read the definition file
+//   Read the definition file and then validate it
 //
 func tplReadDefinitions(definitionsStruct *tplDef) error {
 

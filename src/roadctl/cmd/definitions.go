@@ -202,7 +202,6 @@ var LastErr *tblDefError
 // implements error.Error() interface
 //
 func (d *tblDefError) Error() string {
-
 	e := fmt.Sprintf("Table: %v, Error number: %v, %v\n",
 		d.tableName,
 		d.errorType,
@@ -225,7 +224,6 @@ func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
 		LastErr = &e
 
 	}
-
 }
 
 // tplTableItem
@@ -689,5 +687,4 @@ func checkArrayElements(columnType string) (bool, string) {
 		}
 	}
 	return true, ""
-
 }
