@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	//	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -167,6 +169,65 @@ type tplDef struct {
 	Project   Project   `yaml:"project"`
 }
 
+// Define constants for error types
+// iota starts at 0, next constant is iota + 1
+const (
+	INVALIDCOLUMNTYPE = iota
+	INVALIDCONTENT
+	INVALIDTABLENAME
+	NOPARENT
+	NOMAPPEDNAME
+	INVALIDTABLETYPE
+	INVALIDCOLUMNNAME
+	INVALIDCONSTRAINT
+	INVALIDMODIFIER
+	INVALIDARRAY
+	UNKOWN
+)
+
+// tblDefError
+// structure for returning table defintion errors
+//
+type tblDefError struct {
+	errorType    int
+	errorMessage string
+	tableName    string
+	nextError    *tblDefError
+}
+
+var ErrList *tblDefError
+var LastErr *tblDefError
+
+// tlbDefError
+// implements error.Error() interface
+//
+func (d *tblDefError) Error() string {
+
+	e := fmt.Sprintf("Table: %v, Error number: %v, %v\n",
+		d.tableName,
+		d.errorType,
+		d.errorMessage)
+
+	return e
+}
+
+func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
+	e := tblDefError{
+		errorType:    msgNum,
+		errorMessage: msg,
+		tableName:    tName,
+	}
+	if LastErr == nil {
+		LastErr = &e
+		ErrList = &e
+	} else {
+		LastErr.nextError = &e
+		LastErr = &e
+
+	}
+
+}
+
 // tplTableItem
 type tplTableItem struct {
 	// The name of this table
@@ -186,7 +247,7 @@ type tplTableItem struct {
 func (d *tplDef) devineOrder() tplTableItem {
 	ptName := ""
 
-	// Get primary table and make sure this is only one
+	// Get primary table and make sure it is the only primary
 	x := d.findTables(ptName)
 	if len(x) == 0 {
 		fmt.Println("No primary table found")
@@ -238,12 +299,13 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 	return
 }
 
-// findTables: Given a parent, see if they have children
+// findTables: Find primary parent table, or
+// children for a given table
 func (d *tplDef) findTables(parent string) []tplTableItem {
 	rlist := []tplTableItem{}
-	tlist := d.tables()
+	//	tlist := d.tables()
 
-	for _, t := range tlist {
+	for _, t := range d.TableList {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
 			var isRoot bool = false
@@ -259,13 +321,13 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	return rlist
 }
 
-// tables(): return a pointer to definitions Tables
+// tables(): return a pointer(a copy?) to definitions Tables
 func (d *tplDef) tables() []Tables {
 	return d.TableList
 }
 
-//
-func (d *tplDef) table(name string) (Tables, error) {
+// Search for Table by name
+func (d *tplDef) tableByName(name string) (Tables, error) {
 	e := Tables{}
 	for _, v := range d.TableList {
 		if v.TableName == name {
@@ -307,4 +369,325 @@ func (d *tplDef) BadgesToString() string {
 		}
 	}
 	return badges
+}
+
+//Valide the table(s) definition
+
+func (d *tplDef) Validate() *tblDefError {
+	//ErrList := nil
+	//LastErr := nil
+
+	ErrList = &tblDefError{}
+	LastErr = ErrList
+
+	//e := tblDefError{}
+
+	// Do all tables and report all potential errors
+	for _, t := range d.tables() {
+		// Metadata validation
+		//e := d.validateTableMetaData(t)
+
+		d.validateTableMetaData(t)
+		//if len(e) > 0 {
+		//	for _, x := range e {
+		//		errList = append(errList, x)
+		//	}
+		//}
+		// Column validation
+		//e = d.validateTableColumns(t)
+
+		d.validateTableColumns(t)
+		//if len(e) > 0 {
+		//	for _, x := range e {
+		//		errList = append(errList, x)
+		//	}
+		//}
+
+	}
+	return ErrList
+}
+
+// validateTableMetaData
+// name not blank, type is supported, parent table exists
+// Table name only have allowed characters
+// **All table names should be unique (not case sensitive)
+// Table name length
+func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
+
+	var validTypes = []string{"JSONB"}
+	const maxLen = 60
+
+	// Make sure table name is set
+	if t.TableName == "" {
+		d.setErrorList(INVALIDTABLENAME, "Missing table name", "")
+	} else {
+
+		if len(t.TableName) > maxLen {
+			e := fmt.Sprintf("Tabl name length cannot be greater than  %v", maxLen)
+			d.setErrorList(INVALIDTABLENAME, e, t.TableName)
+
+		}
+
+		// Use simple regex until more sepcific requirements
+		// and security review.
+		// Must be modified to support specific target databases
+		// Looked at specifications for Cockroachdb
+		matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]*$`, t.TableName)
+
+		if !matched {
+			d.setErrorList(INVALIDTABLENAME, "Bad table name: ["+t.TableName+"]", t.TableName)
+
+		}
+	}
+	// Make sure it is a valid type
+	isValidType := false
+	for _, m := range validTypes {
+		if strings.ToUpper(t.TableType) == m {
+			isValidType = true
+			break
+		}
+	}
+
+	if !isValidType {
+		d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
+
+	}
+
+	// If a parent is specified make sure it exists
+	if t.ParentTable != "" {
+		_, e := d.tableByName(t.ParentTable)
+		if e != nil {
+			d.setErrorList(NOPARENT, "Parent table not found: ["+t.ParentTable+"]", t.TableName)
+
+		}
+	}
+	return ErrList
+}
+
+func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
+	var validColTypes = []string{
+		"string",
+		"number",
+		"integer",
+		"boolean",
+		"time",
+		"uuid",
+	}
+	var convName string
+
+	// validate:
+	//  - Name *
+	//  - Modifiers
+	//  - MappedName
+	//  - Constraints
+	//  - Type *
+	//
+
+	for _, v := range t.Columns {
+		//Check the column name
+		if v.Name == "" {
+			d.setErrorList(INVALIDCOLUMNNAME, "Missing column name", t.TableName)
+		} else {
+
+			matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]*$`, v.Name)
+
+			if !matched {
+				d.setErrorList(INVALIDCOLUMNNAME, "Bad column name: ["+v.Name+"]", t.TableName)
+
+			}
+		}
+		//Check the column types
+		convName = strings.ToLower(v.Type)
+		if strings.Index(convName, "array") == 0 {
+			aStat, pErr := checkArrayElements(convName)
+			if !aStat {
+				d.setErrorList(INVALIDARRAY, pErr, t.TableName)
+			}
+		} else {
+
+			if !isStringInList(validColTypes, convName) {
+				d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+"]", t.TableName)
+
+			}
+		}
+
+		//Check the mapped Name
+		//This wouldn't be an error if it is the functionality
+		//required.
+		if v.MappedName == "" {
+			v.MappedName = strings.ToLower(v.Name)
+			d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
+		}
+
+	}
+	return ErrList
+}
+
+// isStringInList
+// Should move to a generic function list
+//
+func isStringInList(l []string, s string) bool {
+	for _, v := range l {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+//Call with the notation and the extracted name
+func isStringFromTag(notation string, name string) bool {
+	ti := strings.Index(notation, name)
+	if ti < 0 {
+		return false
+	}
+	return true
+}
+
+//For some string comparisons, leading and trailing blanks
+//Sould not matter. This will remove space padding from the
+//beginning and end of a string
+
+func padRemove(pLine string) string {
+	var y, x, z int
+	x = 0
+	y = 0
+
+	z = len(pLine)
+
+	//No string to parse
+	if z == 0 {
+		return pLine
+	}
+
+	y = z
+
+	//Find index to first char after leading spaces
+	for i := 0; i < z; i++ {
+		if pLine[i:i+1] == " " {
+			x = i + 1
+		} else {
+			break
+		}
+	}
+	//If just a empty string of space, return empty string
+	if x == z {
+		return ""
+	}
+	//Find index to first char before trailing spaces
+	for i := z; i >= 0; i-- {
+		if pLine[i-1:i] == " " {
+			y = i - 1
+		} else {
+			break
+		}
+	}
+	//If string is not padded, return it
+	if (x == 0) && (y == z) {
+		return pLine
+	}
+	//return the string without the padding
+	return pLine[x:y]
+}
+
+//make sure array elements are unique
+//in field type like
+// array {0,5,2,6,8}
+// array {"ggds","dhdhd","ddjjssj"}
+func checkArrayElements(columnType string) (bool, string) {
+	sepV := ","
+	brOpen := "{"
+	brClose := "}"
+	cAtI := ""
+	allEl := ""
+	var aL [20]string
+	var cntSep, openBr, closeBr, lastSep, cLen, wkLen int
+	//must be an aray column
+	if strings.Index(columnType, "array") < 0 {
+		return false, "array {} expected"
+	}
+	lastSep = strings.Index(columnType, sepV)
+	openBr = strings.Index(columnType, brOpen)
+	closeBr = strings.Index(columnType, brClose)
+
+	//Empty*** or one element array, not reported as error, and
+	//no need check for unique values to
+	if (lastSep < 0) && (openBr >= 0) && (closeBr > 0) {
+
+		return true, ""
+	}
+
+	//Report error and return
+	if openBr < 0 {
+		return false, "array { expected:" + columnType
+	}
+	//Report error and return
+	if closeBr < 0 {
+		return false, "array } expected:" + columnType
+
+	}
+	cLen = len(columnType)
+	cntSep = 0
+	for i := 0; i < cLen; i++ {
+		cAtI = columnType[i : i+1]
+		if cAtI == sepV {
+			cntSep++
+		}
+		if cAtI == brOpen {
+			//Mutiple brOpen, report error and return
+			if i != openBr {
+				return false, "array {{ not expected:" + columnType
+
+			}
+		}
+		if cAtI == brClose {
+			//Mutiple brClose, report error and return
+			if i != closeBr {
+				return false, "array }} not expected:" + columnType
+
+			}
+		}
+	}
+	//Use number of seperators to now indicate number of
+	//items for the array.
+	cntSep++
+	//Too many array elements
+	//Can make more dynamic with append if needed
+	if cntSep > len(aL) {
+		return false, "Unanticipated array element limit:" + columnType
+
+	}
+	//elements for array with closing brackets
+	//Using closing bracket to test for no more elements
+
+	allEl = columnType[openBr+1 : closeBr+1]
+	wkLen = len(allEl)
+	for i := 0; i < cntSep; i++ {
+		lastSep = strings.Index(allEl, sepV)
+		if lastSep < 0 {
+			lastSep = wkLen - 1
+		}
+		if (allEl[0:1]) == brClose {
+			//report erorrr
+			return false, "array {,} unexpected:" + columnType
+		}
+		aL[i] = padRemove(allEl[0:lastSep])
+		//Nothing else to process so skip
+		if (i + 1) < cntSep {
+			allEl = allEl[lastSep+1 : wkLen]
+			wkLen = len(allEl)
+		}
+	}
+	for i := 0; i < cntSep; i++ {
+		for j := 0; j < cntSep; j++ {
+			if i != j {
+				if aL[i] == aL[j] {
+					//duplicate array value
+					return false, "array duplicates unexpected:" + columnType
+				}
+			}
+		}
+	}
+	return true, ""
+
 }
