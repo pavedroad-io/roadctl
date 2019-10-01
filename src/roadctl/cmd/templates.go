@@ -37,7 +37,6 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
-	_ "github.com/ompluscator/dynamic-struct"
 	"gopkg.in/yaml.v2"
 )
 
@@ -516,9 +515,10 @@ func (t tplListResponse) RespondWithYAML() string {
 //  org: GitHub orginization
 //  repo: GitHub repository
 //  path: path to start in repository
-func tplPull(pullOptions, org, repo, path, outdir string) error {
-	//TODO: make this an authenticated request/client
-	client := github.NewClient(nil)
+//  client: a github client
+//
+func tplPull(pullOptions, org, repo, path, outdir string,
+	client *github.Client) error {
 
 	opts := github.RepositoryContentGetOptions{}
 
@@ -559,12 +559,12 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 						os.MkdirAll(dn, os.ModePerm)
 						fmt.Println("Template directory created: ", dn)
 					}
-					_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
+					_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
 				}
 
 				// For files, request their content
 				if *item.Type == "file" {
-					_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
+					_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
 				}
 
 			}

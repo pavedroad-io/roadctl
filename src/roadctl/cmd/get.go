@@ -105,7 +105,8 @@ func initTemplates() {
 		fmt.Println("defaultTemplateDir")
 		os.MkdirAll(defaultTemplateDir, os.ModePerm)
 	}
-	tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir)
+	client := getClient()
+	tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
 }
 
 func getByResource(r, n string) Response {
