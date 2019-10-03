@@ -195,8 +195,13 @@ type tblDefError struct {
 	nextError    *tblDefError
 }
 
-var ErrList *tblDefError
-var LastErr *tblDefError
+// ErrList is a list of table definition error messages.
+// Processing is done on all errors instead of exiting for
+// every error.
+var ErrList *tblDefError //Prior comment for exported format.
+
+// LastErr is the last error message on ErrList.
+var LastErr *tblDefError //Prior comment for exported format.
 
 // tlbDefError
 // implements error.Error() interface
@@ -287,14 +292,13 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 
 	if len(c) == 0 {
 		return
-	} else {
-		for _, v := range c {
-			parent.Children = append(parent.Children, &v)
-			d.addChildren(&v)
-		}
 	}
-
+	for _, v := range c {
+		parent.Children = append(parent.Children, &v)
+		d.addChildren(&v)
+	}
 	return
+
 }
 
 // findTables: Find primary parent table, or
@@ -306,7 +310,7 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	for _, t := range d.TableList {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
-			var isRoot bool = false
+			var isRoot = false
 			if parent == "" {
 				isRoot = true
 			}
