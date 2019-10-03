@@ -11,8 +11,9 @@ import (
 	"strings"
 )
 
+// Tables require additional documentaion.
 type Tables struct {
-	// TableName is the name of the table to create
+	// TableName is the name of the table to create.
 	//   This is really just a sub-object
 	//   It could be meta-data, user, blah...
 	//
@@ -66,6 +67,7 @@ type Tables struct {
 	} `yaml:"columns"`
 }
 
+// Community require additional documentaion.
 type Community struct {
 	CommunityFiles []struct {
 		Name string `yaml:"name"`
@@ -76,6 +78,7 @@ type Community struct {
 	Description string `yaml:"description"`
 }
 
+// Info is holds API help information.
 type Info struct {
 	APIVersion    string `yaml:"api-version"`
 	ID            string `yaml:"id"`
@@ -84,6 +87,8 @@ type Info struct {
 	ReleaseStatus string `yaml:"release-status"`
 	Version       string `yaml:"version"`
 }
+
+// Dependencies require additional documentaion.
 type Dependencies []struct {
 	Command          string      `yaml:"command"`
 	Comments         string      `yaml:"comments"`
@@ -98,12 +103,16 @@ type Dependencies []struct {
 	DockerKafka interface{}   `yaml:"docker-kafka,omitempty"`
 	Topics      []string      `yaml:"topics,omitempty"`
 }
+
+// Maintainer require additional documentaion.
 type Maintainer struct {
 	Email string `yaml:"email"`
 	Name  string `yaml:"name"`
 	Slack string `yaml:"slack"`
 	Web   string `yaml:"web"`
 }
+
+// ProjectFiles require additional documentaion.
 type ProjectFiles struct {
 	Description string `yaml:"description"`
 	Name        string `yaml:"name"`
@@ -111,12 +120,14 @@ type ProjectFiles struct {
 	Src         string `yaml:"src"`
 }
 
+//Badges require additional documentaion.
 type Badges struct {
 	Enable bool   `yaml:"enable"`
 	Link   string `yaml:"link"`
 	Name   string `yaml:"name"`
 }
 
+// ConfigurationFile require additional documentaion.
 type ConfigurationFile struct {
 	ArtifactsDir string `yaml:"artifacts-dir"`
 	Name         string `yaml:"name"`
@@ -124,6 +135,7 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
+// Integrations require additional documentaion.
 type Integrations struct {
 	Badges []Badges `yaml:"badges,omitempty"`
 	Name   string   `yaml:"name"`
@@ -153,6 +165,7 @@ type Integrations struct {
 	ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
 }
 
+// Project require additional documentaion.
 type Project struct {
 	Description  string         `yaml:"description"`
 	Dependencies Dependencies   `yaml:"dependencies"`
@@ -518,7 +531,7 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		//required.
 		if v.MappedName == "" {
 			v.MappedName = strings.ToLower(v.Name)
-			d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
+			//d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
 		}
 
 	}
@@ -535,61 +548,6 @@ func isStringInList(l []string, s string) bool {
 		}
 	}
 	return false
-}
-
-//Call with the notation and the extracted name
-func isStringFromTag(notation string, name string) bool {
-	ti := strings.Index(notation, name)
-	if ti < 0 {
-		return false
-	}
-	return true
-}
-
-//For some string comparisons, leading and trailing blanks
-//Sould not matter. This will remove space padding from the
-//beginning and end of a string
-
-func padRemove(pLine string) string {
-	var y, x, z int
-	x = 0
-	y = 0
-
-	z = len(pLine)
-
-	//No string to parse
-	if z == 0 {
-		return pLine
-	}
-
-	y = z
-
-	//Find index to first char after leading spaces
-	for i := 0; i < z; i++ {
-		if pLine[i:i+1] == " " {
-			x = i + 1
-		} else {
-			break
-		}
-	}
-	//If just a empty string of space, return empty string
-	if x == z {
-		return ""
-	}
-	//Find index to first char before trailing spaces
-	for i := z; i >= 0; i-- {
-		if pLine[i-1:i] == " " {
-			y = i - 1
-		} else {
-			break
-		}
-	}
-	//If string is not padded, return it
-	if (x == 0) && (y == z) {
-		return pLine
-	}
-	//return the string without the padding
-	return pLine[x:y]
 }
 
 //make sure array elements are unique
@@ -673,7 +631,7 @@ func checkArrayElements(columnType string) (bool, string) {
 			//report erorrr
 			return false, "array {,} unexpected:" + columnType
 		}
-		aL[i] = padRemove(allEl[0:lastSep])
+		aL[i] = strings.TrimSpace(allEl[0:lastSep])
 		//Nothing else to process so skip
 		if (i + 1) < cntSep {
 			allEl = allEl[lastSep+1 : wkLen]
@@ -681,12 +639,10 @@ func checkArrayElements(columnType string) (bool, string) {
 		}
 	}
 	for i := 0; i < cntSep; i++ {
-		for j := 0; j < cntSep; j++ {
-			if i != j {
-				if aL[i] == aL[j] {
-					//duplicate array value
-					return false, "array duplicates unexpected:" + columnType
-				}
+		for j := i + 1; j < cntSep; j++ {
+			if aL[i] == aL[j] {
+				//duplicate array value
+				return false, "array duplicates unexpected:" + columnType
 			}
 		}
 	}

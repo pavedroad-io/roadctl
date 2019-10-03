@@ -30,32 +30,33 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	_ "reflect"
+	// "reflect"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
-	_ "github.com/ompluscator/dynamic-struct"
+	// "github.com/ompluscator/dynamic-struct"
 	"gopkg.in/yaml.v2"
 )
 
 // Default template repository
-var defaultOrg string = "pavedroad-io"
+var defaultOrg = "pavedroad-io"
 
 // Default template directory on GitHub
-var defaultRepo string = "templates"
-var defaultPath string = ""
+var defaultRepo = "templates"
+var defaultPath = ""
 
 // Default template directory on local machine
-var defaultTemplateDir string = ".templates"
-var repoType string = "GitHub"
-var tplFile string = ""    // Name of the template file to use
-var tplDir string = "."    // Directory for generated code output
-var tplDefFile string = "" // Name of the definitions file used to generated tempaltes
+var defaultTemplateDir = ".templates"
+var repoType = "GitHub"
+var tplFile = ""      // Name of the template file to use
+var tplDir = "."      // Directory for generated code output
+var tplDefFile string // Name of the definitions file used to generated tempaltes
 var tplDirSelected = ""
 
+//TEMPLATE needs documentation.
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
@@ -174,11 +175,10 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	return nil
 }
 
-//  tplJsonData
+//  tplJSONData
 //    Use the schema definition found in tplDefs to create
 //    Sample JSON data files
-//
-func tplJsonData(defs tplDef, output *tplData) error {
+func tplJSONData(defs tplDef, output *tplData) error {
 	var jsonString string
 	order := defs.devineOrder()
 	tplAddJSON(order, defs, &jsonString)
@@ -530,45 +530,45 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 		//TODO: change to proper logging method
 		fmt.Println(err)
 		return err
-	} else {
-		//fmt.Println(rsp.StatusCode)
+	}
+	//fmt.Println(rsp.StatusCode)
+	//		if err != nil {
+	//			log.Println(err)
+	//			os.Exit(1)
+	//		}
+
+	if fileContent != nil {
+		dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
+		fp := outdir + "/" + *fileContent.Path
+		if _, err := os.Stat(fp); os.IsNotExist(err) {
+			os.Create(fp)
+		}
+		err = ioutil.WriteFile(fp, dstr, 0644)
 		if err != nil {
-			log.Println(err)
-			os.Exit(1)
+			fmt.Println(err)
 		}
 
-		if fileContent != nil {
-			dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
-			fp := outdir + "/" + *fileContent.Path
-			if _, err := os.Stat(fp); os.IsNotExist(err) {
-				os.Create(fp)
-			}
-			err = ioutil.WriteFile(fp, dstr, 0644)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-		} else {
-			//fmt.Println(directoryContent)
-			for _, item := range directoryContent {
-				// If it is a directory, create if necessary
-				// Then walk it
-				if *item.Type == "dir" {
-					dn := outdir + "/" + *item.Path
-					if _, err := os.Stat(dn); os.IsNotExist(err) {
-						os.MkdirAll(dn, os.ModePerm)
-						fmt.Println("Template directory created: ", dn)
-					}
-					_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
+	} else {
+		//fmt.Println(directoryContent)
+		for _, item := range directoryContent {
+			// If it is a directory, create if necessary
+			// Then walk it
+			if *item.Type == "dir" {
+				dn := outdir + "/" + *item.Path
+				if _, err := os.Stat(dn); os.IsNotExist(err) {
+					os.MkdirAll(dn, os.ModePerm)
+					fmt.Println("Template directory created: ", dn)
 				}
-
-				// For files, request their content
-				if *item.Type == "file" {
-					_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
-				}
-
+				_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
 			}
+
+			// For files, request their content
+			if *item.Type == "file" {
+				_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
+			}
+
 		}
+
 	}
 	return nil
 }
@@ -638,7 +638,7 @@ func tplCreate(rn string) string {
 	}
 
 	// Generate JSON test data
-	err = tplJsonData(defs, &tplInputData)
+	err = tplJSONData(defs, &tplInputData)
 	if err != nil {
 		fmt.Println("Generating JSON failed: ", err)
 		os.Exit(-1)
@@ -654,7 +654,7 @@ func tplCreate(rn string) string {
 
 	//templates = template.Must(template.ParseFiles(tplRsp...))
 	//TODO: turn into a function
-	var fn string = ""
+	var fn string
 	for _, v := range filelist {
 		if v.Name == tplDefinition {
 			continue
@@ -748,7 +748,7 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	//}
 	if errs != nil {
 		for errs != nil {
-			errs.Error()
+			fmt.Println(errs.Error())
 			errs = errs.NextError
 		}
 		os.Exit(-1)
