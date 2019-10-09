@@ -176,7 +176,7 @@ type Project struct {
 }
 
 type tplDef struct {
-	TableList []Tables  `yaml:"tables"`
+	tableList []Tables  `yaml:"tables"`
 	Commuity  Community `yaml:"community"`
 	Info      Info      `yaml:"info"`
 	Project   Project   `yaml:"project"`
@@ -320,7 +320,7 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	rlist := []tplTableItem{}
 	//	tlist := d.tables()
 
-	for _, t := range d.TableList {
+	for _, t := range d.tableList {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
 			var isRoot = false
@@ -338,13 +338,13 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 
 // tables(): return a pointer(a copy?) to definitions Tables
 func (d *tplDef) tables() []Tables {
-	return d.TableList
+	return d.tableList
 }
 
 // Search for Table by name
 func (d *tplDef) tableByName(name string) (Tables, error) {
 	e := Tables{}
-	for _, v := range d.TableList {
+	for _, v := range d.tableList {
 		if v.TableName == name {
 			return v, nil
 		}
@@ -486,6 +486,7 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		"integer",
 		"boolean",
 		"time",
+		"null",
 		"uuid",
 	}
 	var convName string
@@ -513,17 +514,10 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		}
 		//Check the column types
 		convName = strings.ToLower(v.Type)
-		if strings.Index(convName, "array") == 0 {
-			aStat, pErr := checkArrayElements(convName)
-			if !aStat {
-				d.setErrorList(INVALIDARRAY, pErr, t.TableName)
-			}
-		} else {
 
-			if !isStringInList(validColTypes, convName) {
-				d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+"]", t.TableName)
+		if !isStringInList(validColTypes, convName) {
+			d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+"]", t.TableName)
 
-			}
 		}
 
 		//Check the mapped Name
@@ -548,103 +542,4 @@ func isStringInList(l []string, s string) bool {
 		}
 	}
 	return false
-}
-
-//make sure array elements are unique
-//in field type like
-// array {0,5,2,6,8}
-// array {"ggds","dhdhd","ddjjssj"}
-func checkArrayElements(columnType string) (bool, string) {
-	sepV := ","
-	brOpen := "{"
-	brClose := "}"
-	cAtI := ""
-	allEl := ""
-	var aL [20]string
-	var cntSep, openBr, closeBr, lastSep, cLen, wkLen int
-	//must be an aray column
-	if strings.Index(columnType, "array") < 0 {
-		return false, "array {} expected"
-	}
-	lastSep = strings.Index(columnType, sepV)
-	openBr = strings.Index(columnType, brOpen)
-	closeBr = strings.Index(columnType, brClose)
-
-	//Empty*** or one element array, not reported as error, and
-	//no need check for unique values to
-	if (lastSep < 0) && (openBr >= 0) && (closeBr > 0) {
-
-		return true, ""
-	}
-
-	//Report error and return
-	if openBr < 0 {
-		return false, "array { expected:" + columnType
-	}
-	//Report error and return
-	if closeBr < 0 {
-		return false, "array } expected:" + columnType
-
-	}
-	cLen = len(columnType)
-	cntSep = 0
-	for i := 0; i < cLen; i++ {
-		cAtI = columnType[i : i+1]
-		if cAtI == sepV {
-			cntSep++
-		}
-		if cAtI == brOpen {
-			//Mutiple brOpen, report error and return
-			if i != openBr {
-				return false, "array {{ not expected:" + columnType
-
-			}
-		}
-		if cAtI == brClose {
-			//Mutiple brClose, report error and return
-			if i != closeBr {
-				return false, "array }} not expected:" + columnType
-
-			}
-		}
-	}
-	//Use number of seperators to now indicate number of
-	//items for the array.
-	cntSep++
-	//Too many array elements
-	//Can make more dynamic with append if needed
-	if cntSep > len(aL) {
-		return false, "Unanticipated array element limit:" + columnType
-
-	}
-	//elements for array with closing brackets
-	//Using closing bracket to test for no more elements
-
-	allEl = columnType[openBr+1 : closeBr+1]
-	wkLen = len(allEl)
-	for i := 0; i < cntSep; i++ {
-		lastSep = strings.Index(allEl, sepV)
-		if lastSep < 0 {
-			lastSep = wkLen - 1
-		}
-		if (allEl[0:1]) == brClose {
-			//report erorrr
-			return false, "array {,} unexpected:" + columnType
-		}
-		aL[i] = strings.TrimSpace(allEl[0:lastSep])
-		//Nothing else to process so skip
-		if (i + 1) < cntSep {
-			allEl = allEl[lastSep+1 : wkLen]
-			wkLen = len(allEl)
-		}
-	}
-	for i := 0; i < cntSep; i++ {
-		for j := i + 1; j < cntSep; j++ {
-			if aL[i] == aL[j] {
-				//duplicate array value
-				return false, "array duplicates unexpected:" + columnType
-			}
-		}
-	}
-	return true, ""
 }
