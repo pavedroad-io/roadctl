@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +35,10 @@ or rename to ~.bash_completion
 	Run: func(cmd *cobra.Command, args []string) {
 		zshTrue := cmd.Flag("zsh")
 		if zshTrue.Value.String() == "true" {
+			fmt.Println("Writing: " + "roadctlZshCompletion.sh")
 			rootCmd.GenZshCompletionFile("roadctlZshCompletion.sh")
 		} else {
+			fmt.Println("Writing: " + "roadctlBashCompletion.sh")
 			rootCmd.GenBashCompletionFile("roadctlBashCompletion.sh")
 		}
 	},

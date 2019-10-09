@@ -28,6 +28,9 @@ import (
 var cfgFile string
 var fmtFlag string = "text"
 var debugFlag string = "info"
+var userName string
+var userPassword string
+var userAccessToken string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -56,8 +59,13 @@ func init() {
 	cobra.OnInitialize(initConstants)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.roadctl.yaml)")
-	rootCmd.PersistentFlags().StringVar(&fmtFlag, "format", "f", "Output format: text(default)|json|yaml")
-	rootCmd.PersistentFlags().StringVar(&debugFlag, "debug", "d", "Debug level: info(default)|warm|error|critical")
+	rootCmd.PersistentFlags().StringVar(&fmtFlag, "format", "text", "Output format: text(default)|json|yaml")
+	rootCmd.PersistentFlags().StringVar(&debugFlag, "debug", "info", "Debug level: info(default)|warm|error|critical")
+
+	// For API calls that require authentication
+	rootCmd.PersistentFlags().StringVar(&userName, "user", "", "HTTP basic auth user name")
+	rootCmd.PersistentFlags().StringVar(&userPassword, "password", "", "HTTP basic auth password")
+	rootCmd.PersistentFlags().StringVar(&userAccessToken, "token", "", "OAUTH access token")
 }
 
 // initConstants populates global slices of types
@@ -65,6 +73,49 @@ func initConstants() {
 	// Types or resouces command can act on
 	initResourcetypes()
 
+	// TODO: Move this into viper configuration
+	initAuthentication()
+
+	return
+}
+
+// initAuthentication: Set global authentication variables
+//   OAUTH token takes precedents over basic authentication
+//   so quit if we find that as a command line option or
+//   environment variable
+//
+func initAuthentication() {
+	if userAccessToken != "" {
+		return
+	}
+
+	envVar := os.Getenv("ACCESS-TOKEN")
+	if envVar != "" {
+		userAccessToken = envVar
+		return
+	}
+
+	// Command line rules over envVar and we have both
+	if userName != "" && userPassword != "" {
+		return
+	}
+
+	envName := os.Getenv("USER-NAME")
+	envPass := os.Getenv("USER-PASSWORD")
+
+	if envPass != "" {
+		userPassword = envPass
+	}
+
+	// Allow for case where userName is from command
+	// line and password is from envVar
+	if userName != "" {
+		return
+	}
+
+	if envName != "" {
+		userPassword = envPass
+	}
 	return
 }
 
