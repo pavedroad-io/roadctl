@@ -31,12 +31,11 @@ import (
 	"os"
 	"path/filepath"
 	// "reflect"
+	"github.com/google/go-github/github"
+	"github.com/iancoleman/strcase"
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/google/go-github/github"
-	"github.com/iancoleman/strcase"
 	// "github.com/ompluscator/dynamic-struct"
 	"gopkg.in/yaml.v2"
 )
@@ -198,7 +197,7 @@ func tplJSONData(defs tplDef, output *tplData) error {
 //   Creates JSON sample data
 //
 func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
-	table, _ := defs.table(item.Name)
+	table, _ := defs.tableByName(item.Name)
 
 	// Start this table
 	if item.Root {
@@ -288,7 +287,7 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 //        One for insert, and one for updates
 //
 func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
-	table, _ := defs.table(item.Name)
+	table, _ := defs.tableByName(item.Name)
 
 	// Start this table
 	tableString := fmt.Sprintf(swaggerRoute, item.Name)
@@ -749,7 +748,7 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	if errs != nil {
 		for errs != nil {
 			fmt.Println(errs.Error())
-			errs = errs.NextError
+			errs = errs.nextError
 		}
 		os.Exit(-1)
 	}

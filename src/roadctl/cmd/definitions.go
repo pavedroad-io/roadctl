@@ -176,7 +176,7 @@ type Project struct {
 }
 
 type tplDef struct {
-	tableList []Tables  `yaml:"tables"`
+	TableList []Tables  `yaml:"tables"`
 	Commuity  Community `yaml:"community"`
 	Info      Info      `yaml:"info"`
 	Project   Project   `yaml:"project"`
@@ -320,7 +320,7 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	rlist := []tplTableItem{}
 	//	tlist := d.tables()
 
-	for _, t := range d.tableList {
+	for _, t := range d.TableList {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
 			var isRoot = false
@@ -338,13 +338,13 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 
 // tables(): return a pointer(a copy?) to definitions Tables
 func (d *tplDef) tables() []Tables {
-	return d.tableList
+	return d.TableList
 }
 
 // Search for Table by name
 func (d *tplDef) tableByName(name string) (Tables, error) {
 	e := Tables{}
-	for _, v := range d.tableList {
+	for _, v := range d.TableList {
 		if v.TableName == name {
 			return v, nil
 		}
