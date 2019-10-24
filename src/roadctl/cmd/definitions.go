@@ -1,5 +1,5 @@
-// definitions structure
-
+// Package cmd from gobra
+//   types and methods for template definitions file
 package cmd
 
 import (
@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// Tables strucuter for user defined tables that need
+// to be generated
 type Tables struct {
 	// TableName is the name of the table to create
 	//   This is really just a sub-object
@@ -64,6 +66,8 @@ type Tables struct {
 	} `yaml:"columns"`
 }
 
+// Community files to be included
+//   For example, CONTIRBUTING.md
 type Community struct {
 	CommunityFiles []struct {
 		Name string `yaml:"name"`
@@ -74,6 +78,7 @@ type Community struct {
 	Description string `yaml:"description"`
 }
 
+// Info defines information about the services and organization
 type Info struct {
 	APIVersion    string `yaml:"api-version"`
 	ID            string `yaml:"id"`
@@ -82,6 +87,8 @@ type Info struct {
 	ReleaseStatus string `yaml:"release-status"`
 	Version       string `yaml:"version"`
 }
+
+// Dependencies that this service requires
 type Dependencies []struct {
 	Command          string      `yaml:"command"`
 	Comments         string      `yaml:"comments"`
@@ -96,12 +103,16 @@ type Dependencies []struct {
 	DockerKafka interface{}   `yaml:"docker-kafka,omitempty"`
 	Topics      []string      `yaml:"topics,omitempty"`
 }
+
+// Maintainer contact information
 type Maintainer struct {
 	Email string `yaml:"email"`
 	Name  string `yaml:"name"`
 	Slack string `yaml:"slack"`
 	Web   string `yaml:"web"`
 }
+
+// ProjectFiles template files to be included
 type ProjectFiles struct {
 	Description string `yaml:"description"`
 	Name        string `yaml:"name"`
@@ -109,12 +120,15 @@ type ProjectFiles struct {
 	Src         string `yaml:"src"`
 }
 
+// Badges are links with graphis to be included in
+// doc/service.html file.  These go to CI test results
 type Badges struct {
 	Enable bool   `yaml:"enable"`
 	Link   string `yaml:"link"`
 	Name   string `yaml:"name"`
 }
 
+// ConfigurationFile where the configuration can be found
 type ConfigurationFile struct {
 	ArtifactsDir string `yaml:"artifacts-dir"`
 	Name         string `yaml:"name"`
@@ -122,6 +136,7 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
+// Integrations CI/CD tools
 type Integrations struct {
 	Badges []Badges `yaml:"badges,omitempty"`
 	Name   string   `yaml:"name"`
@@ -151,6 +166,7 @@ type Integrations struct {
 	ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
 }
 
+// Project information
 type Project struct {
 	Description  string         `yaml:"description"`
 	Dependencies Dependencies   `yaml:"dependencies"`
@@ -228,11 +244,11 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 
 	if len(c) == 0 {
 		return
-	} else {
-		for _, v := range c {
-			parent.Children = append(parent.Children, &v)
-			d.addChildren(&v)
-		}
+	}
+
+	for _, v := range c {
+		parent.Children = append(parent.Children, &v)
+		d.addChildren(&v)
 	}
 
 	return

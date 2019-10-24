@@ -2,20 +2,27 @@
 
 # Roadctl
 Roadclt is a command-line interface for:
+
 -	Creating microservices, CRDs, and serverless functions from low-code templates
 -	Managing a pre-configured CI/CD pipeline
 -	Controlling deployment options
 
-This overview covers roadctl syntax, describes the command operations, and provides common examples. For details about each command, including all the supported flags and subcommands, see the roadctl reference documentation. For installation instructions see installing roadctl.
+This overview covers roadctl syntax, describes the command operations, and provides common examples. For details about each command, including all the supported flags and subcommands, see the roadctl reference documentation. For installation instructions see [installing roadctl](http://www.pavedroad.io/roadctl/install.md).
 
 ## Syntax
 Use the following syntax to run roadctl commands from your terminal window:
-roadctl [command] [TYPE] [NAME] [flags]
-where command, TYPE, NAME, and flags are:
+
+$ roadctl [command] [TYPE] [NAME] [flags]
+
+Where command, TYPE, NAME, and flags are:
+
 -	command: Specifies the operation that you want to perform on one or more resources, for example create, get, describe, delete.
 -	TYPE: Specifies the resource type. Resource types are case-insensitive and you can specify the singular, or plural forms. For example, the following commands produce the same output:
--	  roadctl get template template1
--	  roadctl get templates template1
+
+     `$ roadctl get template template1`
+
+     `$ roadctl get templates template1`
+
 -	NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates.
 
 ## Resource types
@@ -37,7 +44,7 @@ Allows you to tailor the preconfigured integrations
 ### artifacts
 Manage development artifacts such as logs and code coverage.
 ### providers
-Manage local and cloud providers you want to deploy too
+Manage local and cloud providers you want to deploy to
 ### deployments
 Manage deployment strategies for various environments.
 
@@ -45,30 +52,43 @@ Manage deployment strategies for various environments.
 By default, roadclt outputs the results of a command as text.  However, 
 you can control that by using the --format option:
 
-- --format text
-- --format json
-- --format yaml
+--format text
+
+--format json
+
+--format yaml
 
 ## Examples: Common operations
 
 ### Initialize a local template repository
 The following command populates available templates on your local hard drive.  By default, they are placed in your current directory in “.templates.”  The prefix “.” Is necessary to tell compilers to ignore its contents.
 
-`roadctl get templates --init`
+`$ roadctl get templates --init`
 
 ### 
 ### Print a list of available templates
 The output includes the template name and its release status.  Release status is one of the following:
--	Ga: for general availability
--	Incubation: for templates working towards ga
--	Experimental: not stable or work in progress or simple examples
 
-roadctl get templates
+```
+```
+
+| Release | Meaning |
+| :---------- | :-------------------------------- |
+| ga         | For general availability|
+| incubation | For templates working towards ga|
+| experimental | Not stable or work in progress or simple examples|
+
+`$ roadctl get templates`
+
 Or
-roadctl get templates name
+
+`$ roadctl get templates name`
 
 Example output
+
+```
 $ roadctl get templates
+
 Template Type   Name                 Release Status
 crd             kubebuilder          incubation
 microservices   datamgr              ga
@@ -79,64 +99,79 @@ microservices   subscriber           experimental
 microservices   ml                   incubation
 serverless      go-open-faas         ga
 serverless      go-knative           ga
+```
 
 ### Create and edit a template definitions file
 Template definitions file allow you to tailor your application to your requirements, such as:
+
 -	Define fields and structures to create
 -	Specify community files
 -	Tailor the initial integrations that get included
 -	Set organizational and project information like; license, company name, or project description
+
 Each template comes with a default definitions file you can use as a beginning point.
 
 Use the describe command to create your definitions file
-`roadctl describe templates datamgr > myNewService.yaml`
+
+`$ roadctl describe templates datamgr > myNewService.yaml`
 
 Then edit it using vi
-`vi myNewService.yaml`
+
+`$ vi myNewService.yaml`
 
 Example
-`tables:
-- columns:
-  - {constraints: '', mapped-name: id, modifiers: '', name: id, type: string}
-  - {constraints: '', mapped-name: updated, modifiers: '', name: updated, type: string}
-  - {constraints: '', mapped-name: created, modifiers: '', name: created, type: string}
-  parent-tables: ''
-  table-name: users
-  table-type: jsonb`
+
+```
+  tables:
+  - columns:
+    - {constraints: '', mapped-name: id, modifiers: '', name: id, type: string}
+    - {constraints: '', mapped-name: updated, modifiers: '', name: updated, type: string}
+    - {constraints: '', mapped-name: created, modifiers: '', name: created, type: string}
+    parent-tables: ''
+    table-name: users
+    table-type: jsonb
+```
 
 ### To see valid contents for a template
 Use the explain command to learn the valid syntax for the named templates is.
 
-`roadctl explain templates datamgr`
+```
+$ roadctl explain templates datamgr
 
 Example
-`Name: templates
+Name: templates
+
 DESCRIPTION:
 Templates provide a low-code environment for serverless, crd, and Microservices.
-The roadctl CLI uses the template scaffold combined code generation to create your
-application, CI, and test framework.
+The roadctl CLI uses the template scaffold combined code generation to create
+your application, CI, and test framework.
+  
+  FIELDS:
+  name <string>
+       A user friendly name for this template
+  api-version <string>
+       API version used to generate it
+  version <string>
+       Object data model version
+  id <string>
+```
 
-FIELDS:
-name <string>
-     A user friendly name for this template
-api-version <string>
-     API version used to generate it
-version <string>
-     Object data model version
-id <string>
-`
 ### Generate your application
 Will build your source code, test cases, integrations, documentation, and CI pipeline
 
-`roadctl describe templates --template datamgr --definition my myNewService.yaml`
+`$ roadctl create templates --template datamgr --definition my myNewService.yaml`
+
 To compile and invoke the CI/CD pipeline enter:
-`make`
+
+`$ make`
 
 ### Build defaults
 Execute lint, go sec, go test, and sonar scanner
+
 -	The artifacts hold the results for each command
 
 Generate the the following components:
+
 -  Go source code
 -  Dependency graph
 -  Swagger API specification in docs/api.json
@@ -150,40 +185,57 @@ Generate the the following components:
 -  go test harness
 
 Deployment options
+
 - Push image to local microk8s instance
 - Push service and run service to local microk8s instance
 
 ### Make options
+Check and compile the code
+
+`$ make`
+
 Just compile the code
-`make compile`
+
+`$ make compile`
 
 Just execut the test suite
-`make check`
+
+`$ make check`
+
+Package and deploy code to local k8s cluster
+
+`$ make deploy`
 
 Rewrite code in go formatting
-`make fmt`
-or
-Like above but simplify the code where possible
-`make simplify`
 
+`$ make fmt`
+
+Or to format and simplify the code use
+
+`$ make simplify`
 
 ## GitHub Authentication
 A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
 
 ### From the command line
-roadctl get templates --init --password XXXXXXX --user YYYYYYY
+`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
+
 **or**
-roadctl get templates --token #######
+
+`$ roadctl get templates --token #######`
 
 ### Using environment variables
-export ACCESS-TOKEN="#########"
+`$ export ACCESS-TOKEN="#########"`
+
 **or**
-export USER-NAME="#########"
-export USER-PASSWORD="#########"
+
+`$ export USER-NAME="#########"`
+`$ export USER-PASSWORD="#########"`
 
 ### Or a combination
-roadctl get templates --init  --user YYYYYYY
-export USER-PASSWORD="#########"
+`$ roadctl get templates --init  --user YYYYYYY`
+
+`$ export USER-PASSWORD="#########"`
 
 ## Project Status
 
@@ -193,6 +245,7 @@ The project is an early preview. We realize that it's going to take a village to
 
 Official releases of PavedRoad can be found here:
 [Official Releases](https://github.com/pavedroad-io/pavedroad/releases).
+
 Please note that it is **strongly recommended** that you use the official releases
 of PavedRoad, as unreleased versions from the master branch are subject to
 changes and incompatibilities that will not be supported in the official releases.

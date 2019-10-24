@@ -101,6 +101,14 @@
   version = "v1.1.2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:adc6ea2a2e33c1aa3d66c9c3dbd624b31522e8d2cbe1c64cc273443bb315329e"
+  name = "github.com/pavedroad-io/integrations"
+  packages = ["sonarcloud/cmd"]
+  pruneopts = "UT"
+  revision = "028e8cd2f84fdac299c3954dac090c59ee3092b9"
+
+[[projects]]
   digest = "1:93131d8002d7025da13582877c32d1fc302486775a1b06f62241741006428c5e"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
@@ -252,6 +260,7 @@
     "github.com/google/uuid",
     "github.com/iancoleman/strcase",
     "github.com/mitchellh/go-homedir",
+    "github.com/pavedroad-io/integrations/sonarcloud/cmd",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "golang.org/x/oauth2",
