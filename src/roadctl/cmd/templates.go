@@ -717,12 +717,12 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	fmt.Println("Reading defintions from: ", tplDefFile)
 	df, err := os.Open(tplDefFile)
 	if err != nil {
-		fmt.Println("failed to open: %v err %v", df, err)
+		fmt.Println("failed to open:", tplDefFile, ", error:", err)
 	}
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
 	if e != nil {
-		fmt.Println("read failed for " + tplDefFile)
+		fmt.Println("read failed for ", tplDefFile)
 		os.Exit(-1)
 	}
 
