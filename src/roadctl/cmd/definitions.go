@@ -1,19 +1,17 @@
-// Package cmd from gobra
-//   types and methods for template definitions file
+// definitions structure
+
 package cmd
 
 import (
 	"errors"
 	"fmt"
 	"os"
-
 	//	"reflect"
 	"regexp"
 	"strings"
 )
 
-// Tables strucuter for user defined tables that need
-// to be generated
+// Tables require additional documentaion.
 type Tables struct {
 	// TableName is the name of the table to create.
 	//   This is really just a sub-object
@@ -69,8 +67,7 @@ type Tables struct {
 	} `yaml:"columns"`
 }
 
-// Community files to be included
-//   For example, CONTIRBUTING.md
+// Community require additional documentaion.
 type Community struct {
 	CommunityFiles []struct {
 		Name string `yaml:"name"`
@@ -81,7 +78,7 @@ type Community struct {
 	Description string `yaml:"description"`
 }
 
-// Info defines information about the services and organization
+// Info is holds API help information.
 type Info struct {
 	APIVersion    string `yaml:"api-version"`
 	ID            string `yaml:"id"`
@@ -91,7 +88,7 @@ type Info struct {
 	Version       string `yaml:"version"`
 }
 
-// Dependencies that this service requires
+// Dependencies require additional documentaion.
 type Dependencies []struct {
 	Command          string      `yaml:"command"`
 	Comments         string      `yaml:"comments"`
@@ -107,7 +104,7 @@ type Dependencies []struct {
 	Topics      []string      `yaml:"topics,omitempty"`
 }
 
-// Maintainer contact information
+// Maintainer require additional documentaion.
 type Maintainer struct {
 	Email string `yaml:"email"`
 	Name  string `yaml:"name"`
@@ -115,7 +112,7 @@ type Maintainer struct {
 	Web   string `yaml:"web"`
 }
 
-// ProjectFiles template files to be included
+// ProjectFiles require additional documentaion.
 type ProjectFiles struct {
 	Description string `yaml:"description"`
 	Name        string `yaml:"name"`
@@ -123,15 +120,14 @@ type ProjectFiles struct {
 	Src         string `yaml:"src"`
 }
 
-// Badges are links with graphis to be included in
-// doc/service.html file.  These go to CI test results
+//Badges require additional documentaion.
 type Badges struct {
 	Enable bool   `yaml:"enable"`
 	Link   string `yaml:"link"`
 	Name   string `yaml:"name"`
 }
 
-// ConfigurationFile where the configuration can be found
+// ConfigurationFile require additional documentaion.
 type ConfigurationFile struct {
 	ArtifactsDir string `yaml:"artifacts-dir"`
 	Name         string `yaml:"name"`
@@ -139,7 +135,7 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
-// Integrations CI/CD tools
+// Integrations require additional documentaion.
 type Integrations struct {
 	Badges []Badges `yaml:"badges,omitempty"`
 	Name   string   `yaml:"name"`
@@ -147,9 +143,9 @@ type Integrations struct {
 	//
 	SonarCloudConfig struct {
 		// A sonarcloud access token
-		Login string `yaml:login`
+		Login string `yaml:"login"`
 		// Project key should be same a the name
-		Key     string `yaml:key`
+		Key     string `yaml:"key"`
 		Options struct {
 			Badges   []Badges `yaml:"badges"`
 			Coverage struct {
@@ -169,7 +165,7 @@ type Integrations struct {
 	ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
 }
 
-// Project information
+// Project require additional documentaion.
 type Project struct {
 	Description  string         `yaml:"description"`
 	Dependencies Dependencies   `yaml:"dependencies"`
@@ -310,11 +306,6 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 	if len(c) == 0 {
 		return
 	}
-
-	for _, v := range c {
-		parent.Children = append(parent.Children, &v)
-		d.addChildren(&v)
-	}
 	for _, v := range c {
 		parent.Children = append(parent.Children, &v)
 		d.addChildren(&v)
@@ -401,8 +392,8 @@ func (d *tplDef) Validate() *tblDefError {
 	//ErrList := nil
 	//LastErr := nil
 
-	ErrList = &tblDefError{}
-	LastErr = ErrList
+	//ErrList = &tblDefError{}
+	//LastErr = ErrList
 
 	//e := tblDefError{}
 
@@ -447,7 +438,7 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 	} else {
 
 		if len(t.TableName) > maxLen {
-			e := fmt.Sprintf("Tabl name length cannot be greater than  %v", maxLen)
+			e := fmt.Sprintf("Table name length cannot be greater than  %v", maxLen)
 			d.setErrorList(INVALIDTABLENAME, e, t.TableName)
 
 		}
@@ -463,19 +454,6 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 
 		}
 	}
-	// Make sure it is a valid type
-	isValidType := false
-	for _, m := range validTypes {
-		if strings.ToUpper(t.TableType) == m {
-			isValidType = true
-			break
-		}
-	}
-
-	if !isValidType {
-		d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
-
-	}
 
 	// If a parent is specified make sure it exists
 	if t.ParentTable != "" {
@@ -484,6 +462,22 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 			d.setErrorList(NOPARENT, "Parent table not found: ["+t.ParentTable+"]", t.TableName)
 
 		}
+	} else {
+		//do checks only related to parent tables
+		// Make sure it is a valid type
+		isValidType := false
+		for _, m := range validTypes {
+			if strings.ToUpper(t.TableType) == m {
+				isValidType = true
+				break
+			}
+		}
+
+		if !isValidType {
+			d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
+
+		}
+
 	}
 	return ErrList
 }

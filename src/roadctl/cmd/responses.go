@@ -1,8 +1,5 @@
-// Package cmd from cobra
-package cmd
-
 /*
-Copyright © 2019 PavedRoad <info@pavedroad.io>
+Copyright © 2019 PavedRoad
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,12 +19,15 @@ response: defines mandatory response methods a resource MUST implement
   RespondWithJSON:
 */
 
-import (
-	// used for debug
-	_ "errors"
-	// used for debug
-	_ "fmt"
-)
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
+package cmd
+
+//import (
+//	_ "errors"
+//	_ "fmt"
+//)
 
 // Response must include all three
 type Response interface {
