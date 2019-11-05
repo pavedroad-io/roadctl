@@ -56,6 +56,7 @@ var tplDir = "."      // Directory for generated code output
 var tplDefFile string // Name of the definitions file used to generated tempaltes
 var tplDirSelected string
 
+//TEMPLATE needs documentation.
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
@@ -200,7 +201,7 @@ func tplJSONData(defs tplDef, output *tplData) error {
 //   Creates JSON sample data
 //
 func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
-	table, _ := defs.table(item.Name)
+	table, _ := defs.tableByName(item.Name)
 
 	// Start this table
 	if item.Root {
@@ -290,7 +291,7 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 //        One for insert, and one for updates
 //
 func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
-	table, _ := defs.table(item.Name)
+	table, _ := defs.tableByName(item.Name)
 
 	// Start this table
 	tableString := fmt.Sprintf(swaggerRoute, item.Name)
@@ -573,6 +574,7 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 			}
 
 		}
+
 	}
 	return nil
 }
@@ -757,19 +759,19 @@ func tplEdit(name string) {
 }
 
 // tplReadDefinitions
-//   Read the definition file
+//   Read the definition file and then validate it
 //
 func tplReadDefinitions(definitionsStruct *tplDef) error {
 
 	fmt.Println("Reading defintions from: ", tplDefFile)
 	df, err := os.Open(tplDefFile)
 	if err != nil {
-		fmt.Println("failed to open: %v err %v", df, err)
+		fmt.Println("failed to open:", tplDefFile, ", error:", err)
 	}
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
 	if e != nil {
-		fmt.Println("read failed for " + tplDefFile)
+		fmt.Println("read failed for ", tplDefFile)
 		os.Exit(-1)
 	}
 
@@ -781,6 +783,25 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 		return err
 	}
 
+	//definitionsStruct.Validate()
+	//will return a list of validation errors
+	//exit after printing
+
+	errs := definitionsStruct.Validate()
+
+	//if lens(errs) > 0 {
+	//	for _, v := range errs {
+	//		v.Error()
+	//	}
+	//	os.Exit(-1)
+	//}
+	if errs != nil {
+		for errs != nil {
+			fmt.Println(errs.Error())
+			errs = errs.nextError
+		}
+		os.Exit(-1)
+	}
 	return nil
 }
 

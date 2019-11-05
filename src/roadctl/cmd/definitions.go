@@ -6,13 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	//	"reflect"
+	"regexp"
 	"strings"
 )
 
 // Tables strucuter for user defined tables that need
 // to be generated
 type Tables struct {
-	// TableName is the name of the table to create
+	// TableName is the name of the table to create.
 	//   This is really just a sub-object
 	//   It could be meta-data, user, blah...
 	//
@@ -183,6 +186,68 @@ type tplDef struct {
 	Project   Project   `yaml:"project"`
 }
 
+// Define constants for error types
+// iota starts at 0, next constant is iota + 1
+const (
+	INVALIDCOLUMNTYPE = iota
+	INVALIDCONTENT
+	INVALIDTABLENAME
+	NOPARENT
+	NOMAPPEDNAME
+	INVALIDTABLETYPE
+	INVALIDCOLUMNNAME
+	INVALIDCONSTRAINT
+	INVALIDMODIFIER
+	INVALIDARRAY
+	UNKOWN
+)
+
+// tblDefError
+// structure for returning table defintion errors
+//
+type tblDefError struct {
+	errorType    int
+	errorMessage string
+	tableName    string
+	nextError    *tblDefError
+}
+
+// ErrList is a list of table definition error messages.
+// Processing is done on all errors instead of exiting for
+// every error.
+var ErrList *tblDefError //Prior comment for exported format.
+
+// LastErr is the last error message on ErrList.
+var LastErr *tblDefError //Prior comment for exported format.
+
+// tlbDefError
+// implements error.Error() interface
+//
+func (d *tblDefError) Error() string {
+	e := fmt.Sprintf("Table: %v, Error number: %v, %v\n",
+		d.tableName,
+		d.errorType,
+		d.errorMessage)
+
+	return e
+}
+
+func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
+	e := tblDefError{
+		errorType:    msgNum,
+		errorMessage: msg,
+		tableName:    tName,
+	}
+	if LastErr == nil {
+		LastErr = &e
+		ErrList = &e
+	} else {
+		LastErr.nextError = &e
+		LastErr = &e
+
+	}
+}
+
 // tplTableItem
 type tplTableItem struct {
 	// The name of this table
@@ -202,7 +267,7 @@ type tplTableItem struct {
 func (d *tplDef) devineOrder() tplTableItem {
 	ptName := ""
 
-	// Get primary table and make sure this is only one
+	// Get primary table and make sure it is the only primary
 	x := d.findTables(ptName)
 	if len(x) == 0 {
 		fmt.Println("No primary table found")
@@ -250,19 +315,24 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 		parent.Children = append(parent.Children, &v)
 		d.addChildren(&v)
 	}
-
+	for _, v := range c {
+		parent.Children = append(parent.Children, &v)
+		d.addChildren(&v)
+	}
 	return
+
 }
 
-// findTables: Given a parent, see if they have children
+// findTables: Find primary parent table, or
+// children for a given table
 func (d *tplDef) findTables(parent string) []tplTableItem {
 	rlist := []tplTableItem{}
-	tlist := d.tables()
+	//	tlist := d.tables()
 
-	for _, t := range tlist {
+	for _, t := range d.TableList {
 		if t.ParentTable == parent {
 			c := make([]*tplTableItem, 0, 20)
-			var isRoot bool = false
+			var isRoot = false
 			if parent == "" {
 				isRoot = true
 			}
@@ -275,13 +345,13 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 	return rlist
 }
 
-// tables(): return a pointer to definitions Tables
+// tables(): return a pointer(a copy?) to definitions Tables
 func (d *tplDef) tables() []Tables {
 	return d.TableList
 }
 
-//
-func (d *tplDef) table(name string) (Tables, error) {
+// Search for Table by name
+func (d *tplDef) tableByName(name string) (Tables, error) {
 	e := Tables{}
 	for _, v := range d.TableList {
 		if v.TableName == name {
@@ -323,4 +393,162 @@ func (d *tplDef) BadgesToString() string {
 		}
 	}
 	return badges
+}
+
+//Valide the table(s) definition
+
+func (d *tplDef) Validate() *tblDefError {
+	//ErrList := nil
+	//LastErr := nil
+
+	ErrList = &tblDefError{}
+	LastErr = ErrList
+
+	//e := tblDefError{}
+
+	// Do all tables and report all potential errors
+	for _, t := range d.tables() {
+		// Metadata validation
+		//e := d.validateTableMetaData(t)
+
+		d.validateTableMetaData(t)
+		//if len(e) > 0 {
+		//	for _, x := range e {
+		//		errList = append(errList, x)
+		//	}
+		//}
+		// Column validation
+		//e = d.validateTableColumns(t)
+
+		d.validateTableColumns(t)
+		//if len(e) > 0 {
+		//	for _, x := range e {
+		//		errList = append(errList, x)
+		//	}
+		//}
+
+	}
+	return ErrList
+}
+
+// validateTableMetaData
+// name not blank, type is supported, parent table exists
+// Table name only have allowed characters
+// **All table names should be unique (not case sensitive)
+// Table name length
+func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
+
+	var validTypes = []string{"JSONB"}
+	const maxLen = 60
+
+	// Make sure table name is set
+	if t.TableName == "" {
+		d.setErrorList(INVALIDTABLENAME, "Missing table name", "")
+	} else {
+
+		if len(t.TableName) > maxLen {
+			e := fmt.Sprintf("Tabl name length cannot be greater than  %v", maxLen)
+			d.setErrorList(INVALIDTABLENAME, e, t.TableName)
+
+		}
+
+		// Use simple regex until more sepcific requirements
+		// and security review.
+		// Must be modified to support specific target databases
+		// Looked at specifications for Cockroachdb
+		matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]*$`, t.TableName)
+
+		if !matched {
+			d.setErrorList(INVALIDTABLENAME, "Bad table name: ["+t.TableName+"]", t.TableName)
+
+		}
+	}
+	// Make sure it is a valid type
+	isValidType := false
+	for _, m := range validTypes {
+		if strings.ToUpper(t.TableType) == m {
+			isValidType = true
+			break
+		}
+	}
+
+	if !isValidType {
+		d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
+
+	}
+
+	// If a parent is specified make sure it exists
+	if t.ParentTable != "" {
+		_, e := d.tableByName(t.ParentTable)
+		if e != nil {
+			d.setErrorList(NOPARENT, "Parent table not found: ["+t.ParentTable+"]", t.TableName)
+
+		}
+	}
+	return ErrList
+}
+
+func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
+	var validColTypes = []string{
+		"string",
+		"number",
+		"integer",
+		"boolean",
+		"time",
+		"null",
+		"uuid",
+	}
+	var convName string
+
+	// validate:
+	//  - Name *
+	//  - Modifiers
+	//  - MappedName
+	//  - Constraints
+	//  - Type *
+	//
+
+	for _, v := range t.Columns {
+		//Check the column name
+		if v.Name == "" {
+			d.setErrorList(INVALIDCOLUMNNAME, "Missing column name", t.TableName)
+		} else {
+
+			matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]*$`, v.Name)
+
+			if !matched {
+				d.setErrorList(INVALIDCOLUMNNAME, "Bad column name: ["+v.Name+"]", t.TableName)
+
+			}
+		}
+		//Check the column types
+		convName = strings.ToLower(v.Type)
+
+		if !isStringInList(validColTypes, convName) {
+			d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+"]", t.TableName)
+
+		}
+
+		//Check the mapped Name
+		//This wouldn't be an error if it is the functionality
+		//required.
+		if v.MappedName == "" {
+			v.MappedName = strings.ToLower(v.Name)
+			//d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
+		}
+
+	}
+	return ErrList
+}
+
+// isStringInList
+// Should move to a generic function list
+//
+func isStringInList(l []string, s string) bool {
+	for _, v := range l {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
