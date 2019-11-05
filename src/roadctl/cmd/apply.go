@@ -1,8 +1,5 @@
-// Package cmd module from cobra
-package cmd
-
 /*
-Copyright © 2019 PavedRoad <info@pavedroad.io>
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,13 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
+package cmd
+
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
-// applyCmd represents the apply command
+//  applyCmd
+//    represents the apply command
 var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply configuration to named resource",
@@ -35,6 +38,11 @@ roadctl apply environment -f config.yaml`,
 		fmt.Println("apply called")
 	},
 }
+
+//  init
+//    Shell description for init function
+//    Editing anticipated!
+//
 
 func init() {
 	rootCmd.AddCommand(applyCmd)
