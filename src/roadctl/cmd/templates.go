@@ -1,5 +1,8 @@
+// Package cmd from cobra
+package cmd
+
 /*
-Copyright © 2019 PavedRoad
+Copyright © 2019 PavedRoad <info@pavedroad.io>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +19,6 @@ limitations under the License.
 
 //TODO: create standard error messages as const
 
-package cmd
-
 import (
 	"bufio"
 	"bytes"
@@ -29,14 +30,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
-	// "reflect"
-	"github.com/google/go-github/github"
-	"github.com/iancoleman/strcase"
 	"strings"
 	"text/template"
 	"time"
-	// "github.com/ompluscator/dynamic-struct"
+
+	"github.com/google/go-github/github"
+	"github.com/iancoleman/strcase"
 	"gopkg.in/yaml.v2"
 )
 
@@ -45,23 +46,25 @@ var defaultOrg = "pavedroad-io"
 
 // Default template directory on GitHub
 var defaultRepo = "templates"
-var defaultPath = ""
+var defaultPath string
 
 // Default template directory on local machine
 var defaultTemplateDir = ".templates"
 var repoType = "GitHub"
-var tplFile = ""      // Name of the template file to use
+var tplFile string    // Name of the template file to use
 var tplDir = "."      // Directory for generated code output
 var tplDefFile string // Name of the definitions file used to generated tempaltes
-var tplDirSelected = ""
+var tplDirSelected string
 
 //TEMPLATE needs documentation.
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
-	TEMPLATE        = "template"
-	ORGANIZATION    = "organization"
-	prCopyright     = `
+	// TEMPLATE is the prefix to be replaced in front of a file name
+	TEMPLATE = "template"
+	// ORGANIZATION is the prefix to be replaced in front of a file name
+	ORGANIZATION = "organization"
+	prCopyright  = `
 //
 // Copyright (c) PavedRoad. All rights reserved.
 // Licensed under the Apache2. See LICENSE file in the project root for full license information.
@@ -93,7 +96,7 @@ const structClose = "}\n\n"
 
 // structField
 //  name, type, encoding, json|yaml, encoding options
-const structField = "\t%s %s\t`%s:%s`\n"
+const structField = "\t%s %s\t`%s:\"%s\"`\n"
 
 // structSubStruct
 // Same as structField except:
@@ -177,6 +180,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 //  tplJSONData
 //    Use the schema definition found in tplDefs to create
 //    Sample JSON data files
+//
 func tplJSONData(defs tplDef, output *tplData) error {
 	var jsonString string
 	order := defs.devineOrder()
@@ -341,6 +345,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		} else {
 			fieldType = strings.ToLower(col.Type)
 		}
+
 		//Deal with time types
 		tableString += fmt.Sprintf(structField,
 			strcase.ToCamel(col.Name),
@@ -531,11 +536,12 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 		fmt.Println(err)
 		return err
 	}
+
 	//fmt.Println(rsp.StatusCode)
-	//		if err != nil {
-	//			log.Println(err)
-	//			os.Exit(1)
-	//		}
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
 	if fileContent != nil {
 		dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
@@ -627,8 +633,16 @@ func tplCreate(rn string) string {
 		fmt.Println(err)
 		return (err.Error())
 	}
+
 	tplInputData := tplData{}
 	err = tplDataMapper(defs, &tplInputData)
+
+	err = validateIntegrations(&tplInputData)
+
+	if err != nil {
+		fmt.Println("Validating integrations failed: ", err)
+		os.Exit(-1)
+	}
 
 	// Generate internal structures
 	err = tplGenerateStructurs(defs, &tplInputData)
@@ -709,6 +723,41 @@ func tplCreate(rn string) string {
 	return ""
 }
 
+// tplEdit
+//   use the $EDITOR envar to edit the named resource
+//
+func tplEdit(name string) {
+	editor := os.Getenv("EDITOR")
+
+	if editor == "" {
+		editor = "vim"
+	}
+
+	path, err := exec.LookPath(editor)
+	if err != nil {
+		log.Fatal(editor, "not found")
+	}
+
+	fmt.Println(path, name)
+	cmd := exec.Command(editor, name)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		log.Printf("Error while editing. Error: %v\n", err)
+	}
+
+	return
+}
+
 // tplReadDefinitions
 //   Read the definition file and then validate it
 //
@@ -756,7 +805,7 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	return nil
 }
 
-// tplDescribe
+// tplDescribe Get default template definitions file
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
 

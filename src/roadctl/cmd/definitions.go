@@ -1,17 +1,19 @@
-// definitions structure
-
+// Package cmd from gobra
+//   types and methods for template definitions file
 package cmd
 
 import (
 	"errors"
 	"fmt"
 	"os"
+
 	//	"reflect"
 	"regexp"
 	"strings"
 )
 
-// Tables require additional documentaion.
+// Tables strucuter for user defined tables that need
+// to be generated
 type Tables struct {
 	// TableName is the name of the table to create.
 	//   This is really just a sub-object
@@ -67,7 +69,8 @@ type Tables struct {
 	} `yaml:"columns"`
 }
 
-// Community require additional documentaion.
+// Community files to be included
+//   For example, CONTIRBUTING.md
 type Community struct {
 	CommunityFiles []struct {
 		Name string `yaml:"name"`
@@ -78,7 +81,7 @@ type Community struct {
 	Description string `yaml:"description"`
 }
 
-// Info is holds API help information.
+// Info defines information about the services and organization
 type Info struct {
 	APIVersion    string `yaml:"api-version"`
 	ID            string `yaml:"id"`
@@ -88,7 +91,7 @@ type Info struct {
 	Version       string `yaml:"version"`
 }
 
-// Dependencies require additional documentaion.
+// Dependencies that this service requires
 type Dependencies []struct {
 	Command          string      `yaml:"command"`
 	Comments         string      `yaml:"comments"`
@@ -104,7 +107,7 @@ type Dependencies []struct {
 	Topics      []string      `yaml:"topics,omitempty"`
 }
 
-// Maintainer require additional documentaion.
+// Maintainer contact information
 type Maintainer struct {
 	Email string `yaml:"email"`
 	Name  string `yaml:"name"`
@@ -112,7 +115,7 @@ type Maintainer struct {
 	Web   string `yaml:"web"`
 }
 
-// ProjectFiles require additional documentaion.
+// ProjectFiles template files to be included
 type ProjectFiles struct {
 	Description string `yaml:"description"`
 	Name        string `yaml:"name"`
@@ -120,14 +123,15 @@ type ProjectFiles struct {
 	Src         string `yaml:"src"`
 }
 
-//Badges require additional documentaion.
+// Badges are links with graphis to be included in
+// doc/service.html file.  These go to CI test results
 type Badges struct {
 	Enable bool   `yaml:"enable"`
 	Link   string `yaml:"link"`
 	Name   string `yaml:"name"`
 }
 
-// ConfigurationFile require additional documentaion.
+// ConfigurationFile where the configuration can be found
 type ConfigurationFile struct {
 	ArtifactsDir string `yaml:"artifacts-dir"`
 	Name         string `yaml:"name"`
@@ -135,7 +139,7 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
-// Integrations require additional documentaion.
+// Integrations CI/CD tools
 type Integrations struct {
 	Badges []Badges `yaml:"badges,omitempty"`
 	Name   string   `yaml:"name"`
@@ -165,7 +169,7 @@ type Integrations struct {
 	ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
 }
 
-// Project require additional documentaion.
+// Project information
 type Project struct {
 	Description  string         `yaml:"description"`
 	Dependencies Dependencies   `yaml:"dependencies"`
@@ -305,6 +309,11 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 
 	if len(c) == 0 {
 		return
+	}
+
+	for _, v := range c {
+		parent.Children = append(parent.Children, &v)
+		d.addChildren(&v)
 	}
 	for _, v := range c {
 		parent.Children = append(parent.Children, &v)
