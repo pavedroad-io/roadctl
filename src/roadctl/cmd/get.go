@@ -105,10 +105,18 @@ func initTemplates() {
 	// Create template dir if necessary
 	if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
 		fmt.Println("defaultTemplateDir")
-		os.MkdirAll(defaultTemplateDir, os.ModePerm)
+		ferr := os.MkdirAll(defaultTemplateDir, os.ModePerm)
+		if ferr != nil {
+			fmt.Println("Unable to intialize template repository :", ferr)
+			return
+		}
 	}
-	client := getClient()
-	tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
+	err := tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, getClient())
+	if err != nil {
+		fmt.Println("Error initializing template repository :", err)
+
+	}
+
 }
 
 func getByResource(r, n string) Response {

@@ -100,11 +100,11 @@ func ensureSonarCloudKeyExists(client sonarcloud.SonarCloudClient,
 			if strings.Contains(err.Error(), "already exists") {
 				// Continue because the records already exists
 				return nil
-			} else {
-				// Continue because we can't connect to the server
-				log.Println("failed conneting to SonarCloud.io")
-				return err
 			}
+			// Else, we can't connect to the server
+			log.Println("failed conneting to SonarCloud.io")
+			return err
+
 		}
 	}
 
@@ -126,7 +126,7 @@ func ensureSonarCloudKeyExists(client sonarcloud.SonarCloudClient,
 	_, err := client.CreateProject(p)
 
 	if err != nil {
-		log.Println("Failed creating project %s", key)
+		log.Println("Failed creating project:", key)
 		return err
 	}
 

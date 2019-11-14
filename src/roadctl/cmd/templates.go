@@ -452,7 +452,11 @@ func (t tplDescribeResponse) RespondWithJSON() string {
 	for _, val := range t.Templates {
 		//body := make(map[interface{}]interface{})
 		var body interface{}
-		yaml.Unmarshal([]byte(val.Content), &body)
+		err := yaml.Unmarshal([]byte(val.Content), &body)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		//fmt.Println(body)
 
 		body = convert(body)
@@ -520,6 +524,7 @@ func (t tplListResponse) RespondWithYAML() string {
 //  org: GitHub orginization
 //  repo: GitHub repository
 //  path: path to start in repository
+//  outdir: destination directory
 //  client: a github client
 //
 func tplPull(pullOptions, org, repo, path, outdir string,
@@ -533,27 +538,30 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 
 	if err != nil {
 		//TODO: change to proper logging method
-		fmt.Println(err)
+		//fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 
 	//fmt.Println(rsp.StatusCode)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-
+	//if err != nil {
+	//	log.Println(err)
+	//	os.Exit(1)
+	//}
 	if fileContent != nil {
 		dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
 		fp := outdir + "/" + *fileContent.Path
 		if _, err := os.Stat(fp); os.IsNotExist(err) {
-			os.Create(fp)
+			_, ferr := os.Create(fp)
+			if ferr != nil {
+				fmt.Println(ferr)
+			}
+
 		}
 		err = ioutil.WriteFile(fp, dstr, 0644)
 		if err != nil {
 			fmt.Println(err)
 		}
-
 	} else {
 		//fmt.Println(directoryContent)
 		for _, item := range directoryContent {
@@ -562,8 +570,13 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 			if *item.Type == "dir" {
 				dn := outdir + "/" + *item.Path
 				if _, err := os.Stat(dn); os.IsNotExist(err) {
-					os.MkdirAll(dn, os.ModePerm)
-					fmt.Println("Template directory created: ", dn)
+					ferr := os.MkdirAll(dn, os.ModePerm)
+					if ferr == nil {
+						fmt.Println("Template directory created: ", dn)
+					} else {
+						fmt.Println("Couldn't create template directory: ", dn)
+
+					}
 				}
 				_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
 			}
@@ -686,7 +699,7 @@ func tplCreate(rn string) string {
 		// Ensure the path to the file exissts
 		if v.RelativePath != "" {
 			if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
-				err := os.MkdirAll(v.RelativePath, 0766)
+				err := os.MkdirAll(v.RelativePath, 0750)
 				if err != nil {
 					fmt.Println("Failed to make directory: ", v.RelativePath)
 				}
@@ -713,8 +726,20 @@ func tplCreate(rn string) string {
 			fmt.Printf("Template execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
 		}
-		bw.Flush()
-		file.Close()
+		err = bw.Flush()
+		if err != nil {
+			fmt.Println("Unexpecetd buffer error:", err)
+			os.Exit(-1)
+
+		}
+
+		err = file.Close()
+		if err != nil {
+			fmt.Println("Unexpecetd file closing error:", err)
+			os.Exit(-1)
+
+		}
+
 	}
 
 	// Execute goimport for code formating
@@ -736,10 +761,15 @@ func tplEdit(name string) {
 	path, err := exec.LookPath(editor)
 	if err != nil {
 		log.Fatal(editor, "not found")
+		return
 	}
 
 	fmt.Println(path, name)
-	cmd := exec.Command(editor, name)
+	//gosec issues
+	//still not resolved!
+	nName := filepath.Clean(name)
+	nPath := filepath.Clean(path)
+	cmd := exec.Command(nPath, nName)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -764,7 +794,7 @@ func tplEdit(name string) {
 func tplReadDefinitions(definitionsStruct *tplDef) error {
 
 	fmt.Println("Reading defintions from: ", tplDefFile)
-	df, err := os.Open(tplDefFile)
+	df, err := os.Open(filepath.Clean(tplDefFile))
 	if err != nil {
 		fmt.Println("failed to open:", tplDefFile, ", error:", err)
 	}
@@ -819,9 +849,9 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 			continue
 		}
 
-		jf, err := os.Open(fn)
+		jf, err := os.Open(filepath.Clean(fn))
 		if err != nil {
-			fmt.Printf("failed to open: %v err %v", fn, err)
+			fmt.Println("Failed to open: ", fn, " error :", err)
 			continue
 		}
 
@@ -936,13 +966,17 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 			if _, err := os.Stat(dn); os.IsNotExist(err) {
 				continue
 			}
-			f, err := os.Open(dn)
+			f, err := os.Open(filepath.Clean(dn))
 			if err != nil {
 				continue
 			}
 
 			list, err := f.Readdir(-1)
-			f.Close()
+			ferr := f.Close()
+			if ferr != nil {
+				fmt.Println("Unexpected close: ", f, " error :", ferr)
+
+			}
 
 			if err != nil {
 				continue

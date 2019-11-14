@@ -91,7 +91,7 @@ func initAuthentication() {
 		return
 	}
 
-	envVar := os.Getenv("ACCESS-TOKEN")
+	envVar := os.Getenv("GH_ACCESS_TOKEN")
 	if envVar != "" {
 		userAccessToken = envVar
 		return
@@ -102,8 +102,8 @@ func initAuthentication() {
 		return
 	}
 
-	envName := os.Getenv("USER-NAME")
-	envPass := os.Getenv("USER-PASSWORD")
+	envName := os.Getenv("GH_USER_NAME")
+	envPass := os.Getenv("GH_USER_PASSWORD")
 
 	if envPass != "" {
 		userPassword = envPass
