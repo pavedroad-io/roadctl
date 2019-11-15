@@ -17,6 +17,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
 import (
 	"fmt"
 

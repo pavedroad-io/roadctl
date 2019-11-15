@@ -2,6 +2,25 @@
 //   types and methods for template definitions file
 package cmd
 
+/*
+Copyright © 2019 PavedRoad <info@pavedroad.io>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
 import (
 	"errors"
 	"fmt"
@@ -398,34 +417,14 @@ func (d *tplDef) BadgesToString() string {
 //Valide the table(s) definition
 
 func (d *tplDef) Validate() *tblDefError {
-	//ErrList := nil
-	//LastErr := nil
-
-	ErrList = &tblDefError{}
-	LastErr = ErrList
-
-	//e := tblDefError{}
 
 	// Do all tables and report all potential errors
 	for _, t := range d.tables() {
 		// Metadata validation
-		//e := d.validateTableMetaData(t)
-
 		d.validateTableMetaData(t)
-		//if len(e) > 0 {
-		//	for _, x := range e {
-		//		errList = append(errList, x)
-		//	}
-		//}
-		// Column validation
-		//e = d.validateTableColumns(t)
 
+		//Table definition validation
 		d.validateTableColumns(t)
-		//if len(e) > 0 {
-		//	for _, x := range e {
-		//		errList = append(errList, x)
-		//	}
-		//}
 
 	}
 	return ErrList
@@ -463,19 +462,6 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 
 		}
 	}
-	// Make sure it is a valid type
-	isValidType := false
-	for _, m := range validTypes {
-		if strings.ToUpper(t.TableType) == m {
-			isValidType = true
-			break
-		}
-	}
-
-	if !isValidType {
-		d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
-
-	}
 
 	// If a parent is specified make sure it exists
 	if t.ParentTable != "" {
@@ -484,6 +470,21 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 			d.setErrorList(NOPARENT, "Parent table not found: ["+t.ParentTable+"]", t.TableName)
 
 		}
+	} else {
+		// Make sure it is a valid type
+		isValidType := false
+		for _, m := range validTypes {
+			if strings.ToUpper(t.TableType) == m {
+				isValidType = true
+				break
+			}
+		}
+
+		if !isValidType {
+			d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
+
+		}
+
 	}
 	return ErrList
 }

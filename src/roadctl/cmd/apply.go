@@ -17,13 +17,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
-// applyCmd represents the apply command
+//  applyCmd
+//    represents the apply command
 var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply configuration to named resource",
@@ -36,6 +40,10 @@ roadctl apply environment -f config.yaml`,
 	},
 }
 
+//  init
+//    Shell description for init function
+//    Editing anticipated!
+//
 func init() {
 	rootCmd.AddCommand(applyCmd)
 

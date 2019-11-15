@@ -42,9 +42,9 @@ var rootCmd = &cobra.Command{
 
   Usage: roadctl [command] [TYPE] [NAME] [flags]
 
-  TYPE specifies a resource type
-  NAME is the name of a resource
-  flags specify options`,
+  [TYPE] specifies a resource type
+  [NAME] is the name of a resource
+  [flags] specify options`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
