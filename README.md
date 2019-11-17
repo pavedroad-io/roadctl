@@ -225,17 +225,17 @@ A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate li
 `$ roadctl get templates --token #######`
 
 ### Using environment variables
-`$ export ACCESS-TOKEN="#########"`
+`$ export GH_ACCESS_TOKEN="#########"`
 
 **or**
 
-`$ export USER-NAME="#########"`
-`$ export USER-PASSWORD="#########"`
+`$ export GH_USER_NAME="#########"`
+`$ export GH_USER-PASSWORD="#########"`
 
 ### Or a combination
 `$ roadctl get templates --init  --user YYYYYYY`
 
-`$ export USER-PASSWORD="#########"`
+`$ export GH_USER_PASSWORD="#########"`
 
 ## GitHub Authentication
 A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
@@ -246,14 +246,14 @@ roadctl get templates --init --password XXXXXXX --user YYYYYYY
 roadctl get templates --token #######
 
 ### Using environment variables
-export ACCESS-TOKEN="#########"
+export GH_ACCESS_TOKEN="#########"
 **or**
-export USER-NAME="#########"
-export USER-PASSWORD="#########"
+export GH_USER_NAME="#########"
+export GH_USER_PASSWORD="#########"
 
 ### Or a combination
 roadctl get templates --init  --user YYYYYYY
-export USER-PASSWORD="#########"
+export GH_USER_PASSWORD="#########"
 
 ## Project Status
 
