@@ -159,7 +159,7 @@ your application, CI, and test framework.
 ### Generate your application
 Will build your source code, test cases, integrations, documentation, and CI pipeline
 
-`$ roadctl create templates --template datamgr --definition my myNewService.yaml`
+`$ roadctl create templates --template datamgr --definition myNewService.yaml`
 
 To compile and invoke the CI/CD pipeline enter:
 
