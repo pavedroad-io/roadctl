@@ -181,7 +181,7 @@ type Project struct {
 
 type tplDef struct {
 	TableList []Tables  `yaml:"tables"`
-	Commuity  Community `yaml:"community"`
+	Community  Community `yaml:"community"`
 	Info      Info      `yaml:"info"`
 	Project   Project   `yaml:"project"`
 }
