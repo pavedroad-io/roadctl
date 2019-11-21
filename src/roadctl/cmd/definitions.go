@@ -200,7 +200,7 @@ type Project struct {
 
 type tplDef struct {
 	TableList []Tables  `yaml:"tables"`
-	Commuity  Community `yaml:"community"`
+	Community Community `yaml:"community"`
 	Info      Info      `yaml:"info"`
 	Project   Project   `yaml:"project"`
 }
@@ -334,10 +334,15 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 		parent.Children = append(parent.Children, &v)
 		d.addChildren(&v)
 	}
-	for _, v := range c {
-		parent.Children = append(parent.Children, &v)
-		d.addChildren(&v)
-	}
+	/*
+		     Remooved as duplicate.
+		     No noted reason for this additional processing.
+
+			         for _, v := range c {
+					parent.Children = append(parent.Children, &v)
+					d.addChildren(&v)
+				}
+	*/
 	return
 
 }

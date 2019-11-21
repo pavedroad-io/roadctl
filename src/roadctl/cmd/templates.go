@@ -78,7 +78,8 @@ const strcutComment = `
 // JSON formaters
 const (
 	jsonObjectStart = "{\n"
-	jsonObjectEnd   = "}"
+	jsonObjectEnd   = "}\n"
+	jsonFileEnd     = "}"
 	jsonListStart   = "["
 	jsonListEnd     = "]"
 	jsonSeperator   = ",\n"
@@ -190,7 +191,8 @@ func tplJSONData(defs tplDef, output *tplData) error {
 	var pj bytes.Buffer
 	err := json.Indent(&pj, []byte(jsonString), "", "\t")
 	if err != nil {
-		log.Fatal("Failed to generaet json data with ", jsonString)
+		fmt.Println(err)
+		log.Fatal("Failed to generate json data with ", jsonString)
 	}
 	output.PostJSON = string(pj.String())
 	return nil
@@ -202,14 +204,24 @@ func tplJSONData(defs tplDef, output *tplData) error {
 //
 func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 	table, _ := defs.tableByName(item.Name)
+	itmNum := len(item.Children)
 
-	// Start this table
+	/*
+	 tplItem can only supply one parent table but
+	 multiple hierarchy of sub tables.
+
+	 Logic should entend to make sure parent-childern
+	 relationships and maintained with table keys.
+	*/
+
+	// Start this top level
 	if item.Root {
-		*jsonString = fmt.Sprintf(jsonObjectStart)
-	} else {
-		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
 		*jsonString += fmt.Sprintf(jsonObjectStart)
 	}
+
+	//Start a table
+	*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
+	*jsonString += fmt.Sprintf(jsonObjectStart)
 
 	// Only add the UUID if this is the parent table
 	if item.Root {
@@ -243,25 +255,44 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
 		*jsonString += fmt.Sprintf(jsonValue, sample)
-		if idx < numCol-1 {
-			*jsonString += fmt.Sprintf(jsonSeperator)
+		if idx == numCol-1 {
+			//At last column for this table
+
+			if itmNum == 0 {
+				//End tables with no children.
+				*jsonString += fmt.Sprintf("\n")
+				*jsonString += fmt.Sprintf(jsonObjectEnd)
+
+			} else {
+				//Children to process, so prepare
+				*jsonString += fmt.Sprintf(jsonSeperator)
+
+			}
+
 		} else {
-			*jsonString += fmt.Sprintf("\n")
+			//More columns to process.
+			*jsonString += fmt.Sprintf(jsonSeperator)
 		}
 	}
 
 	// See if there are any children
-	if len(item.Children) > 0 {
-		*jsonString += fmt.Sprintf(jsonSeperator)
-		// Add child tables first
+	if itmNum > 0 {
+
+		// Process a child table
 		for _, child := range item.Children {
 			tplAddJSON(*child, defs, jsonString)
 		}
+		// Close tables that had children.
+		*jsonString += jsonObjectEnd
+
 	}
 
-	// Close and append to tplData.SwaggerGeneratedStructs
-	*jsonString += jsonObjectEnd
+	//Close the top level
+	if item.Root {
+		*jsonString += jsonFileEnd
+	}
 
+	// Return and append to tplData.SwaggerGeneratedStructs
 	return
 }
 
@@ -615,6 +646,10 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 func tplCreate(rn string) string {
 	var filelist []tplLocation
 	//var filenames []string
+	//tplFile = rn
+
+	//rn not required, will just say templates
+	//tplFile willl have name of template file.
 
 	//Get back a list of templates for requrested template name
 	tplRsp, err := tplRead(tplFile)
@@ -650,6 +685,11 @@ func tplCreate(rn string) string {
 	tplInputData := tplData{}
 	err = tplDataMapper(defs, &tplInputData)
 
+	if err != nil {
+		fmt.Println("Data mapper failed: ", err)
+		os.Exit(-1)
+	}
+
 	err = validateIntegrations(&tplInputData)
 
 	if err != nil {
@@ -672,7 +712,8 @@ func tplCreate(rn string) string {
 	}
 
 	// Build the template cache
-	//templates, err = template.New("").ParseFiles(tplRsp...)
+	// ParseFiles is a variadic function which takes varaiable
+	// arguments from the tplRsp slice
 	templates, err = template.New("").ParseFiles(tplRsp...)
 	if err != nil {
 		fmt.Println("Template parsing failed: ", err)
@@ -916,7 +957,11 @@ func tplExplain(tplListOption string, rn string) tplExplainResponse {
 func tplRead(tplName string) ([]string, error) {
 	var tplFlLst []string
 
+	//tplName no longer needed, kept for func signature
+	//tplFile is the name of the required templates
+
 	tplRsp := tplGet(tplResourceName, tplFile)
+
 	if len(tplRsp.Templates) == 0 {
 		em := errors.New("Template " + tplName + " not found")
 		return tplFlLst, em
@@ -939,7 +984,10 @@ func tplRead(tplName string) ([]string, error) {
 			}
 			// Don't include directories, just their contents
 			if info.IsDir() == false {
-				tplFlLst = append(tplFlLst, path)
+				//Don't include backup files
+				if len(strings.Split(path, "~")) == 1 {
+					tplFlLst = append(tplFlLst, path)
+				}
 			}
 			return nil
 		})
@@ -959,6 +1007,8 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 	tplTLD := []string{"crd", "microservices", "serverless"}
 	tplSLD := []string{"ga", "experimental", "incubation"}
 	var response tplListResponse
+
+	//rn is not really needed. tplFile has name of template
 
 	for _, tld := range tplTLD {
 		for _, sld := range tplSLD {
@@ -983,13 +1033,14 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 			}
 
 			for _, fn := range list {
-				nrec := tplListItem{tld, sld, fn.Name(), dn}
+
 				// Skip empty directories initialized with a .nothing file
 				if fn.Name() != ".nothing" {
 					if rn != "" && fn.Name() != rn {
 						//n is defined skip records that don't match
 						continue
 					}
+					nrec := tplListItem{tld, sld, fn.Name(), dn}
 					response.Templates = append(response.Templates, nrec)
 				}
 			}

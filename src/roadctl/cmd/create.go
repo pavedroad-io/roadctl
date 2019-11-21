@@ -48,7 +48,7 @@ func runCreate(cmd *cobra.Command, args []string) string {
 
 	if err := isValidResourceType(r); err == nil {
 		if tplFile == "" {
-			fmt.Println("Usage: roadctl create emplates -t templateName")
+			fmt.Println("Usage: roadctl create templates -t templateName")
 			fmt.Println("       --template or -t option is required")
 			return msg
 		}
