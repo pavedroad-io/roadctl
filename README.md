@@ -58,6 +58,38 @@ you can control that by using the --format option:
 
 --format yaml
 
+## Note before you begin
+
+### sonarcloud Requirements
+PavedRoad utlizes sonarcloud to champion quality code in this project. Please setup your sonarcould account and the following
+environment variable to take full advantage of the CLI.
+
+`$ export SONARCLOUD_TOKEN="#########"`
+
+### GitHub Authentication
+A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
+
+### From the command line
+`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
+
+**or**
+
+`$ roadctl get templates --token #######`
+
+### Using environment variables
+`$ export GH_ACCESS_TOKEN="#########"`
+
+**or**
+
+`$ export GH_USER_NAME="#########"`
+`$ export GH_USER-PASSWORD="#########"`
+
+### Or a combination
+
+`$ export GH_USER_PASSWORD="#########"`
+`$ roadctl get templates --init  --user YYYYYYY`
+
+
 ## Examples: Common operations
 
 ### Initialize a local template repository
@@ -213,47 +245,6 @@ Rewrite code in go formatting
 Or to format and simplify the code use
 
 `$ make simplify`
-
-## GitHub Authentication
-A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
-
-### From the command line
-`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
-
-**or**
-
-`$ roadctl get templates --token #######`
-
-### Using environment variables
-`$ export GH_ACCESS_TOKEN="#########"`
-
-**or**
-
-`$ export GH_USER_NAME="#########"`
-`$ export GH_USER-PASSWORD="#########"`
-
-### Or a combination
-`$ roadctl get templates --init  --user YYYYYYY`
-
-`$ export GH_USER_PASSWORD="#########"`
-
-## GitHub Authentication
-A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
-
-### From the command line
-roadctl get templates --init --password XXXXXXX --user YYYYYYY
-**or**
-roadctl get templates --token #######
-
-### Using environment variables
-export GH_ACCESS_TOKEN="#########"
-**or**
-export GH_USER_NAME="#########"
-export GH_USER_PASSWORD="#########"
-
-### Or a combination
-roadctl get templates --init  --user YYYYYYY
-export GH_USER_PASSWORD="#########"
 
 ## Project Status
 
