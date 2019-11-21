@@ -1,8 +1,5 @@
-// Package cmd from cobra
-package cmd
-
 /*
-Copyright © 2019 PavedRoad <info@pavedroad.io>
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,9 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
+package cmd
+
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -33,61 +34,20 @@ var editCmd = &cobra.Command{
   For example:
     roadctl edit template foo`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runEdit(cmd, args)
+		fmt.Println("edit called")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(editCmd)
-}
 
-// runEdit
-func runEdit(cmd *cobra.Command, args []string) {
-	resources := strings.Split(args[0], ",")
+	// Here you will define your flags and configuration settings.
 
-	for _, r := range resources {
-		if err := isValidResourceType(r); err == nil {
-			if len(args) > 1 {
-				editResource(r, args[1])
-			} else {
-				fmt.Println("resource name required")
-			}
-		} else {
-			fmt.Println(err)
-		}
-	}
-}
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// editCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-func editResource(r, n string) {
-	switch r {
-	case "environments":
-		fmt.Println("no environments found")
-		return
-	case "builders":
-		fmt.Println("no builders found")
-		return
-	case "taggers":
-		fmt.Println("no taggers found")
-		return
-	case "tests":
-		fmt.Println("no tests found")
-		return
-	case "templates":
-		tplEdit(n)
-		return
-	case "integrations":
-		fmt.Println("no integrations found")
-		return
-	case "artifacts":
-		fmt.Println("no artifacts found")
-		return
-	case "providers":
-		fmt.Println("no providers found")
-		return
-	case "deployments":
-		fmt.Println("no deployments found")
-		return
-	}
-
-	return
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// editCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

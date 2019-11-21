@@ -1,4 +1,9 @@
-// Package cmd from cobra
+/*
+ */
+
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
 package cmd
 
 /*
@@ -18,17 +23,16 @@ limitations under the License.
 */
 
 import (
+	"github.com/google/uuid"
 	"math/rand"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyz" +
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-// RandomString returns a human readable string of length X
-// TODO: Move these to a core lib
+// RandomString Returns a random string of length specified
+//
 func RandomString(length int) string {
 	var seed *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -39,22 +43,26 @@ func RandomString(length int) string {
 	return string(b)
 }
 
-// RandomInteger return random int no larger than max
+// RandomInteger Returns a random int between speified min and max int
+//
 func RandomInteger(min, max int) int {
 	return min + rand.Intn(max-min)
 }
 
-// RandomBool return random boolen
+// RandomBool Returns true or false
+//
 func RandomBool() bool {
 	return rand.Intn(2) == 0
 }
 
-// RandomFloat returns a random float
+// RandomFloat Returns a random float64
+//
 func RandomFloat() float64 {
 	return rand.Float64()
 }
 
-// RandomUUID generate a new UUID
+// RandomUUID Returns a random UUID
+//
 func RandomUUID() uuid.UUID {
 	return uuid.New()
 }

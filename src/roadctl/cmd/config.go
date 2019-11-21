@@ -1,8 +1,9 @@
-// Package cmd module from cobra
-package cmd
-
 /*
+<<<<<<< HEAD
 Copyright © 2019 PavedRoad <info@pavedroad.io>
+=======
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
+>>>>>>> issue#6
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +21,11 @@ limitations under the License.
 //Note: above and below blank lines required for golint.
 //Related to required documentation format for packages.
 
+<<<<<<< HEAD
+=======
+package cmd
+
+>>>>>>> issue#6
 import (
 	"fmt"
 
@@ -42,8 +48,6 @@ var configCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(configCmd)
-
-	fmt.Println()
 
 	// Here you will define your flags and configuration settings.
 

@@ -1,8 +1,5 @@
-// Package cmd from cobra
-package cmd
-
 /*
-Copyright © 2019 PavedRoad <info@pavedroad.io>
+Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+//Note: above and below blank lines required for golint.
+//Related to required documentation format for packages.
+
+package cmd
 
 import (
 	"errors"
@@ -111,12 +113,19 @@ func initTemplates() {
 			return
 		}
 	}
+<<<<<<< HEAD
 	err := tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, getClient())
+=======
+	err := tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir)
+>>>>>>> issue#6
 	if err != nil {
 		fmt.Println("Error initializing template repository :", err)
 
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> issue#6
 }
 
 func getByResource(r, n string) Response {
