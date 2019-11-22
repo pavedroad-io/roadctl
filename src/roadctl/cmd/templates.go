@@ -1,5 +1,8 @@
+// Package cmd from cobra
+package cmd
+
 /*
-Copyright © 2019 PavedRoad
+Copyright © 2019 PavedRoad <info@pavedroad.io>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +19,6 @@ limitations under the License.
 
 //TODO: create standard error messages as const
 
-package cmd
-
 import (
 	"bufio"
 	"bytes"
@@ -29,14 +30,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
-	// "reflect"
-	"github.com/google/go-github/github"
-	"github.com/iancoleman/strcase"
 	"strings"
 	"text/template"
 	"time"
-	// "github.com/ompluscator/dynamic-struct"
+
+	"github.com/google/go-github/github"
+	"github.com/iancoleman/strcase"
 	"gopkg.in/yaml.v2"
 )
 
@@ -45,23 +46,25 @@ var defaultOrg = "pavedroad-io"
 
 // Default template directory on GitHub
 var defaultRepo = "templates"
-var defaultPath = ""
+var defaultPath string
 
 // Default template directory on local machine
 var defaultTemplateDir = ".templates"
 var repoType = "GitHub"
-var tplFile = ""      // Name of the template file to use
+var tplFile string    // Name of the template file to use
 var tplDir = "."      // Directory for generated code output
 var tplDefFile string // Name of the definitions file used to generated tempaltes
-var tplDirSelected = ""
+var tplDirSelected string
 
 //TEMPLATE needs documentation.
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
-	TEMPLATE        = "template"
-	ORGANIZATION    = "organization"
-	prCopyright     = `
+	// TEMPLATE is the prefix to be replaced in front of a file name
+	TEMPLATE = "template"
+	// ORGANIZATION is the prefix to be replaced in front of a file name
+	ORGANIZATION = "organization"
+	prCopyright  = `
 //
 // Copyright (c) PavedRoad. All rights reserved.
 // Licensed under the Apache2. See LICENSE file in the project root for full license information.
@@ -94,7 +97,7 @@ const structClose = "}\n\n"
 
 // structField
 //  name, type, encoding, json|yaml, encoding options
-const structField = "\t%s %s\t`%s:%s`\n"
+const structField = "\t%s %s\t`%s:\"%s\"`\n"
 
 // structSubStruct
 // Same as structField except:
@@ -178,6 +181,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 //  tplJSONData
 //    Use the schema definition found in tplDefs to create
 //    Sample JSON data files
+//
 func tplJSONData(defs tplDef, output *tplData) error {
 	var jsonString string
 	order := defs.devineOrder()
@@ -372,6 +376,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		} else {
 			fieldType = strings.ToLower(col.Type)
 		}
+
 		//Deal with time types
 		tableString += fmt.Sprintf(structField,
 			strcase.ToCamel(col.Name),
@@ -482,10 +487,7 @@ func (t tplDescribeResponse) RespondWithJSON() string {
 		if err != nil {
 			fmt.Println(err)
 		}
-<<<<<<< HEAD
 
-=======
->>>>>>> issue#6
 		//fmt.Println(body)
 
 		body = convert(body)
@@ -553,17 +555,11 @@ func (t tplListResponse) RespondWithYAML() string {
 //  org: GitHub orginization
 //  repo: GitHub repository
 //  path: path to start in repository
-<<<<<<< HEAD
 //  outdir: destination directory
 //  client: a github client
 //
 func tplPull(pullOptions, org, repo, path, outdir string,
 	client *github.Client) error {
-=======
-func tplPull(pullOptions, org, repo, path, outdir string) error {
-	//TODO: make this an authenticated request/client
-	client := github.NewClient(nil)
->>>>>>> issue#6
 
 	opts := github.RepositoryContentGetOptions{}
 
@@ -577,19 +573,12 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 		log.Println(err)
 		return err
 	}
+
 	//fmt.Println(rsp.StatusCode)
-<<<<<<< HEAD
 	//if err != nil {
 	//	log.Println(err)
 	//	os.Exit(1)
 	//}
-=======
-	//		if err != nil {
-	//			log.Println(err)
-	//			os.Exit(1)
-	//		}
-
->>>>>>> issue#6
 	if fileContent != nil {
 		dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
 		fp := outdir + "/" + *fileContent.Path
@@ -620,12 +609,12 @@ func tplPull(pullOptions, org, repo, path, outdir string) error {
 
 					}
 				}
-				_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
+				_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
 			}
 
 			// For files, request their content
 			if *item.Type == "file" {
-				_ = tplPull(pullOptions, org, repo, *item.Path, outdir)
+				_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
 			}
 
 		}
@@ -692,10 +681,10 @@ func tplCreate(rn string) string {
 		fmt.Println(err)
 		return (err.Error())
 	}
+
 	tplInputData := tplData{}
 	err = tplDataMapper(defs, &tplInputData)
 
-<<<<<<< HEAD
 	if err != nil {
 		fmt.Println("Data mapper failed: ", err)
 		os.Exit(-1)
@@ -708,8 +697,6 @@ func tplCreate(rn string) string {
 		os.Exit(-1)
 	}
 
-=======
->>>>>>> issue#6
 	// Generate internal structures
 	err = tplGenerateStructurs(defs, &tplInputData)
 	if err != nil {
@@ -754,11 +741,6 @@ func tplCreate(rn string) string {
 		if v.RelativePath != "" {
 			if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
 				err := os.MkdirAll(v.RelativePath, 0750)
-<<<<<<< HEAD
-=======
-				//err := os.MkdirAll(v.RelativePath, fi.Mode())
-
->>>>>>> issue#6
 				if err != nil {
 					fmt.Println("Failed to make directory: ", v.RelativePath)
 				}
@@ -785,7 +767,6 @@ func tplCreate(rn string) string {
 			fmt.Printf("Template execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
 		}
-<<<<<<< HEAD
 		err = bw.Flush()
 		if err != nil {
 			fmt.Println("Unexpecetd buffer error:", err)
@@ -807,15 +788,17 @@ func tplCreate(rn string) string {
 	//fmt.Println(tplRsp)
 	return ""
 }
-=======
->>>>>>> issue#6
 
-		err = bw.Flush()
-		if err != nil {
-			fmt.Println("Unexpecetd buffer error:", err)
-			os.Exit(-1)
+// tplEdit
+//   use the $EDITOR envar to edit the named resource
+//
+func tplEdit(name string) {
+	editor := os.Getenv("EDITOR")
 
-<<<<<<< HEAD
+	if editor == "" {
+		editor = "vim"
+	}
+
 	path, err := exec.LookPath(editor)
 	if err != nil {
 		log.Fatal(editor, "not found")
@@ -828,23 +811,22 @@ func tplCreate(rn string) string {
 	nName := filepath.Clean(name)
 	nPath := filepath.Clean(path)
 	cmd := exec.Command(nPath, nName)
-=======
-		}
 
-		err = file.Close()
->>>>>>> issue#6
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-		if err != nil {
-			fmt.Println("Unexpecetd file closing error:", err)
-			os.Exit(-1)
-
-		}
+	err = cmd.Start()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// Execute goimport for code formating
+	err = cmd.Wait()
+	if err != nil {
+		log.Printf("Error while editing. Error: %v\n", err)
+	}
 
-	//fmt.Println(tplRsp)
-	return ""
+	return
 }
 
 // tplReadDefinitions
@@ -852,12 +834,10 @@ func tplCreate(rn string) string {
 //
 func tplReadDefinitions(definitionsStruct *tplDef) error {
 
-	//Ajust for goSec
-	//tplDefFile = filepath.Clean(tplDefFile)
 	fmt.Println("Reading defintions from: ", tplDefFile)
 	df, err := os.Open(filepath.Clean(tplDefFile))
 	if err != nil {
-		fmt.Println("Failed to open:", tplDefFile, " error: ", err)
+		fmt.Println("failed to open:", tplDefFile, ", error:", err)
 	}
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
@@ -896,7 +876,7 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	return nil
 }
 
-// tplDescribe
+// tplDescribe Get default template definitions file
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
 
@@ -906,9 +886,6 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	// Load the defitions.yaml file in the template directory
 	for _, item := range rsp.Templates {
 		fn := item.Path + "/" + item.Name + "/" + "definition.yaml"
-		//Ajust for goSec
-		//fn = filepath.Clean(fn)
-
 		if _, err := os.Stat(fn); os.IsNotExist(err) {
 			continue
 		}
@@ -960,7 +937,7 @@ func tplExplain(tplListOption string, rn string) tplExplainResponse {
 
 	tf, err := os.Open(fn)
 	if err != nil {
-		fmt.Println("Failed to open: ", tf, " error: ", err)
+		fmt.Printf("failed to open: %v err %v", tf, err)
 		return response
 	}
 	defer tf.Close()
@@ -998,7 +975,7 @@ func tplRead(tplName string) ([]string, error) {
 	tplItem := tplRsp.Templates[0]
 	td := tplItem.Path + "/" + tplItem.Name
 
-	fmt.Println("Tpl dir:", td)
+	fmt.Println("Tpl dir", td)
 	tplDirSelected = td
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
@@ -1016,7 +993,7 @@ func tplRead(tplName string) ([]string, error) {
 		})
 
 	if err != nil {
-		em := errors.New("Error: Unable to walk directory: " + td)
+		em := errors.New("Error: Unable to walk directory" + td)
 		return tplFlLst, em
 	}
 
@@ -1036,9 +1013,6 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 	for _, tld := range tplTLD {
 		for _, sld := range tplSLD {
 			dn := defaultTemplateDir + "/" + tld + "/" + sld
-			//Ajust for goSec
-			//dn = filepath.Clean(dn)
-
 			if _, err := os.Stat(dn); os.IsNotExist(err) {
 				continue
 			}

@@ -1,5 +1,8 @@
+// Package cmd module from cobra
+package cmd
+
 /*
-Copyright © 2019 NAME HERE <EMAIL ADDRESS>
+Copyright © 2019 PavedRoad <info@pavedroad.io>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,11 +20,6 @@ limitations under the License.
 //Note: above and below blank lines required for golint.
 //Related to required documentation format for packages.
 
-<<<<<<< HEAD
-=======
-package cmd
-
->>>>>>> issue#6
 import (
 	"fmt"
 

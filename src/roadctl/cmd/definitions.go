@@ -325,17 +325,13 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 	if len(c) == 0 {
 		return
 	}
-<<<<<<< HEAD
 
-=======
->>>>>>> issue#6
 	for _, v := range c {
 		parent.Children = append(parent.Children, &v)
 		d.addChildren(&v)
 	}
-<<<<<<< HEAD
 	/*
-		     Remooved as duplicate.
+		     Removed as duplicate.
 		     No noted reason for this additional processing.
 
 			         for _, v := range c {
@@ -343,8 +339,6 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 					d.addChildren(&v)
 				}
 	*/
-=======
->>>>>>> issue#6
 	return
 
 }
@@ -424,16 +418,6 @@ func (d *tplDef) BadgesToString() string {
 //Valide the table(s) definition
 
 func (d *tplDef) Validate() *tblDefError {
-<<<<<<< HEAD
-=======
-	//ErrList := nil
-	//LastErr := nil
-
-	//ErrList = &tblDefError{}
-	//LastErr = ErrList
-
-	//e := tblDefError{}
->>>>>>> issue#6
 
 	// Do all tables and report all potential errors
 	for _, t := range d.tables() {
@@ -488,10 +472,7 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 
 		}
 	} else {
-<<<<<<< HEAD
-=======
 		//do checks only related to parent tables
->>>>>>> issue#6
 		// Make sure it is a valid type
 		isValidType := false
 		for _, m := range validTypes {

@@ -1,5 +1,8 @@
+// Package cmd from cobra
+package cmd
+
 /*
-Copyright © 2019 PavedRoad
+Copyright © 2019 PavedRoad <info@pavedroad.io>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +17,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//Note: above and below blank lines required for golint.
-//Related to required documentation format for packages.
-
-package cmd
-
 import (
 	"fmt"
 	"os"
@@ -32,12 +30,15 @@ import (
 var cfgFile string
 var fmtFlag string = "text"
 var debugFlag string = "info"
+var userName string
+var userPassword string
+var userAccessToken string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "roadctl",
 	Short: "CLI for PavedRoad Development Kit (DevKit)",
-	Long: `$roadctl allows you to work with the PavedRoad CNCF low-code environment and the associated CI/CD pipeline
+	Long: `roadctl allows you to work with the PavedRoad CNCF low-code environment and the associated CI/CD pipeline
 
   Usage: roadctl [command] [TYPE] [NAME] [flags]
 
@@ -60,8 +61,13 @@ func init() {
 	cobra.OnInitialize(initConstants)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.roadctl.yaml)")
-	rootCmd.PersistentFlags().StringVar(&fmtFlag, "format", "f", "Output format: text(default)|json|yaml")
-	rootCmd.PersistentFlags().StringVar(&debugFlag, "debug", "d", "Debug level: info(default)|warm|error|critical")
+	rootCmd.PersistentFlags().StringVar(&fmtFlag, "format", "text", "Output format: text(default)|json|yaml")
+	rootCmd.PersistentFlags().StringVar(&debugFlag, "debug", "info", "Debug level: info(default)|warm|error|critical")
+
+	// For API calls that require authentication
+	rootCmd.PersistentFlags().StringVar(&userName, "user", "", "HTTP basic auth user name")
+	rootCmd.PersistentFlags().StringVar(&userPassword, "password", "", "HTTP basic auth password")
+	rootCmd.PersistentFlags().StringVar(&userAccessToken, "token", "", "OAUTH access token")
 }
 
 // initConstants populates global slices of types
@@ -69,7 +75,6 @@ func initConstants() {
 	// Types or resouces command can act on
 	initResourcetypes()
 
-<<<<<<< HEAD
 	// TODO: Move this into viper configuration
 	initAuthentication()
 
@@ -113,8 +118,6 @@ func initAuthentication() {
 	if envName != "" {
 		userPassword = envPass
 	}
-=======
->>>>>>> issue#6
 	return
 }
 
