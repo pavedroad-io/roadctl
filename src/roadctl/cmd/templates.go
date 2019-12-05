@@ -151,7 +151,6 @@ type tplData struct {
 //    return error if required mappings are missing
 //
 func tplDataMapper(defs tplDef, output *tplData) error {
-	//fmt.Println(defs)
 	output.Name = defs.Info.Name
 	output.NameExported = strcase.ToCamel(defs.Info.Name)
 	output.TplName = defs.Info.ID
@@ -190,7 +189,7 @@ func tplJSONData(defs tplDef, output *tplData) error {
 	var pj bytes.Buffer
 	err := json.Indent(&pj, []byte(jsonString), "", "\t")
 	if err != nil {
-		log.Fatal("Failed to generaet json data with ", jsonString)
+		log.Fatal("Failed to generate json data with ", jsonString)
 	}
 	output.PostJSON = string(pj.String())
 	return nil
@@ -252,9 +251,11 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 
 	// See if there are any children
 	if len(item.Children) > 0 {
+		//fmt.Println("Children", item.Children)
 		*jsonString += fmt.Sprintf(jsonSeperator)
 		// Add child tables first
 		for _, child := range item.Children {
+			//fmt.Println("Range of childs", child)
 			tplAddJSON(*child, defs, jsonString)
 		}
 	}
@@ -603,30 +604,16 @@ func tplCreate(rn string) string {
 	var filelist []tplLocation
 	//var filenames []string
 
-	//Get back a list of templates for requrested template name
-	tplRsp, err := tplRead(tplFile)
+	// Returns a list of all files in the template directory
+	// including there path, .datamgr/Makefile ....
+	inputTemplateFiles, err := tplRead(tplFile)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// Get a list of the files names
-	for _, rec := range tplRsp {
-		nm := filepath.Base(rec)
-		di := rec[len(tplDirSelected)+1 : len(rec)-len(nm)]
-		li := tplLocation{Name: nm, RelativePath: di}
-
-		// If definitions file, save it, otherwise add to filenames
-		// to process as templates
-		if nm == tplDefinition && tplDefFile == "" {
-			fmt.Println("rec", rec)
-			tplDefFile = rec
-		} else {
-			filelist = append(filelist, li)
-		}
-	}
-
 	// Read the definition file
 	defs := tplDef{}
+
 	//TODO: should be a method not a function
 	err = tplReadDefinitions(&defs)
 	if err != nil {
@@ -636,6 +623,56 @@ func tplCreate(rn string) string {
 
 	tplInputData := tplData{}
 	err = tplDataMapper(defs, &tplInputData)
+
+	// Given the list returned in inputTemplateFiles
+	// Create a tplLocation object with the name and path
+	// And a filtered list of template files
+	var filteredTemplateList []string
+	for _, rec := range inputTemplateFiles {
+		nm := filepath.Base(rec)
+		di := rec[len(tplDirSelected)+1 : len(rec)-len(nm)]
+		li := tplLocation{Name: nm, RelativePath: di}
+
+		// This coveres two special cases where we want to create a
+		// directory with the name of the microservice.
+		//
+		//   - 1 If the file name is "template", it represents a
+		//       directory to created. Create it but don't add it
+		//       to the list of templates to process.
+		//       {template manifests/kubernetes/dev/}
+		//
+		//   - 2 If the path contains "/template/", replace the word
+		//       "template" with the name of the microservice and
+		//       add it to the list of templates to process.
+		//       Note: The pattern "/template/" can occur mutliple
+		//       times.
+		//       {template-deployment.yamp manifests/kubernetes/dev/template/}
+
+		if nm == TEMPLATE {
+			nm = tplInputData.Name
+			dirName := di + nm
+			_ = createDirectory(dirName)
+			continue
+		}
+
+		testString1 := "/" + TEMPLATE + "/"
+		if strings.Contains(di, testString1) {
+			replaceString := "/" + tplInputData.Name + "/"
+			li.RelativePath = strings.ReplaceAll(li.RelativePath,
+				testString1, replaceString)
+		}
+
+		// starts with template"/"
+		testString2 := TEMPLATE + "/"
+		if strings.HasPrefix(di, testString2) {
+			replaceString := tplInputData.Name + "/"
+			li.RelativePath = strings.Replace(li.RelativePath,
+				testString2, replaceString, 1)
+		}
+
+		filelist = append(filelist, li)
+		filteredTemplateList = append(filteredTemplateList, rec)
+	}
 
 	err = validateIntegrations(&tplInputData)
 
@@ -659,14 +696,14 @@ func tplCreate(rn string) string {
 	}
 
 	// Build the template cache
-	//templates, err = template.New("").ParseFiles(tplRsp...)
-	templates, err = template.New("").ParseFiles(tplRsp...)
+	//templates, err = template.New("").ParseFiles(inputTemplateFiles...)
+	templates, err = template.New("").ParseFiles(filteredTemplateList...)
 	if err != nil {
 		fmt.Println("Template parsing failed: ", err)
 		os.Exit(-1)
 	}
 
-	//templates = template.Must(template.ParseFiles(tplRsp...))
+	//templates = template.Must(template.ParseFiles(inputTemplateFiles...))
 	//TODO: turn into a function
 	var fn string
 	for _, v := range filelist {
@@ -708,7 +745,8 @@ func tplCreate(rn string) string {
 		bw := bufio.NewWriter(file)
 
 		fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
-		err = templates.ExecuteTemplate(bw, v.Name, tplInputData)
+		rawDirectoryName := toInputTemplateName(v.RelativePath, tplInputData.Name)
+		err = templates.ExecuteTemplate(bw, rawDirectoryName+v.Name, tplInputData)
 		if err != nil {
 			fmt.Printf("Template execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
@@ -719,8 +757,29 @@ func tplCreate(rn string) string {
 
 	// Execute goimport for code formating
 
-	//fmt.Println(tplRsp)
+	//fmt.Println(inputTemplateFiles)
 	return ""
+}
+
+// toInputTemplateName map a directory path to its name
+// in the input template directory
+func toInputTemplateName(path, name string) string {
+	testString1 := "/" + name + "/"
+	testString2 := name + "/"
+	result := path
+
+	if strings.Contains(path, testString1) {
+		replaceString := "/" + TEMPLATE + "/"
+		result = strings.ReplaceAll(path,
+			testString1, replaceString)
+	}
+
+	if strings.HasPrefix(path, testString2) {
+		replaceString := TEMPLATE + "/"
+		result = strings.Replace(path, testString2, replaceString, 1)
+	}
+
+	return result
 }
 
 // tplEdit
@@ -788,6 +847,7 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	//exit after printing
 
 	errs := definitionsStruct.Validate()
+	fmt.Println(errs)
 
 	//if lens(errs) > 0 {
 	//	for _, v := range errs {
@@ -892,6 +952,7 @@ func tplRead(tplName string) ([]string, error) {
 		return tplFlLst, em
 	}
 
+	// TODO: allow namespace to include ga, .....
 	if len(tplRsp.Templates) > 1 {
 		em := errors.New("Error: Template " + tplName + " not unique")
 		return tplFlLst, em
@@ -911,6 +972,13 @@ func tplRead(tplName string) ([]string, error) {
 			if info.IsDir() == false {
 				tplFlLst = append(tplFlLst, path)
 			}
+
+			// Special case where the directory name is template
+			if info.IsDir() == true && strings.HasSuffix(path, TEMPLATE) {
+				fmt.Println(path)
+				tplFlLst = append(tplFlLst, path)
+			}
+
 			return nil
 		})
 
@@ -962,4 +1030,17 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 		}
 	}
 	return response
+}
+
+func createDirectory(path string) error {
+	var defaultMode os.FileMode = 0755
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err := os.MkdirAll(path, defaultMode)
+		if err != nil {
+			fmt.Println("failed creating directory: ", path)
+			return err
+		}
+	}
+
+	return nil
 }
