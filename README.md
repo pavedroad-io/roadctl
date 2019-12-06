@@ -58,6 +58,37 @@ you can control that by using the --format option:
 
 --format yaml
 
+## Note before you begin
+
+### sonarcloud Requirements
+PavedRoad utlizes sonarcloud to champion quality code in this project. Please setup your sonarcould account and the following
+environment variable to take full advantage of the CLI.
+
+`$ export SONARCLOUD_TOKEN="#########"`
+
+### GitHub Authentication
+A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
+
+### From the command line
+`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
+
+**or**
+
+`$ roadctl get templates --token #######`
+
+### Using environment variables
+`$ export GH_ACCESS_TOKEN="#########"`
+
+**or**
+
+`$ export GH_USER_NAME="#########"`
+`$ export GH_USER-PASSWORD="#########"`
+
+### Or a combination
+
+`$ export GH_USER_PASSWORD="#########"`
+`$ roadctl get templates --init  --user YYYYYYY`
+
 ## Examples: Common operations
 
 ### Initialize a local template repository
@@ -159,7 +190,7 @@ your application, CI, and test framework.
 ### Generate your application
 Will build your source code, test cases, integrations, documentation, and CI pipeline
 
-`$ roadctl create templates --template datamgr --definition my myNewService.yaml`
+`$ roadctl create templates --template datamgr --definition myNewService.yaml`
 
 To compile and invoke the CI/CD pipeline enter:
 
@@ -198,7 +229,7 @@ Just compile the code
 
 `$ make compile`
 
-Just execut the test suite
+Just execute the test suite
 
 `$ make check`
 
@@ -237,23 +268,17 @@ A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate li
 
 `$ export USER-PASSWORD="#########"`
 
-## GitHub Authentication
-A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
+Package and deploy code to local k8s cluster
 
-### From the command line
-roadctl get templates --init --password XXXXXXX --user YYYYYYY
-**or**
-roadctl get templates --token #######
+`$ make deploy`
 
-### Using environment variables
-export ACCESS-TOKEN="#########"
-**or**
-export USER-NAME="#########"
-export USER-PASSWORD="#########"
+Rewrite code in go formatting
 
-### Or a combination
-roadctl get templates --init  --user YYYYYYY
-export USER-PASSWORD="#########"
+`$ make fmt`
+
+Or to format and simplify the code use
+
+`$ make simplify`
 
 ## Project Status
 
