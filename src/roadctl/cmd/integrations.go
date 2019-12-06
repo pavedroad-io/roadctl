@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 
 	sonarcloud "github.com/pavedroad-io/integrations/sonarcloud/cmd"
 )
@@ -43,9 +42,9 @@ func checkSonarCloud(config *tplData) error {
 		return err
 	}
 
-	private := false
+	private := true
 	err = ensureSonarCloudKeyExists(scClient,
-		config.Organization, config.SonarKey, config.ProjectInfo,
+		config.Organization, config.SonarKey, config.Name,
 		private)
 
 	if config.SonarLogin == "" {
@@ -83,29 +82,37 @@ func checkSonarCloud(config *tplData) error {
 
 // ensureSonarCloudKeyExists search for all posible
 // combinations:
-//   key in global namespace == key
+//   key in global namespace == PavedRoad_{{key}}
 //   key in private namespace == organization_key
 // Create in global namespace is it doesn't exist
 func ensureSonarCloudKeyExists(client sonarcloud.SonarCloudClient,
 	org, key, name string,
 	public bool) error {
-	possibleNames := []string{key, org + "_" + key}
 
-	for _, v := range possibleNames {
-		fmt.Println(v)
-		_, err := client.GetProject(org, key)
+	fmt.Printf("SonarCloud Checking org=(%s)  key=(%s)\n", org, key)
+	resp, err := client.GetProject(org, key)
 
-		//
-		if err != nil {
-			if strings.Contains(err.Error(), "already exists") {
-				// Continue because the records already exists
-				return nil
-			} else {
-				// Continue because we can't connect to the server
-				log.Println("failed conneting to SonarCloud.io")
-				return err
-			}
-		}
+	if err != nil {
+		// Continue because we can't connect to the server
+		log.Println("failed conneting to SonarCloud.io")
+		return err
+	}
+
+	// A 200 doesn't mean we found the record
+	project, err := ioutil.ReadAll(resp.Body)
+	var prj sonarcloud.ProjectSearchResponse
+	err = json.Unmarshal(project, &prj)
+
+	if err != nil {
+		fmt.Println("Failed to Unmarshal sonarcloud search response")
+		fmt.Println(err)
+		return err
+	}
+
+	// If it is creater than one the project has already been created
+	if len(prj.Components) >= 1 {
+		fmt.Printf("Project %s already exists, skip creating\n", key)
+		return nil
 	}
 
 	// Make the project in the global namespace
@@ -123,10 +130,11 @@ func ensureSonarCloudKeyExists(client sonarcloud.SonarCloudClient,
 		Visibility:   visability,
 	}
 
-	_, err := client.CreateProject(p)
+	_, err = client.CreateProject(p)
 
 	if err != nil {
-		log.Println("Failed creating project %s", key)
+		log.Printf("Failed creating project %s\n", name)
+		log.Println(err)
 		return err
 	}
 

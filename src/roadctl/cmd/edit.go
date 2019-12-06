@@ -53,7 +53,7 @@ func runEdit(cmd *cobra.Command, args []string) {
 				fmt.Println("resource name required")
 			}
 		} else {
-			fmt.Println(err)
+			fmt.Println("Edit failed: ", err)
 		}
 	}
 }

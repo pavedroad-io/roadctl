@@ -102,7 +102,7 @@ func runExplain(cmd *cobra.Command, args []string) {
 				reply = explainResource(r, "")
 			}
 		} else {
-			fmt.Println(err)
+			fmt.Println("Explained failed: ", err)
 		}
 		replies = append(replies, reply)
 	}

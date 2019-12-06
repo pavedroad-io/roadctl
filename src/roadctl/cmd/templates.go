@@ -64,7 +64,9 @@ const (
 	TEMPLATE = "template"
 	// ORGANIZATION is the prefix to be replaced in front of a file name
 	ORGANIZATION = "organization"
-	prCopyright  = `
+	// Name to add to sonarcloud projects to create unique namespace
+	SONARPREFIX = "PavedRoad_"
+	prCopyright = `
 //
 // Copyright (c) PavedRoad. All rights reserved.
 // Licensed under the Apache2. See LICENSE file in the project root for full license information.
@@ -110,6 +112,7 @@ type tplData struct {
 	// Information about company and project
 	Version             string
 	Organization        string // Name of Organization
+	OrgSQLSafe          string // Mapped to a safe name for using in SQL
 	OrganazationInfo    string // Name of Organization
 	OrganizationLicense string //Org lic/copyright
 	ProjectInfo         string // Project/service description
@@ -119,9 +122,10 @@ type tplData struct {
 	MaintainerWeb       string
 
 	// Integrations
-	Badges     string // badges to include docs
-	SonarKey   string
-	SonarLogin string
+	Badges      string // badges to include docs
+	SonarKey    string
+	SonarLogin  string
+	SonarPrefix string
 
 	// Service and tpl-names
 	Name         string //service name
@@ -144,6 +148,7 @@ type tplData struct {
 
 	//JSON data
 	PostJSON string // Smaple data for a post
+	PutJSON  string // Smaple data for a put
 }
 
 //  tplDataMapper
@@ -158,6 +163,8 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.Version = defs.Info.Version
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+	// TODO: Write an SQL safe naming function
+	output.OrgSQLSafe = strcase.ToCamel(defs.Info.Organization)
 	output.ProjectInfo = defs.Project.Description
 	output.MaintainerName = defs.Project.Maintainer.Name
 	output.MaintainerEmail = defs.Project.Maintainer.Email
@@ -173,6 +180,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 
 	output.SonarKey = si.SonarCloudConfig.Key
 	output.SonarLogin = si.SonarCloudConfig.Login
+	output.SonarPrefix = SONARPREFIX
 	return nil
 }
 
@@ -192,6 +200,8 @@ func tplJSONData(defs tplDef, output *tplData) error {
 		log.Fatal("Failed to generate json data with ", jsonString)
 	}
 	output.PostJSON = string(pj.String())
+	output.PutJSON = string(pj.String())
+
 	return nil
 }
 
@@ -220,12 +230,7 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 	// Add this tables attributes
 	numCol := len(table.Columns)
 	for idx, col := range table.Columns {
-		//TODO: validate column attributes
-		// required attribute
-		// no reserved go words
-
 		// Add it to the dynamic struct
-
 		var sample interface{}
 		switch col.Type {
 		case "string":

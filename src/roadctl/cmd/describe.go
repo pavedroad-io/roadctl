@@ -60,7 +60,7 @@ func runDescribe(cmd *cobra.Command, args []string) {
 				reply = describeResource(r, "")
 			}
 		} else {
-			fmt.Println(err)
+			fmt.Println("Describe failed: ", err)
 		}
 		replies = append(replies, reply)
 	}
