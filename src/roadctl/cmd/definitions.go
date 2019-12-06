@@ -181,7 +181,7 @@ type Project struct {
 
 type tplDef struct {
 	TableList []Tables  `yaml:"tables"`
-	Community  Community `yaml:"community"`
+	Community Community `yaml:"community"`
 	Info      Info      `yaml:"info"`
 	Project   Project   `yaml:"project"`
 }
@@ -233,11 +233,13 @@ func (d *tblDefError) Error() string {
 }
 
 func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
+
 	e := tblDefError{
 		errorType:    msgNum,
 		errorMessage: msg,
 		tableName:    tName,
 	}
+
 	if LastErr == nil {
 		LastErr = &e
 		ErrList = &e
@@ -311,10 +313,6 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 		return
 	}
 
-	for _, v := range c {
-		parent.Children = append(parent.Children, &v)
-		d.addChildren(&v)
-	}
 	for _, v := range c {
 		parent.Children = append(parent.Children, &v)
 		d.addChildren(&v)
@@ -401,8 +399,10 @@ func (d *tplDef) Validate() *tblDefError {
 	//ErrList := nil
 	//LastErr := nil
 
-	ErrList = &tblDefError{}
-	LastErr = ErrList
+	// TODO(sgayle): This defined an empty error message and assigned it
+	// to LastErr.  That caused and error to allways be returned
+	var ErrList *tblDefError
+	//LastErr = ErrList
 
 	//e := tblDefError{}
 
@@ -463,18 +463,21 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 
 		}
 	}
+
 	// Make sure it is a valid type
-	isValidType := false
-	for _, m := range validTypes {
-		if strings.ToUpper(t.TableType) == m {
-			isValidType = true
-			break
+	if t.ParentTable == "" {
+		isValidType := false
+		for _, m := range validTypes {
+			if strings.ToUpper(t.TableType) == m {
+				isValidType = true
+				break
+			}
 		}
-	}
 
-	if !isValidType {
-		d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
+		if !isValidType {
+			d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
 
+		}
 	}
 
 	// If a parent is specified make sure it exists

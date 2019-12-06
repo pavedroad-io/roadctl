@@ -70,7 +70,7 @@ func runGet(cmd *cobra.Command, args []string) {
 				reply = getByResource(r, "")
 			}
 		} else {
-			fmt.Println(err)
+			fmt.Println("Not valied resource type: ", err)
 		}
 		replies = append(replies, reply)
 	}

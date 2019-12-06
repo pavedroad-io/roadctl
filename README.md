@@ -89,7 +89,6 @@ A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate li
 `$ export GH_USER_PASSWORD="#########"`
 `$ roadctl get templates --init  --user YYYYYYY`
 
-
 ## Examples: Common operations
 
 ### Initialize a local template repository
@@ -230,9 +229,44 @@ Just compile the code
 
 `$ make compile`
 
-Just execut the test suite
+Just execute the test suite
 
 `$ make check`
+
+Package and deploy code to local k8s cluster
+
+`$ make deploy`
+
+Rewrite code in go formatting
+
+`$ make fmt`
+
+Or to format and simplify the code use
+
+`$ make simplify`
+
+## GitHub Authentication
+A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
+
+### From the command line
+`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
+
+**or**
+
+`$ roadctl get templates --token #######`
+
+### Using environment variables
+`$ export ACCESS-TOKEN="#########"`
+
+**or**
+
+`$ export USER-NAME="#########"`
+`$ export USER-PASSWORD="#########"`
+
+### Or a combination
+`$ roadctl get templates --init  --user YYYYYYY`
+
+`$ export USER-PASSWORD="#########"`
 
 Package and deploy code to local k8s cluster
 
