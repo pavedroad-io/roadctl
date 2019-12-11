@@ -91,7 +91,7 @@ func initAuthentication() {
 		return
 	}
 
-	envVar := os.Getenv("ACCESS-TOKEN")
+	envVar := os.Getenv("ACCESS_TOKEN")
 	if envVar != "" {
 		userAccessToken = envVar
 		return
