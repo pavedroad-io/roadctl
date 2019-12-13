@@ -147,9 +147,9 @@ type Integrations struct {
 	//
 	SonarCloudConfig struct {
 		// A sonarcloud access token
-		Login string `yaml:login`
+		Login string `yaml:"login"`
 		// Project key should be same a the name
-		Key     string `yaml:key`
+		Key     string `yaml:"key"`
 		Options struct {
 			Badges   []Badges `yaml:"badges"`
 			Coverage struct {

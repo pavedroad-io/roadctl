@@ -90,8 +90,9 @@ func initAuthentication() {
 	if userAccessToken != "" {
 		return
 	}
-
-	envVar := os.Getenv("ACCESS_TOKEN")
+	//No dashes in environment name, use underscore
+	//Prefix for environment name with service (GH GitHub)
+	envVar := os.Getenv("GH_ACCESS_TOKEN")
 	if envVar != "" {
 		userAccessToken = envVar
 		return
@@ -101,9 +102,10 @@ func initAuthentication() {
 	if userName != "" && userPassword != "" {
 		return
 	}
-
-	envName := os.Getenv("USER-NAME")
-	envPass := os.Getenv("USER-PASSWORD")
+	//No dashes in environment name, use underscore
+	//Prefix for environment name with service (GH GitHub)
+	envName := os.Getenv("GH_USER_NAME")
+	envPass := os.Getenv("GH_USER_PASSWORD")
 
 	if envPass != "" {
 		userPassword = envPass
