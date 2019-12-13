@@ -47,5 +47,5 @@ $ roadctl get templates --init --password XXXXXXX --user YYYYYYY
 or
 
 ```bash
-$ export ACCESS-TOKEN="#########"
+$ export GITHUB_ACCESS_TOKEN="#########"
 ```
