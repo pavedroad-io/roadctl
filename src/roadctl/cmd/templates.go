@@ -975,7 +975,10 @@ func tplRead(tplName string) ([]string, error) {
 			}
 			// Don't include directories, just their contents
 			if info.IsDir() == false {
-				tplFlLst = append(tplFlLst, path)
+				//Don't include backup files
+				if len(strings.Split(path, "~")) == 1 {
+					tplFlLst = append(tplFlLst, path)
+				}
 			}
 
 			// Special case where the directory name is template
