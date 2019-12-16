@@ -82,7 +82,7 @@ A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate li
 **or**
 
 `$ export GH_USER_NAME="#########"`
-`$ export GH_USER-PASSWORD="#########"`
+`$ export GH_USER_PASSWORD="#########"`
 
 ### Or a combination
 
@@ -256,17 +256,17 @@ A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate li
 `$ roadctl get templates --token #######`
 
 ### Using environment variables
-`$ export ACCESS-TOKEN="#########"`
+`$ export GH_ACCESS_TOKEN="#########"`
 
 **or**
 
-`$ export USER-NAME="#########"`
-`$ export USER-PASSWORD="#########"`
+`$ export GH_USER_NAME="#########"`
+`$ export GH_USER_PASSWORD="#########"`
 
 ### Or a combination
 `$ roadctl get templates --init  --user YYYYYYY`
 
-`$ export USER-PASSWORD="#########"`
+`$ export GH_USER_PASSWORD="#########"`
 
 Package and deploy code to local k8s cluster
 
