@@ -4,7 +4,7 @@
 
 Go projects have a strict directory structure.  By default, Go creates a $HOME/go/src directory for you to place your packages and programs.  Your GOPATH will point here unless you change it.
 ```bash
-$ go env | grep GOPATH
+$ go env GOPATH
 GOPATH="/home/jscharber/go"
 ```
 If you want to place your project in a different directory, you must include a parent src directory and change your GOPATH.
