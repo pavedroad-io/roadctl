@@ -93,7 +93,7 @@ const structOpen = "type %s struct {\n"
 
 // structUUID
 // name of table, type of data json|yaml
-const structUUID = "\t%sUUID string `%s:%suuid`\n"
+const structUUID = "\t%sUUID string `%s:\"%suuid\"`\n"
 const structClose = "}\n\n"
 
 // structField
@@ -104,7 +104,7 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 // Same as structField except:
 //  type will be the subtable
 //  No options
-const structSubstruct = "\t%s %s\t`%s:%s`\n"
+const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
 
 var templates *template.Template
 
