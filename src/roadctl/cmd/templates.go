@@ -60,9 +60,9 @@ var tplDirSelected string
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
-	// TEMPLATE is the prefix to be replaced in front of a file name
+	// TEMPLATE is the prefix to be replaced in front of the file name
 	TEMPLATE = "template"
-	// ORGANIZATION is the prefix to be replaced in front of a file name
+	// ORGANIZATION is the prefix to be replaced in front of the file name
 	ORGANIZATION = "organization"
 	// Name to add to sonarcloud projects to create unique namespace
 	SONARPREFIX = "PavedRoad_"
@@ -87,7 +87,8 @@ const (
 	jsonField       = "\"%v\": "
 	jsonValue       = "\"%v\"" // If new object, or last field strip the comma
 )
-
+const defMicroserviceName = "yourMicroserviceName"
+const pavedroadSonarTestOrg = "acme-demo"
 const swaggerRoute = "// swagger:response %s\n"
 const structOpen = "type %s struct {\n"
 
@@ -144,7 +145,7 @@ type tplData struct {
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
 	SwaggerGeneratedStructs string // swagger doc and go structs
-	DumpStructs             string // Generic dumb of given object type
+	DumpStructs             string // Generic dump of given object type
 
 	//JSON data
 	PostJSON string // Smaple data for a post
@@ -537,11 +538,15 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 	// file, director, resp, err
 	fileContent, directoryContent, _, err := client.Repositories.GetContents(context.Background(), org, repo, path, &opts)
 
-	if err != nil {
-		//TODO: change to proper logging method
-		fmt.Println(err)
-		return err
-	}
+	/*
+		Not sure of desired functionality, but log.Print
+		is proper method.
+		if err != nil {
+			//TODO: change to proper logging method
+			fmt.Println(err)
+			return err
+		}
+	*/
 
 	//fmt.Println(rsp.StatusCode)
 	if err != nil {

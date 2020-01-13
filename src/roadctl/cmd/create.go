@@ -45,7 +45,7 @@ func runCreate(cmd *cobra.Command, args []string) string {
 
 	if err := isValidResourceType(r); err == nil {
 		if tplFile == "" {
-			fmt.Println("Usage: roadctl create emplates -t templateName")
+			fmt.Println("Usage: roadctl create templates -t templateName")
 			fmt.Println("       --template or -t option is required")
 			return msg
 		}
@@ -91,10 +91,22 @@ func createResource(rn string) string {
 func init() {
 	rootCmd.AddCommand(createCmd)
 
+	//Set up expected command line flags
+
+	//tplfile defined in templates.go
+	//Required!
 	createCmd.Flags().StringVar(&tplFile, "template", "",
 		"Template file name to use")
+
+	//tplDir  defined in templates.go
+	//this flag is not in documentaion 01/09/2020
+	//Not Required!
 	createCmd.Flags().StringVar(&tplDir, "directory", "",
 		"Directory to generate output to")
+
+	//tplDefFile defined in templates.go
+	//Required!
+	//Expexted YAML originaly generated from $roadctl desrcibe templates
 	createCmd.Flags().StringVar(&tplDefFile, "definition", "",
 		"Service definition file to use")
 }
