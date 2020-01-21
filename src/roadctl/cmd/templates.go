@@ -60,10 +60,9 @@ var tplDirSelected string
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
-	// TEMPLATE is the prefix to be replaced in front of a file name
+	// TEMPLATE is the prefix to be replaced in front of the file name
 	TEMPLATE = "template"
-
-	// ORGANIZATION is the prefix to be replaced in front of a file name
+	// ORGANIZATION is the prefix to be replaced in front of the file name
 	ORGANIZATION = "organization"
 
 	// Name to add to sonarcloud projects to create unique namespace
@@ -92,13 +91,14 @@ const (
 	jsonField       = "\"%v\": "
 	jsonValue       = "\"%v\"" // If new object, or last field strip the comma
 )
-
+const defMicroserviceName = "yourMicroserviceName"
+const pavedroadSonarTestOrg = "acme-demo"
 const swaggerRoute = "// swagger:response %s\n"
 const structOpen = "type %s struct {\n"
 
 // structUUID
 // name of table, type of data json|yaml
-const structUUID = "\t%sUUID string `%s:%suuid`\n"
+const structUUID = "\t%sUUID string `%s:\"%suuid\"`\n"
 const structClose = "}\n\n"
 
 // structField
@@ -109,7 +109,7 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 // Same as structField except:
 //  type will be the sub-table
 //  No options
-const structSubstruct = "\t%s %s\t`%s:%s`\n"
+const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
 
 const (
 	checkWithSonar    string = "check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
@@ -188,8 +188,8 @@ type tplData struct {
 	PutSwaggerDoc           string // swagger for put method
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
-	SwaggerGeneratedStructs string // swagger doc and go struts
-	DumpStructs             string // Generic dumb of given object type
+	SwaggerGeneratedStructs string // swagger doc and go structs
+	DumpStructs             string // Generic dump of given object type
 
 	//JSON data
 	PostJSON string // Sample data for a post

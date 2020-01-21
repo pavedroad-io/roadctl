@@ -221,6 +221,7 @@ const (
 	INVALIDCONSTRAINT
 	INVALIDMODIFIER
 	INVALIDARRAY
+	INVALIDSERVICENAME
 	UNKOWN
 )
 
@@ -415,9 +416,14 @@ func (d *tplDef) BadgesToString() string {
 	return badges
 }
 
-//Valide the table(s) definition
+//Valide the table(s) definition, and other YAML defults needed
+//for anticipated execution
 
 func (d *tplDef) Validate() *tblDefError {
+
+	const badMicroserviceName = "yourMicroserviceName"
+	const pavedroadSonarTestOrg = "acme-demo"
+
 	//ErrList := nil
 	//LastErr := nil
 
@@ -427,6 +433,15 @@ func (d *tplDef) Validate() *tblDefError {
 	//LastErr = ErrList
 
 	//e := tblDefError{}
+
+	//Doing YAML default test first
+	//Template default microservice should be changed
+	//if sonar cloud testing under pavedroadSonarTestOrg is
+	//needed.
+
+	if (d.Info.Name == defMicroserviceName) && (d.Info.Organization == pavedroadSonarTestOrg) {
+		d.setErrorList(INVALIDSERVICENAME, "Sonar cloud microservice name change expeceted.", "")
+	}
 
 	// Do all tables and report all potential errors
 	for _, t := range d.tables() {
