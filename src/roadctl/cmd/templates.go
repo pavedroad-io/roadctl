@@ -413,9 +413,6 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 
 	// Add this tables attributes
 	for _, col := range table.Columns {
-		//TODO: validate column attributes
-		// required attribute
-		// no reserved go words
 
 		// build json / yaml string
 		importLine := col.MappedName
@@ -741,17 +738,6 @@ func tplCreate(rn string) string {
 			continue
 		}
 
-		/*
-			make this an os.Stat and if it exists continue
-			// Hook files contain user code we don't want to replace
-			if strings.Contains(nm, HOOK) {
-				//stat and if it exists skip it otherwise create it by
-				// adding it to the list
-				fmt.Printf("Skipping processing of hook file %v\n", nm)
-				continue
-			}
-		*/
-
 		testString1 := "/" + TEMPLATE + "/"
 		if strings.Contains(di, testString1) {
 			replaceString := "/" + tplInputData.Name + "/"
@@ -765,6 +751,26 @@ func tplCreate(rn string) string {
 			replaceString := tplInputData.Name + "/"
 			li.RelativePath = strings.Replace(li.RelativePath,
 				testString2, replaceString, 1)
+		}
+
+		// TODO: we need the equivalent of a .gitignore file
+		//       and we can move this logic into the skipExistingHookFile
+		//       function
+		isHook := strings.Contains(strings.ToLower(li.Name),
+			strings.ToLower(HOOK))
+		if isHook {
+			testName := strings.Replace(li.Name, TEMPLATE, tplInputData.Name, 1)
+			var fileWithPath string
+			if li.RelativePath == "" {
+				fileWithPath = testName
+			} else {
+				fileWithPath = li.RelativePath + "/" + testName
+			}
+			e := skipExistingHookFile(fileWithPath)
+			if e {
+				fmt.Printf("Skipping processing of hook file %v\n", fileWithPath)
+				continue
+			}
 		}
 
 		filelist = append(filelist, li)
@@ -1124,4 +1130,12 @@ func createDirectory(path string) error {
 	}
 
 	return nil
+}
+
+func skipExistingHookFile(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	} else {
+		return true
+	}
 }
