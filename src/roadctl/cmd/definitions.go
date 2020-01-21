@@ -139,10 +139,29 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
+// Kubernetes configurations
+type KubeConfig struct {
+	// Namespace to use when constructing URLs
+	Namespace string `yaml:"namespace"`
+
+	// Liveness endpoint name for k8s checks
+	Liveness string `yaml:"liveness"`
+
+	// Readiness endpoint name for k8s checks
+	Readiness string `yaml:"readiness"`
+
+	// Metrics endpoint name for k8s checks
+	Metrics string `yaml:"metrics"`
+
+	// Management endpoint
+	Management string `yaml:"management"`
+}
+
 // Integrations CI/CD tools
 type Integrations struct {
-	Badges []Badges `yaml:"badges,omitempty"`
-	Name   string   `yaml:"name"`
+	Badges  []Badges `yaml:"badges,omitempty"`
+	Name    string   `yaml:"name"`
+	Enabled bool     `yaml:"enable"`
 	// TODO: Needs to be more generic
 	//
 	SonarCloudConfig struct {
@@ -171,12 +190,15 @@ type Integrations struct {
 
 // Project information
 type Project struct {
-	Description  string         `yaml:"description"`
-	Dependencies Dependencies   `yaml:"dependencies"`
-	License      string         `yaml:"license"`
-	Maintainer   Maintainer     `yaml:"maintainer"`
-	ProjectFiles []ProjectFiles `yaml:"project-files"`
-	Integrations []Integrations `yaml:"integrations"`
+	TLD           string         `yaml:"top_level_domain"`
+	Description   string         `yaml:"description"`
+	Dependencies  Dependencies   `yaml:"dependencies"`
+	License       string         `yaml:"license"`
+	SchedulerName string         `yaml:"scheduler_name"`
+	Maintainer    Maintainer     `yaml:"maintainer"`
+	ProjectFiles  []ProjectFiles `yaml:"project-files"`
+	Integrations  []Integrations `yaml:"integrations"`
+	Kubernetes    KubeConfig     `yaml:"kubernetes"`
 }
 
 type tplDef struct {

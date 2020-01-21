@@ -53,7 +53,7 @@ var defaultTemplateDir = ".templates"
 var repoType = "GitHub"
 var tplFile string    // Name of the template file to use
 var tplDir = "."      // Directory for generated code output
-var tplDefFile string // Name of the definitions file used to generated tempaltes
+var tplDefFile string // Name of the definitions file used to generated templates
 var tplDirSelected string
 
 //TEMPLATE needs documentation.
@@ -64,12 +64,16 @@ const (
 	TEMPLATE = "template"
 	// ORGANIZATION is the prefix to be replaced in front of the file name
 	ORGANIZATION = "organization"
+
 	// Name to add to sonarcloud projects to create unique namespace
 	SONARPREFIX = "PavedRoad_"
+
+	HOOK = "Hook"
+
 	prCopyright = `
-//
 // Copyright (c) PavedRoad. All rights reserved.
-// Licensed under the Apache2. See LICENSE file in the project root for full license information.
+// Licensed under the Apache2. See LICENSE file in the project root
+// for full license information.
 //`
 )
 const strcutComment = `
@@ -77,7 +81,7 @@ const strcutComment = `
 //
 //`
 
-// JSON formaters
+// JSON formatters
 const (
 	jsonObjectStart = "{\n"
 	jsonObjectEnd   = "}"
@@ -103,39 +107,79 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 
 // structSubStruct
 // Same as structField except:
-//  type will be the subtable
+//  type will be the sub-table
 //  No options
 const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
+
+const (
+	checkWithSonar    string = "check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithoutSonar string = "check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+
+	// Fossa has a build section and a lint section
+	fossaSection string = `
+$(FOSSATEST):
+	fossa init
+`
+	fossaLint string = `
+	@echo "  >  running FOSSA license scan."
+	@FOSSA_API_KEY=$(FOSSA_API_KEY) fossa analyze
+`
+)
 
 var templates *template.Template
 
 type tplData struct {
 	// Information about company and project
-	Version             string
 	Organization        string // Name of Organization
 	OrgSQLSafe          string // Mapped to a safe name for using in SQL
 	OrganazationInfo    string // Name of Organization
-	OrganizationLicense string //Org lic/copyright
+	OrganizationLicense string // Org license/copyright
 	ProjectInfo         string // Project/service description
-	MaintainerName      string
-	MaintainerEmail     string
-	MaintainerSlack     string
-	MaintainerWeb       string
+	SchedulerName       string // For worker polls specifies the type of
+	//   scheduler to create
+
+	MaintainerName  string
+	MaintainerEmail string
+	MaintainerSlack string
+	MaintainerWeb   string
+
+	// Version Information
+	Version    string // Version of this application
+	APIVersion string // Version of this API
+	TLD        string // Top level domain
+
+	// Kubernetes endpoints
+	// Namespace to deploy and use in URLs
+	Namespace string
+
+	// Liveness endpoint name
+	Liveness string
+
+	// Readiness endpoint name
+	Readiness string
+
+	// Metrics endpoint name
+	Metrics string
+
+	// Metrics endpoint name
+	Management string
 
 	// Integrations
-	Badges      string // badges to include docs
-	SonarKey    string
-	SonarLogin  string
-	SonarPrefix string
+	Badges            string // badges to include docs
+	SonarKey          string
+	SonarLogin        string
+	SonarPrefix       string
+	SonarCloudEnabled bool
+	FOOSAEnabled      bool
 
 	// Service and tpl-names
 	Name         string //service name
-	NameExported string //camal case with first letter cap
+	NameExported string //camel case with first letter cap
 	TplName      string //template name
 	DefFile      string //definition file used
 
-	//PR lic/copyright should be a function
-	PavedroadInfo string //PR lic/copyright
+	//PR license/copyright should be a function
+	PavedroadInfo string //PR license/copyright
 
 	//Swagger headers probably turn these into functions
 	AllRoutesSwaggerDoc     string
@@ -148,8 +192,14 @@ type tplData struct {
 	DumpStructs             string // Generic dump of given object type
 
 	//JSON data
-	PostJSON string // Smaple data for a post
-	PutJSON  string // Smaple data for a put
+	PostJSON string // Sample data for a post
+	PutJSON  string // Sample data for a put
+
+	// Makefile options
+	CheckBuildTarget  string //build line for check section
+	FossaBuildSection string //build target for Fossa
+	FossaLintSection  string //lint section for Fossa
+
 }
 
 //  tplDataMapper
@@ -161,7 +211,6 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.NameExported = strcase.ToCamel(defs.Info.Name)
 	output.TplName = defs.Info.ID
 	output.DefFile = tplDefFile
-	output.Version = defs.Info.Version
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
 	// TODO: Write an SQL safe naming function
@@ -171,7 +220,20 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.MaintainerEmail = defs.Project.Maintainer.Email
 	output.MaintainerWeb = defs.Project.Maintainer.Web
 	output.MaintainerSlack = defs.Project.Maintainer.Slack
+	output.TLD = defs.Project.TLD
+	output.SchedulerName = defs.Project.SchedulerName
 	output.PavedroadInfo = prCopyright
+
+	// Verision info
+	output.Version = defs.Info.Version
+	output.APIVersion = defs.Info.APIVersion
+
+	// Endpoint mappings
+	output.Namespace = defs.Project.Kubernetes.Namespace
+	output.Liveness = defs.Project.Kubernetes.Liveness
+	output.Readiness = defs.Project.Kubernetes.Readiness
+	output.Metrics = defs.Project.Kubernetes.Metrics
+	output.Management = defs.Project.Kubernetes.Management
 
 	// CI integrations
 	output.Badges = defs.BadgesToString()
@@ -179,9 +241,32 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	//Sonarcloud
 	si := defs.findIntegration("sonarcloud")
 
-	output.SonarKey = si.SonarCloudConfig.Key
-	output.SonarLogin = si.SonarCloudConfig.Login
-	output.SonarPrefix = SONARPREFIX
+	if si.Name != "" {
+		output.SonarKey = si.SonarCloudConfig.Key
+		output.SonarLogin = si.SonarCloudConfig.Login
+		output.SonarPrefix = SONARPREFIX
+		output.SonarCloudEnabled = si.Enabled
+	}
+
+	if output.SonarCloudEnabled {
+		output.CheckBuildTarget = checkWithSonar
+	} else {
+		output.CheckBuildTarget = checkWithoutSonar
+	}
+
+	si = defs.findIntegration("fossa")
+	if si.Name != "" {
+		output.FOOSAEnabled = si.Enabled
+	}
+
+	if output.FOOSAEnabled {
+		output.FossaBuildSection = fossaSection
+		output.FossaLintSection = fossaLint
+	} else {
+		output.FossaBuildSection = ""
+		output.FossaLintSection = ""
+	}
+
 	return nil
 }
 
@@ -257,11 +342,9 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 
 	// See if there are any children
 	if len(item.Children) > 0 {
-		//fmt.Println("Children", item.Children)
 		*jsonString += fmt.Sprintf(jsonSeperator)
 		// Add child tables first
 		for _, child := range item.Children {
-			//fmt.Println("Range of childs", child)
 			tplAddJSON(*child, defs, jsonString)
 		}
 	}
@@ -283,7 +366,6 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 func tplGenerateStructurs(defs tplDef, output *tplData) error {
 	order := defs.devineOrder()
 	tplAddStruct(order, defs, output)
-	//fmt.Println(output.SwaggerGeneratedStructs)
 	return nil
 }
 
@@ -331,9 +413,6 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 
 	// Add this tables attributes
 	for _, col := range table.Columns {
-		//TODO: validate column attributes
-		// required attribute
-		// no reserved go words
 
 		// build json / yaml string
 		importLine := col.MappedName
@@ -460,7 +539,6 @@ func (t tplDescribeResponse) RespondWithJSON() string {
 		//body := make(map[interface{}]interface{})
 		var body interface{}
 		yaml.Unmarshal([]byte(val.Content), &body)
-		//fmt.Println(body)
 
 		body = convert(body)
 		jb, err := json.Marshal(body)
@@ -481,7 +559,7 @@ func (t tplDescribeResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Templates {
 		nl += fmt.Sprintf("%v\n", val.Content)
-		nl += fmt.Sprintf("---\n") //replies contains multip documents
+		nl += fmt.Sprintf("---\n") //replies contains multiple documents
 	}
 	nl = string(nl[:len(nl)-4])
 	fmt.Println(nl)
@@ -537,17 +615,13 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 	// Either file or directory content will be nil
 	// file, director, resp, err
 	fileContent, directoryContent, _, err := client.Repositories.GetContents(context.Background(), org, repo, path, &opts)
+	if err != nil {
+		//TODO: change to proper logging method
+		fmt.Println("client.Repositories.GetContents: ", err)
+		return err
+	}
 
-	/*
-		Not sure of desired functionality, but log.Print
-		is proper method.
-		if err != nil {
-			//TODO: change to proper logging method
-			fmt.Println(err)
-			return err
-		}
-	*/
-
+	// TODO: what is this
 	//fmt.Println(rsp.StatusCode)
 	if err != nil {
 		log.Println(err)
@@ -562,11 +636,10 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 		}
 		err = ioutil.WriteFile(fp, dstr, 0644)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("ioutil.WriteFile error %v\n", err.Error())
 		}
 
 	} else {
-		//fmt.Println(directoryContent)
 		for _, item := range directoryContent {
 			// If it is a directory, create if necessary
 			// Then walk it
@@ -601,14 +674,14 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 //
 //   Before templates can be executed, the dynamic code components
 //   must be compiled and also mapped to tplData for:
-//     - Go structs for user defined objects
+//     - Go struts for user defined objects
 //     - SQL Scripts for developer use
 //     - SQL functions for testing
 //
 //   Next, iterate over the templates to generate
 //
 //   Last, run goimport to check for missing or unused import
-//   statements and clean up any code formating issues
+//   statements and clean up any code formatting issues
 //
 func tplCreate(rn string) string {
 	var filelist []tplLocation
@@ -643,7 +716,7 @@ func tplCreate(rn string) string {
 		di := rec[len(tplDirSelected)+1 : len(rec)-len(nm)]
 		li := tplLocation{Name: nm, RelativePath: di}
 
-		// This coveres two special cases where we want to create a
+		// This covers two special cases where we want to create a
 		// directory with the name of the microservice.
 		//
 		//   - 1 If the file name is "template", it represents a
@@ -654,9 +727,9 @@ func tplCreate(rn string) string {
 		//   - 2 If the path contains "/template/", replace the word
 		//       "template" with the name of the microservice and
 		//       add it to the list of templates to process.
-		//       Note: The pattern "/template/" can occur mutliple
+		//       Note: The pattern "/template/" can occur multiple
 		//       times.
-		//       {template-deployment.yamp manifests/kubernetes/dev/template/}
+		//       {template-deployment.yaml manifests/kubernetes/dev/template/}
 
 		if nm == TEMPLATE {
 			nm = tplInputData.Name
@@ -680,11 +753,34 @@ func tplCreate(rn string) string {
 				testString2, replaceString, 1)
 		}
 
+		// TODO: we need the equivalent of a .gitignore file
+		//       and we can move this logic into the skipExistingHookFile
+		//       function
+		isHook := strings.Contains(strings.ToLower(li.Name),
+			strings.ToLower(HOOK))
+		if isHook {
+			testName := strings.Replace(li.Name, TEMPLATE, tplInputData.Name, 1)
+			var fileWithPath string
+			if li.RelativePath == "" {
+				fileWithPath = testName
+			} else {
+				fileWithPath = li.RelativePath + "/" + testName
+			}
+			e := skipExistingHookFile(fileWithPath)
+			if e {
+				fmt.Printf("Skipping processing of hook file %v\n", fileWithPath)
+				continue
+			}
+		}
+
 		filelist = append(filelist, li)
 		filteredTemplateList = append(filteredTemplateList, rec)
 	}
 
-	err = validateIntegrations(&tplInputData)
+	// If sonarcloud is configured validate token and project
+	if tplInputData.SonarCloudEnabled {
+		err = validateIntegrations(&tplInputData)
+	}
 
 	if err != nil {
 		fmt.Println("Validating integrations failed: ", err)
@@ -692,17 +788,20 @@ func tplCreate(rn string) string {
 	}
 
 	// Generate internal structures
-	err = tplGenerateStructurs(defs, &tplInputData)
-	if err != nil {
-		fmt.Println("Generating structures failed: ", err)
-		os.Exit(-1)
-	}
+	if len(defs.TableList) > 0 {
+		err = tplGenerateStructurs(defs, &tplInputData)
+		if err != nil {
+			fmt.Println("Generating structures failed: ", err)
+			os.Exit(-1)
+		}
 
-	// Generate JSON test data
-	err = tplJSONData(defs, &tplInputData)
-	if err != nil {
-		fmt.Println("Generating JSON failed: ", err)
-		os.Exit(-1)
+		// Generate JSON test data
+		err = tplJSONData(defs, &tplInputData)
+		if err != nil {
+			fmt.Println("Generating JSON failed: ", err)
+			os.Exit(-1)
+		}
+
 	}
 
 	// Build the template cache
@@ -730,7 +829,7 @@ func tplCreate(rn string) string {
 			fn = v.Name
 		}
 
-		// Ensure the path to the file exissts
+		// Ensure the path to the file exists
 		if v.RelativePath != "" {
 			if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
 				err := os.MkdirAll(v.RelativePath, 0766)
@@ -741,7 +840,7 @@ func tplCreate(rn string) string {
 		}
 
 		var defaultMode os.FileMode = 0666
-		// Make sure shell scripts are created execuatble
+		// Make sure shell scripts are created executable
 		if strings.Contains(fn, ".sh") {
 			defaultMode = 0755
 		}
@@ -765,9 +864,8 @@ func tplCreate(rn string) string {
 		file.Close()
 	}
 
-	// Execute goimport for code formating
+	// Execute goimport for code formatting
 
-	//fmt.Println(inputTemplateFiles)
 	return ""
 }
 
@@ -832,7 +930,7 @@ func tplEdit(name string) {
 //
 func tplReadDefinitions(definitionsStruct *tplDef) error {
 
-	fmt.Println("Reading defintions from: ", tplDefFile)
+	fmt.Println("Reading definitions from: ", tplDefFile)
 	df, err := os.Open(tplDefFile)
 	if err != nil {
 		fmt.Println("failed to open:", tplDefFile, ", error:", err)
@@ -844,28 +942,15 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 		os.Exit(-1)
 	}
 
-	//defData := make(map[interface{}]interface{})
-	//err = yaml.Unmarshal(yamlMap, defs)
-	//yaml.Unmarshal([]byte(byteValue), &defData)
 	err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
 	if err != nil {
 		return err
 	}
 
-	//definitionsStruct.Validate()
-	//will return a list of validation errors
-	//exit after printing
-
 	errs := definitionsStruct.Validate()
-	fmt.Println(errs)
 
-	//if lens(errs) > 0 {
-	//	for _, v := range errs {
-	//		v.Error()
-	//	}
-	//	os.Exit(-1)
-	//}
 	if errs != nil {
+		fmt.Println("definitionsStruct.Validate()")
 		for errs != nil {
 			fmt.Println(errs.Error())
 			errs = errs.nextError
@@ -882,7 +967,7 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	// Get the list of templates
 	rsp := tplGet("all", rn)
 
-	// Load the defitions.yaml file in the template directory
+	// Load the definitions.yaml file in the template directory
 	for _, item := range rsp.Templates {
 		fn := item.Path + "/" + item.Name + "/" + "definition.yaml"
 		if _, err := os.Stat(fn); os.IsNotExist(err) {
@@ -899,23 +984,12 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 
 		byteValue, _ := ioutil.ReadAll(jf)
 		/*
-				Type         string // Type of template, i.e. serverless
+				Type         string // Type of template, i.e. Server less
 				Name         string // Name of template == directory name
 			  Content      string // YAML configuration data
 		*/
 		nItem := tplDescribeItem{item.Type, item.Name, string(byteValue)}
 		response.Templates = append(response.Templates, nItem)
-		/*
-			    //fmt.Println(string(byteValue))
-
-			    //var body interface{}
-			    body := make(map[interface{}]interface{})
-					yaml.Unmarshal([]byte(byteValue), &body)
-
-					//fmt.Println(result)
-					fmt.Println(body["id"])
-					fmt.Println(body["api-version"])
-		*/
 	}
 
 	return response
@@ -928,7 +1002,7 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 func tplExplain(tplListOption string, rn string) tplExplainResponse {
 	var response tplExplainResponse
 
-	// Load explaination
+	// Load explanation
 	fn := defaultTemplateDir + "/" + eTLD + "/" + tplResourceName + ".txt"
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		return response
@@ -1056,4 +1130,12 @@ func createDirectory(path string) error {
 	}
 
 	return nil
+}
+
+func skipExistingHookFile(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	} else {
+		return true
+	}
 }

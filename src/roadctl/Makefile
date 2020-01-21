@@ -43,7 +43,7 @@ LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD) -X=main.GitT
 all: compile check
 
 ## compile: Compile the binary.
-compile: $(LOGS) $(ARTIFACTS) $(ASSETS) $(DOCS) $(BUILDS)
+compile: go-get $(LOGS) $(ARTIFACTS) $(ASSETS) $(DOCS) $(BUILDS)
 	@echo "  Compiling"
 	@-$(MAKE) -s build
 
@@ -55,7 +55,7 @@ clean:
 	@-$(MAKE) go-clean
 
 ## build: Build the binary for linux / mac x86 and amd
-build: go-get
+build:
 	@echo "  >  Building binary..."
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
 # make this conditional on build GOARCH
