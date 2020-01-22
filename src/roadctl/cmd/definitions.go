@@ -416,7 +416,7 @@ func (d *tplDef) BadgesToString() string {
 	return badges
 }
 
-//Valide the table(s) definition, and other YAML defults needed
+//Valid the table(s) definition, and other YAML defaults needed
 //for anticipated execution
 
 func (d *tplDef) Validate() *tblDefError {

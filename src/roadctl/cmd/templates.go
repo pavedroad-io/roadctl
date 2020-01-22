@@ -111,7 +111,11 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 //  No options
 const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
 
+// Makefile constants
 const (
+	allWithFossa    string = "all: $(GITTEST) $(FOSSATEST) compile check"
+	allWithoutFossa string = "all: $(GITTEST) compile check"
+
 	checkWithSonar    string = "check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 	checkWithoutSonar string = "check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 
@@ -170,7 +174,7 @@ type tplData struct {
 	SonarLogin        string
 	SonarPrefix       string
 	SonarCloudEnabled bool
-	FOOSAEnabled      bool
+	FOSSAEnabled      bool
 
 	// Service and tpl-names
 	Name         string //service name
@@ -197,6 +201,7 @@ type tplData struct {
 
 	// Makefile options
 	CheckBuildTarget  string //build line for check section
+	AllBuildTarget    string //build line for check section
 	FossaBuildSection string //build target for Fossa
 	FossaLintSection  string //lint section for Fossa
 
@@ -256,15 +261,17 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 
 	si = defs.findIntegration("fossa")
 	if si.Name != "" {
-		output.FOOSAEnabled = si.Enabled
+		output.FOSSAEnabled = si.Enabled
 	}
 
-	if output.FOOSAEnabled {
+	if output.FOSSAEnabled {
 		output.FossaBuildSection = fossaSection
 		output.FossaLintSection = fossaLint
+		output.AllBuildTarget = allWithFossa
 	} else {
 		output.FossaBuildSection = ""
 		output.FossaLintSection = ""
+		output.AllBuildTarget = allWithoutFossa
 	}
 
 	return nil
