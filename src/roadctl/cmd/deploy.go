@@ -40,8 +40,8 @@ var deployCmd = &cobra.Command{
     --user
     --password`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("deploying to localcluster")
-		fmt.Println("run: kubectl get svs,po servicename")
+		fmt.Println("deploying to local cluster")
+		fmt.Println("run: kubectl get svc,po servicename")
 		fmt.Println("To track status")
 	},
 }

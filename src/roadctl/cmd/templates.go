@@ -192,7 +192,7 @@ type tplData struct {
 	PutSwaggerDoc           string // swagger for put method
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
-	SwaggerGeneratedStructs string // swagger doc and go structs
+	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
 	//JSON data
@@ -229,7 +229,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.SchedulerName = defs.Project.SchedulerName
 	output.PavedroadInfo = prCopyright
 
-	// Verision info
+	// Version info
 	output.Version = defs.Info.Version
 	output.APIVersion = defs.Info.APIVersion
 
@@ -380,7 +380,7 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 //
 // Performs two tasks
 //    - 1 Generates the structure as a string that is inserted
-//        into the code template.  This is the tableString
+//        into the code template.  This is the "tableString"
 //        variable
 //
 //    - 2 Creates JSON sample data
@@ -409,7 +409,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		for _, child := range item.Children {
 			tplAddStruct(*child, defs, output)
 
-			// Same as structField except type with be the subtable
+			// Same as structField except type with be the suitable
 			tableString += fmt.Sprintf(structSubstruct,
 				strcase.ToCamel(child.Name),
 				strings.ToLower(child.Name),
@@ -474,7 +474,7 @@ type tplListItem struct {
 // tplLocation
 type tplLocation struct {
 	Name         string //Name of the template file
-	RelativePath string // Path realative to the current directory
+	RelativePath string // Path relative to the current directory
 }
 
 type tplExplainItem struct {
@@ -609,7 +609,7 @@ func (t tplListResponse) RespondWithYAML() string {
 //    microservices:
 //    serverless:
 //    crd:
-//  org: GitHub orginization
+//  org: GitHub organization
 //  repo: GitHub repository
 //  path: path to start in repository
 //  client: a github client

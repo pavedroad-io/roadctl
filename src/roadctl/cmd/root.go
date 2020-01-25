@@ -72,7 +72,7 @@ func init() {
 
 // initConstants populates global slices of types
 func initConstants() {
-	// Types or resouces command can act on
+	// Types or resources command can act on
 	initResourcetypes()
 
 	// TODO: Move this into viper configuration

@@ -16,7 +16,9 @@
 *.out
 *.log
 
+assets/
 bin/
+builds/
 pkg/
 vendor/
 volumes/
