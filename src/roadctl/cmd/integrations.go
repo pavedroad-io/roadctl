@@ -1,4 +1,4 @@
-// Package cmd this files handels functions related to integratiosn
+// Package cmd this files handles functions related to integrations
 package cmd
 
 import (
@@ -80,7 +80,7 @@ func checkSonarCloud(config *tplData) error {
 	return nil
 }
 
-// ensureSonarCloudKeyExists search for all posible
+// ensureSonarCloudKeyExists search for all possible
 // combinations:
 //   key in global namespace == PavedRoad_{{key}}
 //   key in private namespace == organization_key

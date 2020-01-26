@@ -111,7 +111,11 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 //  No options
 const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
 
+// Makefile constants
 const (
+	allWithFossa    string = "all: $(GITTEST) $(FOSSATEST) compile check"
+	allWithoutFossa string = "all: $(GITTEST) compile check"
+
 	checkWithSonar    string = "check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 	checkWithoutSonar string = "check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 
@@ -170,7 +174,7 @@ type tplData struct {
 	SonarLogin        string
 	SonarPrefix       string
 	SonarCloudEnabled bool
-	FOOSAEnabled      bool
+	FOSSAEnabled      bool
 
 	// Service and tpl-names
 	Name         string //service name
@@ -188,7 +192,7 @@ type tplData struct {
 	PutSwaggerDoc           string // swagger for put method
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
-	SwaggerGeneratedStructs string // swagger doc and go structs
+	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
 	//JSON data
@@ -197,6 +201,7 @@ type tplData struct {
 
 	// Makefile options
 	CheckBuildTarget  string //build line for check section
+	AllBuildTarget    string //build line for check section
 	FossaBuildSection string //build target for Fossa
 	FossaLintSection  string //lint section for Fossa
 
@@ -224,7 +229,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.SchedulerName = defs.Project.SchedulerName
 	output.PavedroadInfo = prCopyright
 
-	// Verision info
+	// Version info
 	output.Version = defs.Info.Version
 	output.APIVersion = defs.Info.APIVersion
 
@@ -256,15 +261,17 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 
 	si = defs.findIntegration("fossa")
 	if si.Name != "" {
-		output.FOOSAEnabled = si.Enabled
+		output.FOSSAEnabled = si.Enabled
 	}
 
-	if output.FOOSAEnabled {
+	if output.FOSSAEnabled {
 		output.FossaBuildSection = fossaSection
 		output.FossaLintSection = fossaLint
+		output.AllBuildTarget = allWithFossa
 	} else {
 		output.FossaBuildSection = ""
 		output.FossaLintSection = ""
+		output.AllBuildTarget = allWithoutFossa
 	}
 
 	return nil
@@ -373,7 +380,7 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 //
 // Performs two tasks
 //    - 1 Generates the structure as a string that is inserted
-//        into the code template.  This is the tableString
+//        into the code template.  This is the "tableString"
 //        variable
 //
 //    - 2 Creates JSON sample data
@@ -402,7 +409,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		for _, child := range item.Children {
 			tplAddStruct(*child, defs, output)
 
-			// Same as structField except type with be the subtable
+			// Same as structField except type with be the suitable
 			tableString += fmt.Sprintf(structSubstruct,
 				strcase.ToCamel(child.Name),
 				strings.ToLower(child.Name),
@@ -467,7 +474,7 @@ type tplListItem struct {
 // tplLocation
 type tplLocation struct {
 	Name         string //Name of the template file
-	RelativePath string // Path realative to the current directory
+	RelativePath string // Path relative to the current directory
 }
 
 type tplExplainItem struct {
@@ -602,7 +609,7 @@ func (t tplListResponse) RespondWithYAML() string {
 //    microservices:
 //    serverless:
 //    crd:
-//  org: GitHub orginization
+//  org: GitHub organization
 //  repo: GitHub repository
 //  path: path to start in repository
 //  client: a github client
