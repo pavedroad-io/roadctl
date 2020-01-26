@@ -25,5 +25,6 @@ volumes/
 github.com/
 logs/
 .scannerwork/
+.templates/
 templates/
 old/
