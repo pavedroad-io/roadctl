@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// Tables strucuter for user defined tables that need
+// Tables structure for user defined tables that need
 // to be generated
 type Tables struct {
 	// TableName is the name of the table to create.
@@ -27,7 +27,7 @@ type Tables struct {
 	//
 	//   If TableRole is Secondary, TableType is ignored
 	//   if present and the table will be added as a sub
-	//   strucuter
+	//   structure
 	//
 	TableType string `yaml:"table-type"`
 
@@ -35,7 +35,7 @@ type Tables struct {
 	//   Nest this table under the named parent
 	ParentTable string `yaml:"parent-tables"`
 
-	// A list of table columes or object attributes
+	// A list of table columns or object attributes
 	Columns []struct {
 		// Name of the column
 		Name string `yaml:"name"`
@@ -50,18 +50,18 @@ type Tables struct {
 		//
 		MappedName string `yaml:"mapped-name"`
 
-		// Contraints such as required
+		// Constraints such as required
 		// Valid swagger 2.0 validation
 		//
 		Constraints string `yaml:"constraints"`
 
 		// TODO: need to map this to array/map for validation
-		// Type such as boolen, string, float, or integer
+		// Type such as boolean, string, float, or integer
 		//   valid types: Stick to JSON for now
 		//     string
 		//     number
 		//     integer
-		//     boolen
+		//     boolean
 		//     time
 		//     null
 
@@ -70,7 +70,7 @@ type Tables struct {
 }
 
 // Community files to be included
-//   For example, CONTIRBUTING.md
+//   For example, CONTRIBUTING.md
 type Community struct {
 	CommunityFiles []struct {
 		Name string `yaml:"name"`
@@ -123,7 +123,7 @@ type ProjectFiles struct {
 	Src         string `yaml:"src"`
 }
 
-// Badges are links with graphis to be included in
+// Badges are links with graphics to be included in
 // doc/service.html file.  These go to CI test results
 type Badges struct {
 	Enable bool   `yaml:"enable"`
@@ -167,7 +167,7 @@ type Integrations struct {
 	SonarCloudConfig struct {
 		// A sonarcloud access token
 		Login string `yaml:"login"`
-		// Project key should be same a the name
+		// Project key should be same as the name
 		Key     string `yaml:"key"`
 		Options struct {
 			Badges   []Badges `yaml:"badges"`
@@ -226,7 +226,7 @@ const (
 )
 
 // tblDefError
-// structure for returning table defintion errors
+// structure for returning table definition errors
 //
 type tblDefError struct {
 	errorType    int
@@ -327,7 +327,7 @@ func (d *tplDef) walkOrder(item tplTableItem) {
 }
 
 // addChildren: Add children to a parent, then
-//  add any children they may have recursivley
+//  add any children they may have recursively
 func (d *tplDef) addChildren(parent *tplTableItem) {
 
 	c := d.findTables(parent.Name)
@@ -416,7 +416,7 @@ func (d *tplDef) BadgesToString() string {
 	return badges
 }
 
-//Valide the table(s) definition, and other YAML defults needed
+//Valid the table(s) definition, and other YAML defaults needed
 //for anticipated execution
 
 func (d *tplDef) Validate() *tblDefError {
@@ -440,7 +440,7 @@ func (d *tplDef) Validate() *tblDefError {
 	//needed.
 
 	if (d.Info.Name == defMicroserviceName) && (d.Info.Organization == pavedroadSonarTestOrg) {
-		d.setErrorList(INVALIDSERVICENAME, "Sonar cloud microservice name change expeceted.", "")
+		d.setErrorList(INVALIDSERVICENAME, "Sonar cloud microservice name change expected.", "")
 	}
 
 	// Do all tables and report all potential errors
@@ -484,12 +484,12 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 	} else {
 
 		if len(t.TableName) > maxLen {
-			e := fmt.Sprintf("Tabl name length cannot be greater than  %v", maxLen)
+			e := fmt.Sprintf("Table name length cannot be greater than  %v", maxLen)
 			d.setErrorList(INVALIDTABLENAME, e, t.TableName)
 
 		}
 
-		// Use simple regex until more sepcific requirements
+		// Use simple regex until more specific requirements
 		// and security review.
 		// Must be modified to support specific target databases
 		// Looked at specifications for Cockroachdb
