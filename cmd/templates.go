@@ -113,8 +113,8 @@ const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
 
 // Makefile constants
 const (
-	allWithFossa    string = "all: $(GITTEST) $(FOSSATEST) compile check"
-	allWithoutFossa string = "all: $(GITTEST) compile check"
+	allWithFossa    string = "all: $(PREFLIGHT) $(FOSSATEST) compile check"
+	allWithoutFossa string = "all: $(PREFLIGHT) compile check"
 
 	checkWithSonar    string = "check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 	checkWithoutSonar string = "check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
