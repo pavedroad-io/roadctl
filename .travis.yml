@@ -1,0 +1,26 @@
+language: go
+go:
+- '1.0'
+- '1.3'
+
+branches:
+  only:
+    - master
+    - preflightMakeIntegration
+
+jobs:
+	include:
+		- os: linux
+			dist: xenial
+			name: xenial
+		- os: linux
+			dist: bionic
+			name: bionic
+		- os: osx
+			name: osx
+script:
+	- make compile
+	- make check
+
+
+
