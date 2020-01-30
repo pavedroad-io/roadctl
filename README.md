@@ -1,5 +1,3 @@
-<p align="center"><img src="https://github.com/pavedroad-io/kevlar-repo/blob/master/assets/images/banner.png" alt="PavedRoad.io"></p>
-
 # Roadctl
 Roadclt is a command-line interface for:
 
