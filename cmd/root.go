@@ -33,6 +33,9 @@ var debugFlag string = "info"
 var userName string
 var userPassword string
 var userAccessToken string
+var GitTag string
+var Version string
+var Build string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
