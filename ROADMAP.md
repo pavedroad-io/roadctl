@@ -20,4 +20,5 @@ Integrations for SonarCloud, and FOSSA
 ## Future Improvements
 Flexible logging with support for Kafka and Cloud Events
 Open tracing support
+Pre-flight check to help new user get the environment setup correctly
 
