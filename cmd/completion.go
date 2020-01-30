@@ -19,35 +19,42 @@ limitations under the License.
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
 
 // completionCmd represents the completion command
 var completionCmd = &cobra.Command{
-	Use:   "completion",
-	Short: "Generate bash completion scripts",
-	Long: `To load completion run
+	ValidArgs: []string{"bash", "zsh"},
+	Use:       "completion bash|zsh",
+	Short:     "Generate completion scripts on stdout",
+	Long: `To create a roadctl completion file:
+  roadctl completion bash > roadctl.bash
+Or:
+  roadctl completion zsh > _roadctl
+Then move the file to the appropriate completion directory
 
-To configure your bash shell to load completions for each session add to your bashrc
-
-# ~/.bashrc or ~/.profile
-
-or rename to ~.bash_completion
+Or to load the completion code into the current shell:
+  source <(roadctl completion bash)
+Or:
+  source <(roadctl completion zsh)
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		zshTrue := cmd.Flag("zsh")
-		if zshTrue.Value.String() == "true" {
-			fmt.Println("Writing: " + "roadctlZshCompletion.sh")
-			rootCmd.GenZshCompletionFile("roadctlZshCompletion.sh")
+		var usage string = "Usage: roadctl completion bash|zsh"
+		if len(args) == 0 {
+			fmt.Fprintf(os.Stderr, "Missing completion type\n%s\n", usage)
+		} else if args[0] == "bash" {
+			rootCmd.GenBashCompletion(os.Stdout)
+		} else if args[0] == "zsh" {
+			rootCmd.GenZshCompletion(os.Stdout)
 		} else {
-			fmt.Println("Writing: " + "roadctlBashCompletion.sh")
-			rootCmd.GenBashCompletionFile("roadctlBashCompletion.sh")
+			fmt.Fprintf(os.Stderr, "Unsupported completion type %s\n%s\n",
+				args[0], usage)
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(completionCmd)
-	completionCmd.Flags().BoolP("zsh", "z", false, "Generate zsh completion")
 }
