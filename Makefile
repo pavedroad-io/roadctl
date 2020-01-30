@@ -1,7 +1,7 @@
 
 #-include .env
 
-VERSION := 1.0.0
+VERSION := 0.5.0
 BUILD := $(shell git rev-parse --short HEAD)
 PROJECTNAME := $(shell basename "$(PWD)")
 PROJDIR := $(shell pwd)

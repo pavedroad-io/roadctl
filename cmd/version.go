@@ -29,7 +29,8 @@ var versionCmd = &cobra.Command{
 	Short: "Print the current version",
 	Long:  "Print the current version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("version: 1.0alpha")
+		fmt.Printf("{\"Version\": \"%v\", \"Build\": \"%v\", \"GitTag\": \"%v\"}\n",
+			Version, Build, GitTag)
 	},
 }
 

@@ -16,6 +16,8 @@
 *.out
 *.log
 
+.envrc
+roadctl
 assets/
 bin/
 builds/

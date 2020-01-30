@@ -15,8 +15,22 @@ limitations under the License.
 */
 package main
 
-import "roadctl/cmd"
+import (
+	"roadctl/cmd"
+)
+
+// GitTag contains current git tab for this repository
+var GitTag string
+
+// Version contains version specified in definitions file
+var Version string
+
+// Build holds latest git commit hash in short form
+var Build string
 
 func main() {
+	cmd.GitTag = GitTag
+	cmd.Version = Version
+	cmd.Build = Build
 	cmd.Execute()
 }
