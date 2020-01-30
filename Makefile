@@ -15,8 +15,6 @@ LOGS := $(PROJDIR)/logs
 
 # Go related variables.
 GOBASE := $(shell cd ../../;pwd)
-GOPATH := $(GOBASE)
-export GOPATH = $(GOBASE)
 GOBIN := $(GOBASE)/bin
 GOFILES := $(wildcard *.go)
 GOLINT := $(shell which golint)
@@ -69,15 +67,15 @@ build:
 
 Gopkg.toml:
 	@echo "  >  initialize dep support..."
-	$(shell (export GOPATH=$(GOPATH);dep init))
+	$(shell (dep init))
 
 go-get: Gopkg.toml get-deps $(ASSETS)
 	@echo "  >  Creating dependencies graph png..."
-	$(shell (export GOPATH=$(GOPATH);dep status -dot | dot -T png -o $(ASSETS)/$(PROJECTNAME).png))
+	$(shell (dep status -dot | dot -T png -o $(ASSETS)/$(PROJECTNAME).png))
 
 get-deps:
 	@echo "  >  dep ensure..."
-	$(shell (GOPATH=$(GOPATH);dep ensure $?))
+	$(shell (dep ensure $?))
 
 ## install: Install packages or main
 install:
@@ -110,9 +108,9 @@ lint: $(GOFILES)
 	@echo $?
 	$(GOLINT) ./... > $(GOLINTREPORT)
 	@echo "  >  running gosec... > $(GOSECREPORT)"
-	$(shell (export GOPATH=$(GOPATH);gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.templates ./...))
+	$(shell (gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.templates ./...))
 	@echo "  >  running go vet... > $(GOVETREPORT)"
-	$(shell (export GOPATH=$(GOPATH);go vet ./... 2> $(GOVETREPORT)))
+	$(shell (go vet ./... 2> $(GOVETREPORT)))
 
 ## fmt: Run gofmt on all code
 fmt: $(GOFILES)
