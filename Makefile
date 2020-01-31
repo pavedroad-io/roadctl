@@ -83,10 +83,8 @@ go-clean:
 	@echo "  >  Cleaning build cache"
 	go clean
 
-# TODO: enable sonar scanner once we get API key
-# check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
-## check: Start services and execute static code analysis and tests
-check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
+# check: Start services and execute static code analysis and tests
+check: lint sonar-scanner fossa $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
 	@echo "  >  running to tests..."
 	go test -coverprofile=$(GOCOVERAGE) -v ./...
 
@@ -145,3 +143,6 @@ $(DOCS):
 $(LOGS):
 	@echo "  >  Creating logs directory"
 	$(shell mkdir -p $(LOGS))
+
+fossa:
+	FOSSA_API_KEY=09bd1204d501e8682e1bb6bcadf55cee fossa analyze
