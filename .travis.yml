@@ -14,3 +14,5 @@ install: true
 script:
   - go build -mod=vendor ./...
   - make -f Bakefile build
+  - ls
+  - ls builds
