@@ -9,5 +9,6 @@ addons:
       - go-dep
 script:
 - dep ensure
+- go get context
 - GOOS=linux GOARCH=amd64 go build -o "roadctl-$(git describe --tags)-linux-amd64"
 
