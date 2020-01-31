@@ -16,7 +16,7 @@ limitations under the License.
 package main
 
 import (
-	"pavedroad-io/roadctl/cmd"
+	"github.com/pavedroad-io/roadctl/cmd"
 )
 
 // GitTag contains current git tab for this repository
