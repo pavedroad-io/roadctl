@@ -51,7 +51,7 @@ clean:
 	@-$(MAKE) go-clean
 
 ## build: Build the binary for linux / mac x86 and amd
-build:
+build: $(BUILDS)
 	@echo "  >  Building binary..."
 	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
 # make this conditional on build GOARCH
