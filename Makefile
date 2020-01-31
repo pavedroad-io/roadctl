@@ -1,6 +1,4 @@
 
-#-include .env
-
 VERSION := 0.5.0
 BUILD := $(shell git rev-parse --short HEAD)
 PROJECTNAME := $(shell basename "$(PWD)")
@@ -41,7 +39,7 @@ LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD) -X=main.GitT
 all: compile check
 
 ## compile: Compile the binary.
-compile: go-get $(LOGS) $(ARTIFACTS) $(ASSETS) $(DOCS) $(BUILDS)
+compile: build-mods $(LOGS) $(ARTIFACTS) $(ASSETS) $(DOCS) $(BUILDS)
 	@echo "  Compiling"
 	@-$(MAKE) -s build
 
@@ -55,27 +53,27 @@ clean:
 ## build: Build the binary for linux / mac x86 and amd
 build:
 	@echo "  >  Building binary..."
-	go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
+	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
 # make this conditional on build GOARCH
-	go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(GOFILES)
-	go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(GOFILES)
+	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(GOFILES)
+	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(GOFILES)
 	cp $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH)
 	cp $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(PROJECTNAME)
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(BUILDS)/$(PROJECTNAME)-"darwin"-"amd64"
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(BUILDS)/$(PROJECTNAME)-"darwin"-"386"
 
 
-Gopkg.toml:
-	@echo "  >  initialize dep support..."
-	$(shell (dep init))
+#Gopkg.toml:
+#	@echo "  >  initialize dep support..."
+#	$(shell (dep init))
 
-go-get: Gopkg.toml get-deps $(ASSETS)
-	@echo "  >  Creating dependencies graph png..."
-	$(shell (dep status -dot | dot -T png -o $(ASSETS)/$(PROJECTNAME).png))
+#go-get: Gopkg.toml get-deps $(ASSETS)
+#	@echo "  >  Creating dependencies graph png..."
+#	$(shell (dep status -dot | dot -T png -o $(ASSETS)/$(PROJECTNAME).png))
 
-get-deps:
-	@echo "  >  dep ensure..."
-	$(shell (dep ensure $?))
+build-mods:
+	@echo "  >  go mod vendor..."
+	go mod vendor
 
 ## install: Install packages or main
 install:

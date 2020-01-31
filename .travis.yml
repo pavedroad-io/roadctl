@@ -11,4 +11,6 @@ before_script:
 
 install: true
 
-script: go build -mod=vendor ./...
+script:
+  - go build -mod=vendor ./...
+  - make -f Bakefile build
