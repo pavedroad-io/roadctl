@@ -10,7 +10,7 @@ addons:
 script:
 - dep ensure
 - echo $GOPATH
-- ls ../
+- ls $GOPATH
 - GOOS=linux GOARCH=amd64 go build -o "roadctl-$(git describe --tags)-linux-amd64"
 install: "# disable travis dep"
 
