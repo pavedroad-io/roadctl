@@ -8,3 +8,4 @@ addons:
       - go-dep
 script:
 - make compile
+install: true

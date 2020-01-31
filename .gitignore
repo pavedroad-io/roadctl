@@ -22,9 +22,7 @@ assets/
 bin/
 builds/
 pkg/
-vendor/
 volumes/
-github.com/
 logs/
 .scannerwork/
 .templates/

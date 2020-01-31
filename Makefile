@@ -90,7 +90,7 @@ go-clean:
 ## check: Start services and execute static code analysis and tests
 check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
 	@echo "  >  running to tests..."
-#	go test -coverprofile=$(GOCOVERAGE) -v ./...
+	go test -coverprofile=$(GOCOVERAGE) -v ./...
 
 sonar-scanner: $(ARTIFACTS)
 	sonarcloud.sh
