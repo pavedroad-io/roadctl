@@ -3,5 +3,7 @@ sudo: false
 language: go
 go:
 - '1.3'
+env: GO111MODULE=on  GOFLAGS'-mod vendor'
 before_script:
 - mv Makefile Bakefile
+install: true
