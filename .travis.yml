@@ -8,6 +8,6 @@ addons:
     packages:
       - go-dep
 script:
+- dep ensure
 - GOOS=linux GOARCH=amd64 go build -o "roadctl-$(git describe --tags)-linux-amd64"
 
-install: "# skip"
