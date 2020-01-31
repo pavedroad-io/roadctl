@@ -3,14 +3,3 @@ sudo: false
 language: go
 go:
 - '1.3'
-addons:
-  apt:
-    packages:
-      - go-dep
-script:
-- dep ensure
-- echo $GOPATH
-- ls -R $GOPATH/pkg
-- GOOS=linux GOARCH=amd64 go build -o "roadctl-$(git describe --tags)-linux-amd64"
-install: "# disable travis dep"
-
