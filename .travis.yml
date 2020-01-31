@@ -1,4 +1,5 @@
 dist: bionic
+sudo: false
 language: go
 go:
 - '1.3'
@@ -7,5 +8,6 @@ addons:
     packages:
       - go-dep
 script:
-- make compile
-install: true
+- GOOS=linux GOARCH=amd64 go build -o "roadctl-$(git describe --tags)-linux-amd64"
+
+install: "# skip"
