@@ -1,9 +1,14 @@
 dist: bionic
-sudo: false
 language: go
 go:
 - '1.3'
-env: GO111MODULE=on  GOFLAGS'-mod vendor'
+
+env:
+  -GO111MODULE=on
+
 before_script:
 - mv Makefile Bakefile
+
 install: true
+
+script: go build -v -mod=vendor ./...
