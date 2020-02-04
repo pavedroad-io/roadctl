@@ -1,6 +1,4 @@
 
-#-include .env
-
 VERSION := 0.5.0
 BUILD := $(shell git rev-parse --short HEAD)
 PROJECTNAME := $(shell basename "$(PWD)")
@@ -15,8 +13,6 @@ LOGS := $(PROJDIR)/logs
 
 # Go related variables.
 GOBASE := $(shell cd ../../;pwd)
-GOPATH := $(GOBASE)
-export GOPATH = $(GOBASE)
 GOBIN := $(GOBASE)/bin
 GOFILES := $(wildcard *.go)
 GOLINT := $(shell which golint)
@@ -43,7 +39,7 @@ LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD) -X=main.GitT
 all: compile check
 
 ## compile: Compile the binary.
-compile: go-get $(LOGS) $(ARTIFACTS) $(ASSETS) $(DOCS) $(BUILDS)
+compile: build-mods $(LOGS) $(ARTIFACTS) $(ASSETS) $(DOCS) $(BUILDS)
 	@echo "  Compiling"
 	@-$(MAKE) -s build
 
@@ -55,44 +51,42 @@ clean:
 	@-$(MAKE) go-clean
 
 ## build: Build the binary for linux / mac x86 and amd
-build:
+build: $(BUILDS)
 	@echo "  >  Building binary..."
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
+	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
 # make this conditional on build GOARCH
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOOS="darwin" GOARCH="amd64" go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(GOFILES)
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOOS="darwin" GOARCH="386" go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(GOFILES)
+	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(GOFILES)
+	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(GOFILES)
 	cp $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH)
 	cp $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(PROJECTNAME)
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(BUILDS)/$(PROJECTNAME)-"darwin"-"amd64"
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(BUILDS)/$(PROJECTNAME)-"darwin"-"386"
 
 
-Gopkg.toml:
-	@echo "  >  initialize dep support..."
-	$(shell (export GOPATH=$(GOPATH);dep init))
+#Gopkg.toml:
+#	@echo "  >  initialize dep support..."
+#	$(shell (dep init))
 
-go-get: Gopkg.toml get-deps $(ASSETS)
-	@echo "  >  Creating dependencies graph png..."
-	$(shell (export GOPATH=$(GOPATH);dep status -dot | dot -T png -o $(ASSETS)/$(PROJECTNAME).png))
+#go-get: Gopkg.toml get-deps $(ASSETS)
+#	@echo "  >  Creating dependencies graph png..."
+#	$(shell (dep status -dot | dot -T png -o $(ASSETS)/$(PROJECTNAME).png))
 
-get-deps:
-	@echo "  >  dep ensure..."
-	$(shell (GOPATH=$(GOPATH);dep ensure $?))
+build-mods:
+	@echo "  >  go mod vendor..."
+	go mod vendor
 
 ## install: Install packages or main
 install:
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go install $(GOFILES)
+	go install $(GOFILES)
 
 go-clean:
 	@echo "  >  Cleaning build cache"
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) go clean
+	go clean
 
-# TODO: enable sonar scanner once we get API key
-# check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
-## check: Start services and execute static code analysis and tests
-check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
+# check: Start services and execute static code analysis and tests
+check: lint sonar-scanner fossa $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)
 	@echo "  >  running to tests..."
-#	go test -coverprofile=$(GOCOVERAGE) -v ./...
+	go test -coverprofile=$(GOCOVERAGE) -v ./...
 
 sonar-scanner: $(ARTIFACTS)
 	sonarcloud.sh
@@ -110,9 +104,9 @@ lint: $(GOFILES)
 	@echo $?
 	$(GOLINT) ./... > $(GOLINTREPORT)
 	@echo "  >  running gosec... > $(GOSECREPORT)"
-	$(shell (export GOPATH=$(GOPATH);gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.templates ./...))
+	$(shell (gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.templates ./...))
 	@echo "  >  running go vet... > $(GOVETREPORT)"
-	$(shell (export GOPATH=$(GOPATH);go vet ./... 2> $(GOVETREPORT)))
+	$(shell (go vet ./... 2> $(GOVETREPORT)))
 
 ## fmt: Run gofmt on all code
 fmt: $(GOFILES)
@@ -149,3 +143,6 @@ $(DOCS):
 $(LOGS):
 	@echo "  >  Creating logs directory"
 	$(shell mkdir -p $(LOGS))
+
+fossa:
+	FOSSA_API_KEY=09bd1204d501e8682e1bb6bcadf55cee fossa analyze
