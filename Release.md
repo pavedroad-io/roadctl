@@ -7,4 +7,5 @@ v0.5.2alpha:
 	  - FOSSA CI integration
 	  - Go report card CI integration
 	  - Github release integration
+		- Make service names lowercase for docker image names
 
