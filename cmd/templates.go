@@ -212,7 +212,8 @@ type tplData struct {
 //    return error if required mappings are missing
 //
 func tplDataMapper(defs tplDef, output *tplData) error {
-	output.Name = defs.Info.Name
+	// Docker images names don't allow uppercase letters
+	output.Name = strings.ToLower(defs.Info.Name)
 	output.NameExported = strcase.ToCamel(defs.Info.Name)
 	output.TplName = defs.Info.ID
 	output.DefFile = tplDefFile
