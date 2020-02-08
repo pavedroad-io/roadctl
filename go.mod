@@ -8,6 +8,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
+	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pavedroad-io/integrations v0.0.0-20191104225729-028e8cd2f84f
 	github.com/pelletier/go-toml v1.6.0 // indirect
