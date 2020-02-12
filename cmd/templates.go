@@ -210,7 +210,7 @@ type tplData struct {
 //  tplDataMapper
 //    Map data from definitions file to tplData structure
 //    return error if required mappings are missing
-//
+//    TODO: jms
 func tplDataMapper(defs tplDef, output *tplData) error {
 	// Docker images names don't allow uppercase letters
 	output.Name = strings.ToLower(defs.Info.Name)
@@ -219,6 +219,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.DefFile = tplDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+
 	// TODO: Write an SQL safe naming function
 	output.OrgSQLSafe = strcase.ToCamel(defs.Info.Organization)
 	output.ProjectInfo = defs.Project.Description
