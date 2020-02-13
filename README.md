@@ -1,4 +1,4 @@
-<img src="assets/images/JumpDrive-logo_with-icon.png" alt="JD" align="left" heigth="100" width="200">
+![PavedRoad, Inc.](assets/images/pavedroad_black_230x36.png)
 
 [![Build Status](https://travis-ci.org/pavedroad-io/roadctl.svg?branch=travisSetup2)](https://travis-ci.org/pavedroad-io/roadctl)[![Go Report Card](https://goreportcard.com/badge/github.com/pavedroad-io/roadctl)](https://goreportcard.com/report/github.com/pavedroad-io/roadctl)[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=alert_status)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=ncloc)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=sqale_index)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=security_rating)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B9819%2Fgit%40github.com%3Apavedroad-io%2Froadctl.git.svg?type=shield)](https://app.fossa.com/projects/custom%2B9819%2Fgit%40github.com%3Apavedroad-io%2Froadctl.git?ref=badge_shield)
 
@@ -6,8 +6,8 @@
 Roadclt is a command-line interface for:
 
 -	Creating microservices, CRDs, and serverless functions from low-code templates
--	Managing a pre-configured CI/CD pipeline
--	Controlling deployment options
+		Managing a pre-configured CI/CD pipeline
+		Controlling deployment options
 
 This overview covers roadctl syntax, describes the command operations, and provides common examples. For details about each command, including all the supported flags and subcommands, see the roadctl reference documentation. For installation instructions see [installing roadctl](http://www.pavedroad.io/roadctl/install.md).
 
@@ -19,13 +19,13 @@ $ roadctl [command] [TYPE] [NAME] [flags]
 Where command, TYPE, NAME, and flags are:
 
 -	command: Specifies the operation that you want to perform on one or more resources, for example create, get, describe, delete.
--	TYPE: Specifies the resource type. Resource types are case-insensitive and you can specify the singular, or plural forms. For example, the following commands produce the same output:
+		TYPE: Specifies the resource type. Resource types are case-insensitive and you can specify the singular, or plural forms. For example, the following commands produce the same output:
 
      `$ roadctl get template template1`
 
      `$ roadctl get templates template1`
 
--	NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates.
+		NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates.
 
 ## Resource types
 The following table includes a list of all the supported resource types
@@ -103,6 +103,7 @@ The following command populates available templates on your local hard drive.  B
 The output includes the template name and its release status.  Release status is one of the following:
 
 ```
+
 ```
 
 | Release | Meaning |
@@ -138,9 +139,9 @@ serverless      go-knative           ga
 Template definitions file allow you to tailor your application to your requirements, such as:
 
 -	Define fields and structures to create
--	Specify community files
--	Tailor the initial integrations that get included
--	Set organizational and project information like; license, company name, or project description
+		Specify community files
+		Tailor the initial integrations that get included
+		Set organizational and project information like; license, company name, or project description
 
 Each template comes with a default definitions file you can use as a beginning point.
 
