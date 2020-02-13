@@ -52,6 +52,10 @@
 
 [Online guide](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 # Resources
 
 Can be accessed using their short name or full name.  Multiple resources can be request depending on the kubernetes service/control being used.
