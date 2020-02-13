@@ -21,34 +21,29 @@
                    master <---> master <---> master
 
 - [daemonsets](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) run on every node providing support for applications like monitoring
-
 - [jobs](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/) are a pattern that provides a service to deployments
-
 - [side cars](https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/) are a pattern that provides a service to deployments
 
--
+---
 
 - [Service](https://kubernetes.io/docs/concepts/services-networking/service/) exposes pods and managed load balancing
-
 - [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) controls deploying pods and managing replication and health check.
-
 - [Replicate controller](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/) manages scaling pods to the desired number specified
-
 - [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/) Support running stateless containers
 
--
+---
 
 - [Persistent Volume Claims](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) Allow a pod to request storage
 
--
+---
 
 - [nodes](https://kubernetes.io/docs/concepts/architecture/nodes/) are the servers workloads are scheduled on 
 
--
+---
 
 - [persistentvolumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) are statically or dynamically generated storage
 
--
+---
 
 - [master](https://kubernetes.io/docs/concepts/architecture/master-node-communication/) manage workload, nodes, and provide core services like API and discovery
 
@@ -56,7 +51,6 @@
 # Kubectl
 
 [Online guide](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands)
-
 
 # Resources
 
