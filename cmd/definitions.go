@@ -109,9 +109,12 @@ type Dependencies []struct {
 
 // Topic defines a Kafka topic and its partition and replication counts
 type Topic struct {
-	Value       string `json:"value"`
-	Partitions  int    `json:"partitions"`
-	replication int    `json:"replication"`
+	// Value is the topic name
+	Value string `json:"value"`
+	// Partitions is the number of partions
+	Partitions int `json:"partitions"`
+	// ReleaseStatus is the replication factor for this topic
+	Replication int `json:"replication"`
 }
 
 // Maintainer contact information
