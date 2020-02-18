@@ -104,7 +104,13 @@ type Dependencies []struct {
 	} `yaml:"ports"`
 	Volumes     []interface{} `yaml:"volumes"`
 	DockerKafka interface{}   `yaml:"docker-kafka,omitempty"`
-	Topics      []string      `yaml:"topics,omitempty"`
+	Topics      []Topic       `yaml:"topics,omitempty"`
+}
+
+type Topic struct {
+	Value       string `json:"value"`
+	Partitions  int    `json:"partitions"`
+	replication int    `json:"replication"`
 }
 
 // Maintainer contact information
