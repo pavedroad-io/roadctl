@@ -20,7 +20,6 @@ limitations under the License.
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -102,13 +101,16 @@ func runGet(cmd *cobra.Command, args []string) {
 //
 func initTemplates() {
 	fmt.Println("Initializing template repository")
-	// Create template dir if necessary
-	if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
-		fmt.Println("defaultTemplateDir")
-		os.MkdirAll(defaultTemplateDir, os.ModePerm)
-	}
-	client := getClient()
-	tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
+	/*
+		// Create template dir if necessary
+		if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
+			fmt.Println("defaultTemplateDir")
+			os.MkdirAll(defaultTemplateDir, os.ModePerm)
+		}
+		client := getClient()
+		tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
+	*/
+	tplClone("release")
 }
 
 func getByResource(r, n string) Response {
