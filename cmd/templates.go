@@ -56,7 +56,18 @@ var tplDir = "."      // Directory for generated code output
 var tplDefFile string // Name of the definitions file used to generated templates
 var tplDirSelected string
 
-//TEMPLATE needs documentation.
+// The release branch stores released templates
+// The latest and stable tags are used to select which release
+const (
+	gitTemplateBranch  = "release"
+	gitLatestTag       = "latest"
+	gitStableTag       = "stable"
+	templateRepository = "https://github.com/pavedroad-io/templates"
+	githubAPI          = "GitHub API"
+	gitclone           = "git clone"
+)
+
+// TEMPLATE needs documentation.
 const (
 	tplResourceName = "templates"
 	tplDefinition   = "definition.yaml"
@@ -131,6 +142,42 @@ $(FOSSATEST):
 )
 
 var templates *template.Template
+
+// tplDirectory manages template directory locations
+type tplDirectory struct {
+	// Full path to the template directory
+	location string
+
+	// Is it initialized
+	initialized bool
+
+	// How we determined the location
+	// default, so.GetEnv, command line option
+	locationFrom string
+}
+
+const (
+	tplCacheCreatedFile string = ".pr_cache_created"
+	tplCacheUreatedFile string = ".pr_cache_updated"
+	tplCacheCreatedWtih string = ".pr_cache_created_with"
+)
+
+// tplCache manages information about templates
+//  stored in a template directory
+type tplCache struct {
+	// What directory is it in
+	location *tplDirectory
+
+	// Is it initialized
+	initialized bool
+
+	// git clone or github API
+	initilazedFrom string
+
+	// Track we we creatd and last updated
+	created time.Time
+	updated time.Time
+}
 
 type tplData struct {
 	// Information about company and project
@@ -603,6 +650,86 @@ func (t tplListResponse) RespondWithYAML() string {
 	fmt.Println(string(yb))
 
 	return string(yb)
+}
+
+// Location returns the location of the template directory
+// Initialize if necessary
+func (t *tplDirectory) Location() string {
+
+	if !t.initialized {
+		err := t.initialize()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	}
+	return t.location
+}
+
+// initialize a private function for initializing
+//   the template directory location, not the
+//   templates
+func (t *tplDirectory) initialize() error {
+	// Order of precedence
+	//   - roadctl CLI
+	//   - PR_TEMPLATE_DIR
+	//   - defaultTemplateDir
+
+	env := os.Getenv("PR_TEMPLATE_DIR")
+	if templateDirectoryLocation != "" {
+		t.location = templateDirectoryLocation
+		t.locationFrom = "CLI"
+	} else if env != "" && templateDirectoryLocation == "" {
+		t.location = env
+		t.locationFrom = "PR_TEMPLATE_DIR"
+	} else {
+		t.location = defaultTemplateDir
+		t.locationFrom = "default"
+	}
+
+	if !t.initialized {
+		if err := createDirectory(t.location); err != nil {
+			log.Fatal(err.Error())
+		}
+		t.initialized = true
+	}
+
+	return nil
+}
+
+func (t *tplDirectory) getDefault() string {
+
+	return ""
+}
+
+// New create a tplCache
+// If it does not exists, initalize it using method specified
+//   td: a tplDirectory type
+//   method: GitHub API or git clone
+func (tc *tplCache) New(td *tplDirectory, method string) error {
+	tc.location = td
+	switch method {
+	case gitclone:
+		//tc.Clone()
+	case githubAPI:
+		//tc.API()
+	default:
+		fmt.Println("error")
+	}
+	return nil
+}
+
+// tplClone create the template repository using git clone
+//   branch: specify a branch to use, default is latest release
+//           can also be changed by setting PR_TEMPLATE_BRANCH
+func tplClone(branch string) error {
+
+	t := &tplDirectory{}
+	tc := &tplCache{}
+	if dir := t.Location(); dir != "" {
+		msg := fmt.Sprintf("Unable to open template directory (%v)\n", dir)
+		return errors.New(msg)
+	}
+	return tc.New(t, gitclone)
 }
 
 //tplPull pulls templates from a remote repository

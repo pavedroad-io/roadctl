@@ -33,6 +33,7 @@ var debugFlag string = "info"
 var userName string
 var userPassword string
 var userAccessToken string
+var templateDirectoryLocation string
 var GitTag string
 var Version string
 var Build string
@@ -71,6 +72,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&userName, "user", "", "HTTP basic auth user name")
 	rootCmd.PersistentFlags().StringVar(&userPassword, "password", "", "HTTP basic auth password")
 	rootCmd.PersistentFlags().StringVar(&userAccessToken, "token", "", "OAUTH access token")
+
+	// Template directory
+	//   Don't set the default so we know if it was set by command line vs env
+	rootCmd.PersistentFlags().StringVar(&templateDirectoryLocation, "templates", "", "Set the location of the directory holding roadctl templates")
 }
 
 // initConstants populates global slices of types
