@@ -60,9 +60,9 @@ var tplDirSelected string
 // The release branch stores released templates
 // The latest and stable tags are used to select which release
 const (
-	gitTemplateBranch  = "release"
-	gitLatestTag       = "latest"
-	gitStableTag       = "stable"
+	gitTemplateBranch  = "refs/heads/release"
+	gitLatestTag       = "refs/heads/latest"
+	gitStableTag       = "refs/heads/stable"
 	templateRepository = "https://github.com/pavedroad-io/templates"
 	githubAPI          = "GitHub API"
 	gitclone           = "git clone"
@@ -676,6 +676,7 @@ func (t *tplDirectory) Location() string {
 		err := t.initialize()
 		if err != nil {
 			log.Fatal(err.Error())
+			return ""
 		}
 	}
 	return t.location
@@ -692,14 +693,17 @@ func (t *tplDirectory) initialize() error {
 
 	env := os.Getenv("PR_TEMPLATE_DIR")
 	if templateDirectoryLocation != "" {
+		fmt.Println("using cli")
 		t.location = templateDirectoryLocation
 		t.locationFrom = "CLI"
 	} else if env != "" && templateDirectoryLocation == "" {
 		t.location = env
 		t.locationFrom = "PR_TEMPLATE_DIR"
+		fmt.Println("using env")
 	} else {
 		t.location = defaultTemplateDir
 		t.locationFrom = "default"
+		fmt.Println("using default")
 	}
 
 	if !t.initialized {
@@ -723,6 +727,7 @@ func (t *tplDirectory) getDefault() string {
 //   method: GitHub API or git clone
 func (tc *tplCache) New(td *tplDirectory, method string) error {
 	tc.location = td
+	log.Println("Cloning with method: ", method)
 	switch method {
 	case gitclone:
 		tc.Clone()
@@ -738,19 +743,13 @@ func (tc *tplCache) Clone() error {
 
 	// See if it already has been cloned
 	// -- Or just try and clone again and catch the error?
-	if e := tc.readCache(); e != nil {
+	if e := tc.readCache(); e == nil {
+		log.Println("Cache exists exiting")
 		return e
 	}
 
-	// Tempdir to clone the repository
-	dir, err := ioutil.TempDir("", defaultTemplateDir)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	_, err = git.PlainClone(dir, false, &git.CloneOptions{
-		URL:           "git@github.com:pavedroad-io/templates.git",
+	_, err := git.PlainClone(defaultTemplateDir, false, &git.CloneOptions{
+		URL:           templateRepository,
 		ReferenceName: gitTemplateBranch,
 	})
 
@@ -765,7 +764,7 @@ func (tc *tplCache) Clone() error {
 	tc.CacheFile.Initialized = true
 	tc.CacheFile.Branch = gitTemplateBranch
 
-	if err = tc.writeCache(dir); err != nil {
+	if err = tc.writeCache(defaultTemplateDir); err != nil {
 		log.Fatal(err)
 	}
 
@@ -804,18 +803,18 @@ func (tc *tplCache) readCache() error {
 		return errors.New("Not found")
 	}
 
-	fmt.Println("Reading cachefile from: ", fl)
 	df, err := os.Open(fl)
 	if err != nil {
-		fmt.Println("failed to open:", fl, ", error:", err)
+		log.Println("failed to open:", fl, ", error:", err)
 	}
+
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
 	if e != nil {
 		log.Fatal("read failed for ", fl)
 	}
 
-	err = yaml.Unmarshal([]byte(byteValue), tc.CacheFile)
+	err = yaml.Unmarshal(byteValue, &tc.CacheFile)
 	if err != nil {
 		return err
 	}
@@ -830,7 +829,7 @@ func tplClone(branch string) error {
 
 	t := &tplDirectory{}
 	tc := &tplCache{}
-	if dir := t.Location(); dir != "" {
+	if dir := t.Location(); dir == "" {
 		msg := fmt.Sprintf("Unable to open template directory (%v)\n", dir)
 		return errors.New(msg)
 	}
@@ -857,8 +856,7 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 	// file, director, resp, err
 	fileContent, directoryContent, _, err := client.Repositories.GetContents(context.Background(), org, repo, path, &opts)
 	if err != nil {
-		//TODO: change to proper logging method
-		fmt.Println("client.Repositories.GetContents: ", err)
+		log.Println("client.Repositories.GetContents: ", err)
 		return err
 	}
 
@@ -877,7 +875,7 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 		}
 		err = ioutil.WriteFile(fp, dstr, 0644)
 		if err != nil {
-			fmt.Printf("ioutil.WriteFile error %v\n", err.Error())
+			log.Printf("ioutil.WriteFile error %v\n", err.Error())
 		}
 
 	} else {
