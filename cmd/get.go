@@ -20,12 +20,15 @@ limitations under the License.
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var repository string
+var branch string
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -50,8 +53,9 @@ func runGet(cmd *cobra.Command, args []string) {
 
 	// See if we need to update or initialize the template repository
 	initTrue := cmd.Flag("init")
+	pullTrue := cmd.Flag("pull")
 	if initTrue.Value.String() == "true" {
-		initTemplates()
+		initTemplates(pullTrue)
 	}
 	//TODO: move to init function
 	cmd.SetUsageTemplate("usage: foobar")
@@ -99,9 +103,9 @@ func runGet(cmd *cobra.Command, args []string) {
 // with "_" or "." to have go skip them when compiling
 // TODO: suggest using "." so things work as expected
 //
-func initTemplates() {
+func initTemplates(pull *pflag.Flag) {
 	fmt.Println("Initializing template repository")
-	/*
+	if pull != nil {
 		// Create template dir if necessary
 		if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
 			fmt.Println("defaultTemplateDir")
@@ -109,8 +113,9 @@ func initTemplates() {
 		}
 		client := getClient()
 		tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
-	*/
-	tplClone("release")
+	} else {
+		tplClone(branch)
+	}
 }
 
 func getByResource(r, n string) Response {
@@ -151,15 +156,9 @@ func getByResource(r, n string) Response {
 func init() {
 	rootCmd.AddCommand(getCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	getCmd.Flags().BoolP("init", "i", false, "Initialize template repository")
+	getCmd.Flags().BoolP("init", "i", false, "Initialize template repository (git clone)")
+	getCmd.Flags().BoolP("api", "a", false, "Initialize template repository using GitHub API")
 	getCmd.Flags().StringVarP(&repository, "repo", "r", "https://github.pavedroad-io/templates",
 		"Change default repository for templates")
+	getCmd.Flags().StringVarP(&branch, "branch", "b", "release", "Branch to clone (default release)")
 }
