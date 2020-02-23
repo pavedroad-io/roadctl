@@ -693,14 +693,17 @@ func (t *tplDirectory) initialize() error {
 
 	env := os.Getenv("PR_TEMPLATE_DIR")
 	if templateDirectoryLocation != "" {
+		fmt.Println("using cli")
 		t.location = templateDirectoryLocation
 		t.locationFrom = "CLI"
 	} else if env != "" && templateDirectoryLocation == "" {
 		t.location = env
 		t.locationFrom = "PR_TEMPLATE_DIR"
+		fmt.Println("using env")
 	} else {
 		t.location = defaultTemplateDir
 		t.locationFrom = "default"
+		fmt.Println("using default")
 	}
 
 	if !t.initialized {
