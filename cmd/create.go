@@ -18,6 +18,7 @@ limitations under the License.
 */
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -27,10 +28,16 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a new resource",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("requirs a resource type with an optional resource name")
+		}
+		return nil
+	},
 	Long: `create a new resource taking input from stdin or a file
 For example:
 
-roadctl create templates -t template-name -d option-directory`,
+roadctl create templates template-name -f definition.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		runCreate(cmd, args)
 	},
@@ -43,12 +50,21 @@ func runCreate(cmd *cobra.Command, args []string) string {
 	msg := "Failed creating resource"
 	r := args[0]
 
+	if len(args) != 2 {
+		fmt.Println("Usage: roadctl create templates templateName -f definiton.yaml")
+		fmt.Printf("       templateName missing\n")
+		return msg
+	}
+
+	tplFile = args[1]
+
+	if tplDefFile == "" {
+		fmt.Println("Usage: roadctl create templates templateName -f definiton.yaml")
+		fmt.Printf("       -f definitions file  missing\n")
+		return msg
+	}
+
 	if err := isValidResourceType(r); err == nil {
-		if tplFile == "" {
-			fmt.Println("Usage: roadctl create templates -t templateName")
-			fmt.Println("       --template or -t option is required")
-			return msg
-		}
 		return createResource(r)
 	}
 	return msg
@@ -95,18 +111,11 @@ func init() {
 
 	//tplfile defined in templates.go
 	//Required!
-	createCmd.Flags().StringVar(&tplFile, "template", "",
-		"Template file name to use")
+	// createCmd.Flags().StringVarP(&tplFile, "template", "t",
+	//	"datamgr", "Template file name to use")
 
-	//tplDir  defined in templates.go
-	//this flag is not in documentaion 01/09/2020
-	//Not Required!
-	createCmd.Flags().StringVar(&tplDir, "directory", "",
-		"Directory to generate output to")
-
-	//tplDefFile defined in templates.go
-	//Required!
-	//Expexted YAML originaly generated from $roadctl desrcibe templates
-	createCmd.Flags().StringVar(&tplDefFile, "definition", "",
-		"Service definition file to use")
+	// tplDefFile defined in templates.go
+	// Expected YAML originally generated from $roadctl describe templates >> myservice.yaml
+	createCmd.Flags().StringVarP(&tplDefFile, "file", "f",
+		"", "Service definition file to use")
 }

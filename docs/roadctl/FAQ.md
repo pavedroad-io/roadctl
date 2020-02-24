@@ -28,7 +28,7 @@ Providing GitHub credentials will avoid these errors.  See [https://github.com/p
 
 ### Sample error
 ```bash
-$ roadctl get templates datamgr --init
+$ roadctl init
 
 Initializing template repository
 GET https://api.github.com/repos/pavedroad-io/templates/contents/microservices/ga/datamgr/manifests/kubernetes/template-service.yaml: 403 API rate limit exceeded for 208.96.177.111
@@ -42,7 +42,7 @@ GET https://api.github.com/repos/pavedroad-io/templates/contents/microservices/g
 
 ### Solution
 ```bash
-$ roadctl get templates --init --password XXXXXXX --user YYYYYYY
+$ roadctl init --password XXXXXXX --user YYYYYYY
 ```
 or
 

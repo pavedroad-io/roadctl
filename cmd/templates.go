@@ -38,35 +38,24 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
-	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/yaml.v2"
 )
 
-// Default template repository
+// GitHub repository information for tplPull
 var defaultOrg = "pavedroad-io"
-
-// Default template directory on GitHub
 var defaultRepo = "templates"
 var defaultPath string
 
 // Default template directory on local machine
-var defaultTemplateDir = ".templates"
+var defaultTemplateDir = "templates"
 var repoType = "GitHub"
-var tplFile string    // Name of the template file to use
-var tplDir = "."      // Directory for generated code output
-var tplDefFile string // Name of the definitions file used to generated templates
-var tplDirSelected string
 
-// The release branch stores released templates
-// The latest and stable tags are used to select which release
-const (
-	gitTemplateBranch  = "refs/heads/release"
-	gitLatestTag       = "refs/heads/latest"
-	gitStableTag       = "refs/heads/stable"
-	templateRepository = "https://github.com/pavedroad-io/templates"
-	githubAPI          = "GitHub API"
-	gitclone           = "git clone"
-)
+// From CLI
+var tplFile string    // Template name to sue
+var tplDefFile string // Definition file to use form -f option
+
+// The directory we found this template in
+var tplDirSelected string
 
 // TEMPLATE needs documentation.
 const (
@@ -143,57 +132,6 @@ $(FOSSATEST):
 )
 
 var templates *template.Template
-
-// tplDirectory manages template directory locations
-type tplDirectory struct {
-	// Full path to the template directory
-	location string
-
-	// Is it initialized
-	initialized bool
-
-	// How we determined the location
-	// default, so.GetEnv, command line option
-	locationFrom string
-}
-
-const (
-	tplCacheFileName string = ".pr_cache"
-)
-
-// tplCache manages information about templates
-//  stored in a template directory
-type tplCache struct {
-	// What directory is it in
-	location *tplDirectory
-
-	// Persist information to disk in a cache file
-	CacheFile tplCacheFile `json:"cacheFile"`
-}
-
-// tplCacheFile Store information to disk for later access
-type tplCacheFile struct {
-	// Cache file syntax version
-	Version string `json:"version"`
-
-	// Time it was created on disk
-	Created time.Time `json:"created"`
-
-	// last updated
-	Updated time.Time `json:"updated"`
-
-	// Is it initialized
-	Initialized bool `json:"initialized"`
-
-	// git clone or github API
-	InitializedFrom string `json:"initialized_from"`
-
-	// git branch
-	Branch string `json:"branch"`
-
-	// git tags
-	Tags []string `json:"tags"`
-}
 
 type tplData struct {
 	// Information about company and project
@@ -629,6 +567,14 @@ func (t tplDescribeResponse) RespondWithJSON() string {
 
 func (t tplDescribeResponse) RespondWithText() string {
 	nl := ""
+
+	// Case: no template found
+	if len(t.Templates) == 0 {
+		msg := "Template not found"
+		fmt.Println(msg)
+		return msg
+	}
+
 	for _, val := range t.Templates {
 		nl += fmt.Sprintf("%v\n", val.Content)
 		nl += fmt.Sprintf("---\n") //replies contains multiple documents
@@ -668,177 +614,24 @@ func (t tplListResponse) RespondWithYAML() string {
 	return string(yb)
 }
 
-// Location returns the location of the template directory
-// Initialize if necessary
-func (t *tplDirectory) Location() string {
-
-	if !t.initialized {
-		err := t.initialize()
-		if err != nil {
-			log.Fatal(err.Error())
-			return ""
-		}
-	}
-	return t.location
-}
-
-// initialize a private function for initializing
-//   the template directory location, not the
-//   templates
-func (t *tplDirectory) initialize() error {
-	// Order of precedence
-	//   - roadctl CLI
-	//   - PR_TEMPLATE_DIR
-	//   - defaultTemplateDir
-
-	env := os.Getenv("PR_TEMPLATE_DIR")
-	if templateDirectoryLocation != "" {
-		fmt.Println("using cli")
-		t.location = templateDirectoryLocation
-		t.locationFrom = "CLI"
-	} else if env != "" && templateDirectoryLocation == "" {
-		t.location = env
-		t.locationFrom = "PR_TEMPLATE_DIR"
-		fmt.Println("using env")
-	} else {
-		t.location = defaultTemplateDir
-		t.locationFrom = "default"
-		fmt.Println("using default")
-	}
-
-	if !t.initialized {
-		if err := createDirectory(t.location); err != nil {
-			log.Fatal(err.Error())
-		}
-		t.initialized = true
-	}
-
-	return nil
-}
-
-func (t *tplDirectory) getDefault() string {
-
-	return ""
-}
-
-// New create a tplCache
-// If it does not exists, initalize it using method specified
-//   td: a tplDirectory type
-//   method: GitHub API or git clone
-func (tc *tplCache) New(td *tplDirectory, method, branch string) error {
-	tc.location = td
-	log.Println("Cloning with method: ", method)
-	switch method {
-	case gitclone:
-		tc.Clone(branch)
-	case githubAPI:
-		//tc.API()
-	default:
-		fmt.Println("error")
-	}
-	return nil
-}
-
-// Clone Do a git clone if the repository doesn't exist
-// in the desired directory
-func (tc *tplCache) Clone(branch string) error {
-
-	// See if it already has been cloned
-	if e := tc.readCache(); e == nil {
-		log.Println("Cache exists exiting")
-		return e
-	}
-
-	cb := gitTemplateBranch
-	if branch != gitTemplateBranch {
-		cb = branch
-	}
-	_, err := git.PlainClone(defaultTemplateDir, false, &git.CloneOptions{
-		URL:           templateRepository,
-		ReferenceName: cb,
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tc.CacheFile.Created = time.Now()
-	tc.CacheFile.Updated = time.Now()
-	tc.CacheFile.InitializedFrom = "clone"
-	tc.CacheFile.Version = "1.0.0alpha"
-	tc.CacheFile.Initialized = true
-	tc.CacheFile.Branch = gitTemplateBranch
-
-	if err = tc.writeCache(defaultTemplateDir); err != nil {
-		log.Fatal(err)
-	}
-
-	return nil
-}
-
-// writeCache save cache file in repository
-//   dir is set if not using tc.location
-func (tc *tplCache) writeCache(dir string) error {
-	var cfn string
-
-	fileData, err := yaml.Marshal(tc.CacheFile)
-	if err != nil {
-		return err
-	}
-
-	if dir != "" {
-		cfn = dir + "/" + tplCacheFileName
-	} else {
-		cfn = tc.location.Location() + "/" + tplCacheFileName
-	}
-
-	err = ioutil.WriteFile(cfn, fileData, 0644)
-	if err != nil {
-		log.Fatal(err, cfn)
-		return err
-	}
-
-	return nil
-}
-
-// readCache Opens the cache file and reads contents
-func (tc *tplCache) readCache() error {
-	fl := tc.location.Location() + "/" + tplCacheFileName
-	if _, err := os.Stat(fl); os.IsNotExist(err) {
-		return errors.New("Not found")
-	}
-
-	df, err := os.Open(fl)
-	if err != nil {
-		log.Println("failed to open:", fl, ", error:", err)
-	}
-
-	defer df.Close()
-	byteValue, e := ioutil.ReadAll(df)
-	if e != nil {
-		log.Fatal("read failed for ", fl)
-	}
-
-	err = yaml.Unmarshal(byteValue, &tc.CacheFile)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // tplClone create the template repository using git clone
 //   branch: specify a branch to use, default is latest release
 //           can also be changed by setting PR_TEMPLATE_BRANCH
 func tplClone(branch string) error {
 
-	t := &tplDirectory{}
-	tc := &tplCache{}
-	if dir := t.Location(); dir == "" {
-		msg := fmt.Sprintf("Unable to open template directory (%v)\n", dir)
-		return errors.New(msg)
+	// Initialize the template cache
+	tc, err := NewTemplateCache()
+
+	if err.errno == tcSuccess {
+		// Found template cache, git is initialized
+		return nil
+	} else if err.errno == tcBadTemplateDirectory {
+		// Unable to locate or create the desired template cache directory
+		return errors.New("Unable to find or create the cache directory")
 	}
-	return tc.New(t, gitclone, branch)
+
+	// Create the template cache and the .pr_cache file
+	return tc.CreateCache(gitclone, branch)
 }
 
 //tplPull pulls templates from a remote repository
@@ -929,7 +722,12 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 //
 func tplCreate(rn string) string {
 	var filelist []tplLocation
-	//var filenames []string
+
+	// read/check template cache
+	_, te := NewTemplateCache()
+	if te.errno != tcSuccess {
+		log.Fatalf("Failed to read template cache, Got (%v)\n", te)
+	}
 
 	// Returns a list of all files in the template directory
 	// including there path, .datamgr/Makefile ....
@@ -1208,6 +1006,14 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
 
+	/*
+		// read/check template cache
+		_, err := NewTemplateCache()
+		if err.errno != tcSuccess {
+			log.Fatalf("Failed to read template cache, Got (%v)\n", err)
+		}
+	*/
+
 	// Get the list of templates
 	rsp := tplGet("all", rn)
 
@@ -1241,10 +1047,21 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 
 // tplExplain
 //   is stored in docs/explain.txt
+//
+//   TODO: Make this read from the actual template
+//         directory, i.e. datamgr.txt.  Those file
+//         exist now
+//
 //   docs is defined by eTLD
 //   explain is tplResourceName
 func tplExplain(tplListOption string, rn string) tplExplainResponse {
 	var response tplExplainResponse
+
+	// read/check template cache
+	_, te := NewTemplateCache()
+	if te.errno != tcSuccess {
+		log.Fatalf("Failed to read template cache, Got (%v)\n", te)
+	}
 
 	// Load explanation
 	fn := defaultTemplateDir + "/" + eTLD + "/" + tplResourceName + ".txt"
@@ -1328,6 +1145,13 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 	tplTLD := []string{"crd", "microservices", "serverless"}
 	tplSLD := []string{"ga", "experimental", "incubation"}
 	var response tplListResponse
+	_, err := NewTemplateCache()
+	if err.errno != tcSuccess {
+		log.Fatalf("Failed to read template cache, Got (%v)\n", err)
+	}
+
+	//fmt.Println(tc.location.Location())
+	//fmt.Println(tc)
 
 	for _, tld := range tplTLD {
 		for _, sld := range tplSLD {
