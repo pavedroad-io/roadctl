@@ -51,7 +51,7 @@ Manage local and cloud providers you want to deploy to
 Manage deployment strategies for various environments.
 
 ## Output options
-By default, roadclt outputs the results of a command as text.  However, 
+By default, roadctl outputs the results of a command as text.  However, 
 you can control that by using the --format option:
 
 --format text
@@ -63,38 +63,19 @@ you can control that by using the --format option:
 ## Note before you begin
 
 ### sonarcloud Requirements
-PavedRoad utlizes sonarcloud to champion quality code in this project. Please setup your sonarcould account and the following
+PavedRoad utilizes sonarcloud to champion quality code in this project.
+Please setup your SonarCould account and the following
 environment variable to take full advantage of the CLI.
 
 `$ export SONARCLOUD_TOKEN="#########"`
 
-### GitHub Authentication
-A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
-
-### From the command line
-`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
-
-**or**
-
-`$ roadctl get templates --token #######`
-
-### Using environment variables
-`$ export GH_ACCESS_TOKEN="#########"`
-
-**or**
-
-`$ export GH_USER_NAME="#########"`
-`$ export GH_USER_PASSWORD="#########"`
-
-### Or a combination
-
-`$ export GH_USER_PASSWORD="#########"`
-`$ roadctl get templates --init  --user YYYYYYY`
-
 ## Examples: Common operations
 
 ### Initialize a local template repository
-The following command populates available templates on your local hard drive.  By default, they are placed in your current directory in “.templates.”  The prefix “.” Is necessary to tell compilers to ignore its contents.
+The following command populates available templates on your local hard 
+drive.  By default, they are placed in your current directory in 
+“.templates.”  The prefix “.” Is necessary to tell compilers to ignore 
+its contents.
 
 `$ roadctl get templates --init`
 
@@ -126,6 +107,7 @@ $ roadctl get templates
 Template Type   Name                 Release Status
 crd             kubebuilder          incubation
 microservices   datamgr              ga
+microservices   workPool             ga
 microservices   service              ga
 microservices   ux                   ga
 microservices   gateway              ga
@@ -204,12 +186,12 @@ Execute lint, go sec, go test, and sonar scanner
 
 -	The artifacts hold the results for each command
 
-Generate the the following components:
+Generate the following components:
 
 -  Go source code
 -  Dependency graph
 -  Swagger API specification in docs/api.json
--  HTLM service documentation in docs/myServiceName.html
+-  HTML service documentation in docs/myServiceName.html
 -  HTML API documentation in docs/api.html
 -  Dependency management with dep and insure all includes are present
 -  Dockerfile
@@ -248,11 +230,31 @@ Or to format and simplify the code use
 
 `$ make simplify`
 
+## Initialize template repository
+
+A GitHub repository stores PavedRoad templates.
+
+As of version 0.6, the git clone command is the default method for creating
+template repositories.  The default is to checkout the "release" branch.
+To use a different branch, use the --branch option.
+
+```bash
+$ roadctl get templates --init
+
+or
+
+$ roadctl get templates --init --branch name
+
+```
+
 ## GitHub Authentication
-A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
+
+For backward compatibility, use the --api option with authentication.
+
+The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
 
 ### From the command line
-`$ roadctl get templates --init --password XXXXXXX --user YYYYYYY`
+`$ roadctl get templates --init --api --password XXXXXXX --user YYYYYYY`
 
 **or**
 
@@ -267,7 +269,7 @@ A GitHub repository stores PavedRoad templates.  The GitHub API enforces rate li
 `$ export GH_USER_PASSWORD="#########"`
 
 ### Or a combination
-`$ roadctl get templates --init  --user YYYYYYY`
+`$ roadctl get templates --init  --api --user YYYYYYY`
 
 `$ export GH_USER_PASSWORD="#########"`
 
