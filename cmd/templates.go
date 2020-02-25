@@ -724,12 +724,6 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 func tplCreate(rn string) string {
 	var filelist []tplLocation
 
-	// read/check template cache
-	_, te := NewTemplateCache()
-	if te.errno != tcSuccess {
-		log.Fatalf("Failed to read template cache, Got (%v)\n", te)
-	}
-
 	// Returns a list of all files in the template directory
 	// including there path, .datamgr/Makefile ....
 	inputTemplateFiles, err := tplRead(tplFile)
@@ -743,7 +737,6 @@ func tplCreate(rn string) string {
 	//TODO: should be a method not a function
 	err = tplReadDefinitions(&defs)
 	if err != nil {
-		fmt.Println(err)
 		return (err.Error())
 	}
 
@@ -1124,7 +1117,6 @@ func tplRead(tplName string) ([]string, error) {
 
 			// Special case where the directory name is template
 			if info.IsDir() == true && strings.HasSuffix(path, TEMPLATE) {
-				fmt.Println(path)
 				tplFlLst = append(tplFlLst, path)
 			}
 
