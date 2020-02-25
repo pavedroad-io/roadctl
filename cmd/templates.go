@@ -48,6 +48,7 @@ var defaultPath string
 
 // Default template directory on local machine
 var defaultTemplateDir = "templates"
+
 var repoType = "GitHub"
 
 // From CLI
@@ -1058,13 +1059,13 @@ func tplExplain(tplListOption string, rn string) tplExplainResponse {
 	var response tplExplainResponse
 
 	// read/check template cache
-	_, te := NewTemplateCache()
+	tc, te := NewTemplateCache()
 	if te.errno != tcSuccess {
 		log.Fatalf("Failed to read template cache, Got (%v)\n", te)
 	}
 
 	// Load explanation
-	fn := defaultTemplateDir + "/" + eTLD + "/" + tplResourceName + ".txt"
+	fn := tc.location.Location() + "/" + eTLD + "/" + tplResourceName + ".txt"
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		return response
 	}
@@ -1145,17 +1146,14 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 	tplTLD := []string{"crd", "microservices", "serverless"}
 	tplSLD := []string{"ga", "experimental", "incubation"}
 	var response tplListResponse
-	_, err := NewTemplateCache()
+	tc, err := NewTemplateCache()
 	if err.errno != tcSuccess {
 		log.Fatalf("Failed to read template cache, Got (%v)\n", err)
 	}
 
-	//fmt.Println(tc.location.Location())
-	//fmt.Println(tc)
-
 	for _, tld := range tplTLD {
 		for _, sld := range tplSLD {
-			dn := defaultTemplateDir + "/" + tld + "/" + sld
+			dn := tc.location.Location() + "/" + tld + "/" + sld
 			if _, err := os.Stat(dn); os.IsNotExist(err) {
 				continue
 			}

@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -37,7 +38,7 @@ const (
 	gitTemplateBranch  plumbing.ReferenceName = "refs/heads/release"
 	gitLatestTag       plumbing.ReferenceName = "refs/heads/latest"
 	gitStableTag       plumbing.ReferenceName = "refs/heads/stable"
-	templateRepository                        = "https://github.com/pavedroad-  io/templates"
+	templateRepository                        = "https://github.com/pavedroad-io/templates"
 	githubAPI                                 = "GitHub API"
 	gitclone                                  = "git clone"
 
@@ -141,12 +142,32 @@ func (t *tplDirectory) initialize() error {
 	//   - defaultTemplateDir
 
 	env := os.Getenv("PR_TEMPLATE_DIR")
+
 	if templateDirectoryLocation != "" {
-		t.location = templateDirectoryLocation
+		// Make sure they
+		if strings.Contains(templateDirectoryLocation, "/"+defaultTemplateDir) {
+			fmt.Printf("Don't include /template with --template option\n")
+			if string(templateDirectoryLocation[len(templateDirectoryLocation)-1]) == "/" {
+				fmt.Printf("Use: --template %s\n",
+					strings.TrimSuffix(templateDirectoryLocation, "/"+defaultTemplateDir+"/"))
+			} else {
+				fmt.Printf("Use: --template %s\n",
+					strings.TrimSuffix(templateDirectoryLocation, "/"+defaultTemplateDir))
+			}
+			os.Exit(-1)
+
+		}
+		t.location = templateDirectoryLocation + "/" + defaultTemplateDir
 		t.locationFrom = "CLI"
+		if defaultTemplateDir != t.location {
+			defaultTemplateDir = t.location
+		}
 	} else if env != "" && templateDirectoryLocation == "" {
-		t.location = env
+		t.location = env + "/" + defaultTemplateDir
 		t.locationFrom = "PR_TEMPLATE_DIR"
+		if defaultTemplateDir != t.location {
+			defaultTemplateDir = t.location
+		}
 	} else {
 
 		home, err := homedir.Dir()
