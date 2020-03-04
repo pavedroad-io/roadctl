@@ -17,8 +17,6 @@
 *.log
 
 .envrc
-roadctl
-assets/
 bin/
 builds/
 pkg/
@@ -26,5 +24,4 @@ volumes/
 logs/
 .scannerwork/
 .templates/
-templates/
 old/

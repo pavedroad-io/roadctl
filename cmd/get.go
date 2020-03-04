@@ -20,13 +20,13 @@ limitations under the License.
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-var repository string
+//var repository string
+//var branch string
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -48,17 +48,6 @@ var getCmd = &cobra.Command{
 func runGet(cmd *cobra.Command, args []string) {
 	replies := []Response{}
 	var reply Response
-
-	// See if we need to update or initialize the template repository
-	initTrue := cmd.Flag("init")
-	if initTrue.Value.String() == "true" {
-		initTemplates()
-	}
-	//TODO: move to init function
-	cmd.SetUsageTemplate("usage: foobar")
-	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
-		return errors.New("Usage: roadctl VERB NOUN NAME")
-	})
 
 	resources := strings.Split(args[0], ",")
 
@@ -93,22 +82,6 @@ func runGet(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-}
-
-// initTemplates: Download templates from GitHub
-// If the template dir is location, you can prefix
-// with "_" or "." to have go skip them when compiling
-// TODO: suggest using "." so things work as expected
-//
-func initTemplates() {
-	fmt.Println("Initializing template repository")
-	// Create template dir if necessary
-	if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
-		fmt.Println("defaultTemplateDir")
-		os.MkdirAll(defaultTemplateDir, os.ModePerm)
-	}
-	client := getClient()
-	tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
 }
 
 func getByResource(r, n string) Response {
@@ -148,16 +121,4 @@ func getByResource(r, n string) Response {
 
 func init() {
 	rootCmd.AddCommand(getCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	getCmd.Flags().BoolP("init", "i", false, "Initialize template repository")
-	getCmd.Flags().StringVarP(&repository, "repo", "r", "https://github.pavedroad-io/templates",
-		"Change default repository for templates")
 }

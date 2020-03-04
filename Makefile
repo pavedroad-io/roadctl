@@ -1,5 +1,5 @@
 
-VERSION := 0.5.0
+VERSION := 0.6.0
 BUILD := $(shell git rev-parse --short HEAD)
 PROJECTNAME := $(shell basename "$(PWD)")
 PROJDIR := $(shell pwd)
@@ -58,9 +58,9 @@ build: $(BUILDS)
 	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(GOFILES)
 	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(GOFILES)
 	cp $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH)
-	cp $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(PROJECTNAME)
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(BUILDS)/$(PROJECTNAME)-"darwin"-"amd64"
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(BUILDS)/$(PROJECTNAME)-"darwin"-"386"
+	cp $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(PROJECTNAME)
 
 
 #Gopkg.toml:
