@@ -190,8 +190,8 @@ Partial example output:
 Name: templates
 
 DESCRIPTION:
-Templates provide a low-code environment for serverless, crd, and Microservices.
-The roadctl CLI uses the template scaffold combined code generation to create your
+Templates provide a low-code environment for serverless, CRD, and microservices.
+The roadctl CLI uses the template skaffold combined code generation to create your
 application, CI, and test framework.
 
 FIELDS:
@@ -216,7 +216,8 @@ To compile and invoke the CI/CD pipeline enter:
 `$ make`
 
 ### Build Defaults
-The defaults are to execute lint, go sec, go test, and the FOSSA and sonar scanners.
+The defaults are to execute lint, go sec, go vet, go test,
+and the FOSSA and SonarCloud scanners.
 
 - The artifacts hold the results for each command
 
@@ -232,7 +233,7 @@ The build generates the following components:
 -  docker-compose files
 -  Kubernetes manifests
 -  Skaffold configuration file
--  go test harness
+-  Go test harness
 
 The deployment options are:
 
