@@ -129,7 +129,7 @@ Use the describe command to create your definitions file:
 
 `$ roadctl describe templates datamgr > myNewService.yaml`
 
-Example output:
+Partial example output:
 
 ```
 tables:
@@ -184,7 +184,7 @@ Use the explain command to learn the valid syntax for the named templates is:
 
 `$ roadctl explain templates datamgr`
 
-Example output:
+Partial example output:
 
 ```
 Name: templates
@@ -204,7 +204,6 @@ version <string>
 id <string>
      UUID that uniquely identified a combination of api-verion + version
      This UUID is immutable for the above combination
-- more ...
 ```
 
 ### Generate an Application
@@ -298,7 +297,7 @@ $ export GH_USER_PASSWORD="#########"
 
 ### Or a Combination
 ```
-$ roadctl init  --api --user YYYYYYY
+$ roadctl init --api --user YYYYYYY
 $ export GH_USER_PASSWORD="#########"
 ```
 
