@@ -26,7 +26,7 @@ Where command, TYPE, NAME, and flags are:
     $ roadctl get templates template1
 ```
 - NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates
-- flags specify roadctl global options or command specific options
+- flags: Specify roadctl global options or command specific options
 
 ## Resource Types
 The following table includes a list of all the supported resource types:
@@ -93,29 +93,27 @@ The output includes the template type, name and its release status.
 
 `$ roadctl get templates name`
 
-Example Output with No Name:
+Example output for the above command with no name specified:
 
 ```
 Template Type   Name                 Release Status
 crd             kubebuilder          incubation
-microservices   datamgr              ga
-microservices   workPool             ga
-microservices   service              ga
+microservices   workerPool           ga
 microservices   ux                   ga
+microservices   service              ga
+microservices   datamgr              ga
 microservices   gateway              ga
 microservices   subscriber           experimental
-microservices   ml                   incubation
-serverless      go-open-faas         ga
 serverless      go-knative           ga
+serverless      go-open-faas         ga
 ```
-The meaning for each type of Release Status is as follows:
+The meaning for each type of release status is as follows:
 
 | Release Status | Meaning |
 |:---------------|:------- |
 | ga             | For general availability|
 | incubation     | For templates working towards ga|
 | experimental   | Not stable or work in progress or simple examples|
-
 
 ### Create and Edit a Template Definitions File
 The template definitions file allow you to tailor your application to your requirements, such as:
@@ -131,17 +129,50 @@ Use the describe command to create your definitions file:
 
 `$ roadctl describe templates datamgr > myNewService.yaml`
 
-Example Output:
+Example output:
 
 ```
-  tables:
-  - columns:
-    - {constraints: '', mapped-name: id, modifiers: '', name: id, type: string}
-    - {constraints: '', mapped-name: updated, modifiers: '', name: updated, type: string}
-    - {constraints: '', mapped-name: created, modifiers: '', name: created, type: string}
-    parent-tables: ''
-    table-name: users
-    table-type: jsonb
+tables:
+- columns:
+  - constraints: ""
+    mapped-name: id
+    modifiers: ""
+    name: id
+    type: string
+  - constraints: ""
+    mapped-name: title
+    modifiers: ""
+    name: title
+    type: string
+  - constraints: ""
+    mapped-name: updated
+    modifiers: ""
+    name: updated
+    type: time
+  - constraints: ""
+    mapped-name: created
+    modifiers: ""
+    name: created
+    type: time
+  parent-tables: ""
+  table-name: users
+  table-type: jsonb
+- columns:
+  - constraints: ""
+    mapped-name: id
+    modifiers: ""
+    name: id
+    type: string
+  parent-tables: users
+  table-name: metadata
+- columns:
+  - constraints: ""
+    mapped-name: key
+    modifiers: ""
+    name: key
+    type: string
+  parent-tables: metadata
+  table-name: test
 ```
 
 Then edit it using vi:
@@ -153,23 +184,27 @@ Use the explain command to learn the valid syntax for the named templates is:
 
 `$ roadctl explain templates datamgr`
 
-Example Output:
-``
+Example output:
+
+```
 Name: templates
 
 DESCRIPTION:
-Templates provide a low-code environment for serverless, CRDs, and Microservices.
-The roadctl CLI uses the template skaffold combined code generation to create
-your application, CI, and test framework.
+Templates provide a low-code environment for serverless, crd, and Microservices.
+The roadctl CLI uses the template scaffold combined code generation to create your
+application, CI, and test framework.
 
-  FIELDS:
-  name <string>
-       A user friendly name for this template
-  api-version <string>
-       API version used to generate it
-  version <string>
-       Object data model version
-  id <string>
+FIELDS:
+name <string>
+     A user friendly name for this template
+api-version <string>
+     API version used to generate it
+version <string>
+     Object data model version
+id <string>
+     UUID that uniquely identified a combination of api-verion + version
+     This UUID is immutable for the above combination
+- more ...
 ```
 
 ### Generate an Application
