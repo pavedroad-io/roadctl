@@ -87,7 +87,7 @@ questions: what changed and why. The subject line should feature the what and
 the body of the commit should describe the why.
 
 ```
-aws: add support for RDS controller
+AWS: add support for RDS controller
 
 this commit enables controllers and APIs for RDS. It
 enables provisioning a RDS database.

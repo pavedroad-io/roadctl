@@ -3,110 +3,93 @@
 [![Build Status](https://travis-ci.org/pavedroad-io/roadctl.svg?branch=travisSetup2)](https://travis-ci.org/pavedroad-io/roadctl)[![Go Report Card](https://goreportcard.com/badge/github.com/pavedroad-io/roadctl)](https://goreportcard.com/report/github.com/pavedroad-io/roadctl)[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=alert_status)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=ncloc)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=sqale_index)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=security_rating)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pavedroad-io_roadctl&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=pavedroad-io_roadctl)[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B9819%2Fgit%40github.com%3Apavedroad-io%2Froadctl.git.svg?type=shield)](https://app.fossa.com/projects/custom%2B9819%2Fgit%40github.com%3Apavedroad-io%2Froadctl.git?ref=badge_shield)
 
 # Roadctl
-Roadclt is a command-line interface for:
+Roadctl is a command line interface for:
 
--	Creating microservices, CRDs, and serverless functions from low-code templates
-		Managing a pre-configured CI/CD pipeline
-		Controlling deployment options
+- Creating microservices, CRDs, and serverless functions from low-code templates
+- Managing a preconfigured CI/CD pipeline
+- Controlling deployment options
 
 This overview covers roadctl syntax, describes the command operations, and provides common examples. For details about each command, including all the supported flags and subcommands, see the roadctl reference documentation. For installation instructions see [installing roadctl](http://www.pavedroad.io/roadctl/install.md).
 
 ## Syntax
 Use the following syntax to run roadctl commands from your terminal window:
 
-$ roadctl [command] [TYPE] [NAME] [flags]
+`$ roadctl [command] [TYPE] [NAME] [flags]`
 
 Where command, TYPE, NAME, and flags are:
 
--	command: Specifies the operation that you want to perform on one or more resources, for example create, get, describe, delete.
-		TYPE: Specifies the resource type. Resource types are case-insensitive and you can specify the singular, or plural forms. For example, the following commands produce the same output:
+- command: Specifies the operation that you want to perform on one or more resources, for example create, get, describe, delete
+- TYPE: Specifies the resource type. Resource types are case insensitive and you can specify the singular, or plural forms. For example, the following commands produce the same output:
 
-     `$ roadctl get template template1`
+```
+    $ roadctl get template template1
+    $ roadctl get templates template1
+```
+- NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates
+- flags specify roadctl or command options
 
-     `$ roadctl get templates template1`
+## Resource Types
+The following table includes a list of all the supported resource types:
 
-		NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates.
+| Resource Type | Description |
+|:--------------|:------------|
+|builders| Manage build pipelines to produce compiled results such; code and CSS|
+|environments| Manages target environments to deploy into, for example dev, test, staging|
+|packagers|Create images/containers along with manifest for docker, docker-compose, and Kubernetes|
+|taggers|Support tagging artifacts, images, and releases|
+|tests|Manage unit, function, benchmarks, and container tests|
+|templates|Allow applications to be built from predefined templates such as API gateways or data managers|
+|integrations|Allows you to tailor the preconfigured integrations|
+|artifacts|Manage development artifacts such as logs and code coverage|
+|providers|Manage local and cloud providers you want to deploy to|
+|deployments|Manage deployment strategies for various environments|
 
-## Resource types
-The following table includes a list of all the supported resource types
-
-### builders
-Manage build pipelines to produce compiled results such; code and css
-
-### environments
-Manages target environments to deploy into, for example dev, test, staging
-
-### packagers
-Create images/containers along with manifest for docker, docker-compose, and kubernetes
-
-### taggers
-Support tagging artifacts, images, and releases
-
-### tests
-Manage unit, function, benchmarks, and container tests
-
-### templates
-Allow applications to be built from pre-defined templates such as API gateways or data managers
-
-### integrations
-Allows you to tailor the preconfigured integrations
-
-### artifacts
-Manage development artifacts such as logs and code coverage.
-
-### providers
-Manage local and cloud providers you want to deploy to
-
-### deployments
-Manage deployment strategies for various environments.
-
-## Output options
+## Output Options
 By default, roadctl outputs the results of a command as text.  However, 
-you can control that by using the --format option:
+you can control that by using the _--format_ option:
 
---format text
-
---format json
-
---format yaml
+    --format text
+    --format json
+    --format yaml
 
 ## Note before you begin
 
-### sonarcloud Requirements
-PavedRoad utilizes sonarcloud to champion quality code in this project.
-Please setup your SonarCould account and the following
-environment variable to take full advantage of the CLI.
+### SonarCloud Requirements
+PavedRoad utilizes SonarCloud to champion quality code in this project.
+Please set up your SonarCloud account and the following
+environment variable to take full advantage of the CLI:
 
 `$ export SONARCLOUD_TOKEN="#########"`
 
 NOTE: You can disable SonarCloud in the integrations section of your 
 definitions file you don't need it.
 
-## Examples: Common operations
+### FOSSA Requirements
+Support for FOSSA is integrated in the generated Makefile.
+Please set up your FOSSA account and add the following
+variable to your environment before executing make:
 
-### Initialize a local template repository
+`$ export FOSSA_API_KEY="XXXXXXXXXXXXXXXXXXXXXXXXXX"`
+
+NOTE: You can disable FOSSA in the integrations section of your 
+definitions file you don't need it.
+
+## Examples: Common Operations
+
+### Initialize a Local Template Repository
 The following command populates available templates on your local hard 
 drive.  By default, they are placed $HOME/.pavedroad.d/templates
 
 `$ roadctl init`
 
 ### 
-### Print a list of available templates
-The output includes the template name and its release status.  Release status is one of the following:
-
-```
-
-```
-
-| Release | Meaning |
-| :---------- | :-------------------------------- |
-| ga         | For general availability|
-| incubation | For templates working towards ga|
-| experimental | Not stable or work in progress or simple examples|
+### Print a List of Available Templates
+The roadctl command can print all available templates or verify an individual template name.
+The output includes the template type, name and its release status:
 
 `$ roadctl get templates`
 
-Or
+**Or**
 
 `$ roadctl get templates name`
 
@@ -127,14 +110,22 @@ microservices   ml                   incubation
 serverless      go-open-faas         ga
 serverless      go-knative           ga
 ```
+The meaning for each type of Release Status is as follows:
 
-### Create and edit a template definitions file
-Template definitions file allow you to tailor your application to your requirements, such as:
+| Release Status | Meaning |
+|:---------------|:------- |
+| ga             | For general availability|
+| incubation     | For templates working towards ga|
+| experimental   | Not stable or work in progress or simple examples|
 
--	Define fields and structures to create
-		Specify community files
-		Tailor the initial integrations that get included
-		Set organizational and project information like; license, company name, or project description
+
+### Create and Edit a Template Definitions File
+The template definitions file allow you to tailor your application to your requirements, such as:
+
+- Define fields and structures to create
+- Specify community files
+- Tailor the initial integrations that get included
+- Set organizational and project information like: license, company name, or project description
 
 Each template comes with a default definitions file you can use as a beginning point.
 
@@ -159,7 +150,7 @@ Example
     table-type: jsonb
 ```
 
-### To see valid contents for a template
+### To See Valid Contents of a Template
 Use the explain command to learn the valid syntax for the named templates is.
 
 ```
@@ -169,8 +160,8 @@ Example
 Name: templates
 
 DESCRIPTION:
-Templates provide a low-code environment for serverless, crd, and Microservices.
-The roadctl CLI uses the template scaffold combined code generation to create
+Templates provide a low-code environment for serverless, CRDs, and Microservices.
+The roadctl CLI uses the template skaffold combined code generation to create
 your application, CI, and test framework.
   
   FIELDS:
@@ -183,7 +174,7 @@ your application, CI, and test framework.
   id <string>
 ```
 
-### Generate your application
+### Generate an Application
 Will build your source code, test cases, integrations, documentation, and CI pipeline
 
 `$ roadctl create templates datamgr -f myNewService.yaml`
@@ -192,10 +183,10 @@ To compile and invoke the CI/CD pipeline enter:
 
 `$ make`
 
-### Build defaults
-Execute lint, go sec, go test, and sonar scanner
+### Build Defaults
+Execute lint, go sec, go test, and the FOSSA and sonar scanners
 
--	The artifacts hold the results for each command
+- The artifacts hold the results for each command
 
 Generate the following components:
 
@@ -216,90 +207,77 @@ Deployment options
 - Push image to local microk8s instance
 - Push service and run service to local microk8s instance
 
-### Make options
-Check and compile the code
+### Make Options
 
-`$ make`
+Make can be executed with the following options:
 
-Just compile the code
+| Make Options | Meaning |
+|:-------------|:------- |
+|`$ make`|Check and compile the code|
+|`$ make compile`|Just compile the code|
+|`$ make check`| Just execute the test suite|
+|`$ make deploy`| Package and deploy code to local k8s cluster|
+|`$ make fmt`| Rewrite code in go formatting|
+|`$ make simplify`| Format and simplify the code use|
 
-`$ make compile`
+## Initializing the Template Repository
 
-Just execute the test suite
-
-`$ make check`
-
-Package and deploy code to local k8s cluster
-
-`$ make deploy`
-
-Rewrite code in go formatting
-
-`$ make fmt`
-
-Or to format and simplify the code use
-
-`$ make simplify`
-
-## Initialize template repository
-
-A GitHub repository stores PavedRoad templates.
+A GitHub repository stores the PavedRoad templates.
 
 As of version 0.6, the git clone command is the default method for creating
-template repositories.  The default is to checkout the "release" branch.
+template repositories.  The default is to checkout the "release" branch:
 
-To use a different branch, use the --branch option.
+`$ roadctl init`
 
-```bash
-$ roadctl init
+To use a different branch, use the _--branch_ option:
 
-or
+`$ roadctl init --branch <branch-name>`
 
-$ roadctl init --branch name
+### Templates Location
 
-```
-### Template location
-
-Default is $HOME/.pavedroad.d/templates
+The default location for the templates is \$HOME/.pavedroad.d/templates.
 
 This can be changed by setting the PR_TEMPLATE_DIR environment variable, or via the 
-roadctl command line with the --templates flag.
+roadctl command line with the _--templates_ flag.
 
 ## GitHub Authentication
 
-For backward compatibility, use the --api option with authentication.
+For backward compatibility, use the _--api_ option with authentication.
 
 The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
 
-### From the command line
-`$ roadctl get templates --init --api --password XXXXXXX --user YYYYYYY`
+### From the Command Line
+`$ roadctl init --api --password XXXXXXX --user YYYYYYY`
 
-**or**
+**Or**
 
-`$ roadctl get templates --token #######`
+`$ roadctl init --token #######`
 
-### Using environment variables
+### Using Environment Variables
 `$ export GH_ACCESS_TOKEN="#########"`
 
-**or**
+**Or**
 
-`$ export GH_USER_NAME="#########"`
-`$ export GH_USER_PASSWORD="#########"`
+```
+$ export GH_USER_NAME="#########"
+$ export GH_USER_PASSWORD="#########"
+```
 
-### Or a combination
-`$ roadctl get templates --init  --api --user YYYYYYY`
+### Or a Combination
+```
+$ roadctl init  --api --user YYYYYYY
+$ export GH_USER_PASSWORD="#########"
+```
 
-`$ export GH_USER_PASSWORD="#########"`
-
-Package and deploy code to local k8s cluster
+Package and deploy code to local k8s cluster:
 
 `$ make deploy`
 
-Rewrite code in go formatting
+Rewrite code in go formatting:
 
 `$ make fmt`
 
-Or to format and simplify the code use
+Or to format and simplify the code use:
 
 `$ make simplify`
 

@@ -20,5 +20,5 @@ are subject to change but should give a general idea of what we are planning.
 ## Future Improvements
 - Flexible logging with support for Kafka and Cloud Events
 - Open tracing support
-- Pre-flight check to help new user get the environment setup correctly
+- Preflight check to help new user get the environment setup correctly
 
