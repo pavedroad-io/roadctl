@@ -26,14 +26,14 @@ Where command, TYPE, NAME, and flags are:
     $ roadctl get templates template1
 ```
 - NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates
-- flags specify roadctl or command options
+- flags specify roadctl global options or command specific options
 
 ## Resource Types
 The following table includes a list of all the supported resource types:
 
 | Resource Type | Description |
 |:--------------|:------------|
-|builders| Manage build pipelines to produce compiled results such; code and CSS|
+|builders| Manage build pipelines to produce compiled results such as code and CSS|
 |environments| Manages target environments to deploy into, for example dev, test, staging|
 |packagers|Create images/containers along with manifest for docker, docker-compose, and Kubernetes|
 |taggers|Support tagging artifacts, images, and releases|
@@ -45,24 +45,14 @@ The following table includes a list of all the supported resource types:
 |deployments|Manage deployment strategies for various environments|
 
 ## Output Options
-By default, roadctl outputs the results of a command as text.  However, 
+By default, roadctl outputs the results of a command as text.  However,
 you can control that by using the _--format_ option:
 
     --format text
     --format json
     --format yaml
 
-## Note before you begin
-
-### SonarCloud Requirements
-PavedRoad utilizes SonarCloud to champion quality code in this project.
-Please set up your SonarCloud account and the following
-environment variable to take full advantage of the CLI:
-
-`$ export SONARCLOUD_TOKEN="#########"`
-
-NOTE: You can disable SonarCloud in the integrations section of your 
-definitions file you don't need it.
+## Requirements Before You Begin
 
 ### FOSSA Requirements
 Support for FOSSA is integrated in the generated Makefile.
@@ -71,21 +61,31 @@ variable to your environment before executing make:
 
 `$ export FOSSA_API_KEY="XXXXXXXXXXXXXXXXXXXXXXXXXX"`
 
-NOTE: You can disable FOSSA in the integrations section of your 
+NOTE: You can disable FOSSA in the integrations section of your
+definitions file you don't need it.
+
+### SonarCloud Requirements
+PavedRoad utilizes SonarCloud to champion quality code in this project.
+Please set up your SonarCloud account and the following
+environment variable to take full advantage of the CLI:
+
+`$ export SONARCLOUD_TOKEN="#########"`
+
+NOTE: You can disable SonarCloud in the integrations section of your
 definitions file you don't need it.
 
 ## Examples: Common Operations
 
 ### Initialize a Local Template Repository
-The following command populates available templates on your local hard 
-drive.  By default, they are placed $HOME/.pavedroad.d/templates
+The following command populates available templates on your local hard
+drive.  By default, they are placed $HOME/.pavedroad.d/templates.
 
 `$ roadctl init`
 
-### 
+###
 ### Print a List of Available Templates
 The roadctl command can print all available templates or verify an individual template name.
-The output includes the template type, name and its release status:
+The output includes the template type, name and its release status.
 
 `$ roadctl get templates`
 
@@ -93,11 +93,9 @@ The output includes the template type, name and its release status:
 
 `$ roadctl get templates name`
 
-Example output
+Example Output with No Name:
 
 ```
-$ roadctl get templates
-
 Template Type   Name                 Release Status
 crd             kubebuilder          incubation
 microservices   datamgr              ga
@@ -129,15 +127,11 @@ The template definitions file allow you to tailor your application to your requi
 
 Each template comes with a default definitions file you can use as a beginning point.
 
-Use the describe command to create your definitions file
+Use the describe command to create your definitions file:
 
 `$ roadctl describe templates datamgr > myNewService.yaml`
 
-Then edit it using vi
-
-`$ vi myNewService.yaml`
-
-Example
+Example Output:
 
 ```
   tables:
@@ -150,20 +144,24 @@ Example
     table-type: jsonb
 ```
 
+Then edit it using vi:
+
+`$ vi myNewService.yaml`
+
 ### To See Valid Contents of a Template
-Use the explain command to learn the valid syntax for the named templates is.
+Use the explain command to learn the valid syntax for the named templates is:
 
-```
-$ roadctl explain templates datamgr
+`$ roadctl explain templates datamgr`
 
-Example
+Example Output:
+``
 Name: templates
 
 DESCRIPTION:
 Templates provide a low-code environment for serverless, CRDs, and Microservices.
 The roadctl CLI uses the template skaffold combined code generation to create
 your application, CI, and test framework.
-  
+
   FIELDS:
   name <string>
        A user friendly name for this template
@@ -184,11 +182,11 @@ To compile and invoke the CI/CD pipeline enter:
 `$ make`
 
 ### Build Defaults
-Execute lint, go sec, go test, and the FOSSA and sonar scanners
+The defaults are to execute lint, go sec, go test, and the FOSSA and sonar scanners.
 
 - The artifacts hold the results for each command
 
-Generate the following components:
+The build generates the following components:
 
 -  Go source code
 -  Dependency graph
@@ -202,7 +200,7 @@ Generate the following components:
 -  Skaffold configuration file
 -  go test harness
 
-Deployment options
+The deployment options are:
 
 - Push image to local microk8s instance
 - Push service and run service to local microk8s instance
@@ -237,7 +235,7 @@ To use a different branch, use the _--branch_ option:
 
 The default location for the templates is \$HOME/.pavedroad.d/templates.
 
-This can be changed by setting the PR_TEMPLATE_DIR environment variable, or via the 
+This can be changed by setting the PR_TEMPLATE_DIR environment variable, or via the
 roadctl command line with the _--templates_ flag.
 
 ## GitHub Authentication
@@ -283,7 +281,7 @@ Or to format and simplify the code use:
 
 ## Project Status
 
-The project is an early preview. We realize that it's going to take a village to arrive at the vision of a multi-cloud control plane, and we wanted to open this up early to get your help and feedback. Please see the [Roadmap](/ROADMAP.md) for details on what we are planning for future releases. 
+The project is an early preview. We realize that it's going to take a village to arrive at the vision of a multi-cloud control plane, and we wanted to open this up early to get your help and feedback. Please see the [Roadmap](/ROADMAP.md) for details on what we are planning for future releases.
 
 ## Official Releases
 
