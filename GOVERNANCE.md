@@ -19,7 +19,7 @@ PavedRoad uses a two-tiered system of maintainer roles:
 
 The current list of maintainers is published and updated in [OWNERS.md](/OWNERS.md).
 
-### Maintainer Pre-requisites
+### Maintainer Prerequisites
 
 To become a maintainer you need to demonstrate the following:
 

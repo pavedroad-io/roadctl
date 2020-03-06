@@ -27,7 +27,7 @@ import (
 // editCmd represents the edit command
 var editCmd = &cobra.Command{
 	Use:   "edit",
-	Short: "edit the configuration for the specified resource",
+	Short: "Edit the configuration for the specified resource",
 	Long: `Invoke the configured $EDITOR and load the current configuration
   for the named resource.
   For example:
