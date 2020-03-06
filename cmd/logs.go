@@ -26,7 +26,7 @@ import (
 // logsCmd represents the logs command
 var logsCmd = &cobra.Command{
 	Use:   "logs",
-	Short: "return logs for a resource",
+	Short: "Return logs for a resource",
 	Long: `Return logs are the named resource(s)
   For example:
     roadctl logs deployment foo`,

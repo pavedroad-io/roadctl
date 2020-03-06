@@ -27,10 +27,10 @@ import (
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "create a new resource",
+	Short: "Create a new resource",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			return errors.New("requirs a resource type with an optional resource name")
+			return errors.New("requires a resource type with an optional resource name")
 		}
 		return nil
 	},
@@ -51,7 +51,7 @@ func runCreate(cmd *cobra.Command, args []string) string {
 	r := args[0]
 
 	if len(args) != 2 {
-		fmt.Println("Usage: roadctl create templates templateName -f definiton.yaml")
+		fmt.Println("Usage: roadctl create templates templateName -f definition.yaml")
 		fmt.Printf("       templateName missing\n")
 		return msg
 	}
@@ -59,7 +59,7 @@ func runCreate(cmd *cobra.Command, args []string) string {
 	tplFile = args[1]
 
 	if tplDefFile == "" {
-		fmt.Println("Usage: roadctl create templates templateName -f definiton.yaml")
+		fmt.Println("Usage: roadctl create templates templateName -f definition.yaml")
 		fmt.Printf("       -f definitions file  missing\n")
 		return msg
 	}

@@ -26,7 +26,7 @@ import (
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "manage roadctl global configuration options",
+	Short: "Manage roadctl global configuration options",
 	Long: `Allows you to manage global configurations
 
   For example:

@@ -26,7 +26,7 @@ import (
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "deploy a service",
+	Short: "Deploy a service",
 	Long: `Deploy one or more service into a cluster.  If not specified,
   cluster is the default specified in the global configuration.  For new
   installs, it will be microk8s.

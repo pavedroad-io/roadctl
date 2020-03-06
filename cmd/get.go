@@ -31,10 +31,10 @@ import (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "get an existing object",
+	Short: "Get an existing object",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			return errors.New("requirs a resource type with an optional resource name")
+			return errors.New("requires a resource type with an optional resource name")
 		}
 		return nil
 	},
@@ -59,7 +59,7 @@ func runGet(cmd *cobra.Command, args []string) {
 				reply = getByResource(r, "")
 			}
 		} else {
-			fmt.Println("Not valied resource type: ", err)
+			fmt.Println("Not valid resource type: ", err)
 		}
 		replies = append(replies, reply)
 	}

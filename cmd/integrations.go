@@ -94,7 +94,7 @@ func ensureSonarCloudKeyExists(client sonarcloud.SonarCloudClient,
 
 	if err != nil {
 		// Continue because we can't connect to the server
-		log.Println("failed conneting to SonarCloud.io")
+		log.Println("failed connecting to SonarCloud.io")
 		return err
 	}
 

@@ -30,7 +30,7 @@ var eTLD = "docs"
 // explainCmd represents the explain command
 var explainCmd = &cobra.Command{
 	Use:   "explain",
-	Short: "return documentation about a resource",
+	Short: "Return documentation about a resource",
 	Long: `Return documentation about the structure of a resource
   For example:
     roadctl explain template`,
