@@ -1,0 +1,25 @@
+dist: bionic
+language: go
+go:
+- '1.13'
+env: "-GO111MODULE=on"
+before_script:
+- mv Makefile Bakefile
+install: true
+script:
+- go build -mod=vendor ./...
+- make -f Bakefile build
+- ls builds
+deploy:
+  provider: releases
+  skip_cleanup: true
+  draft: true
+  overwrite: true
+  api_key:
+    secure: SHXUUm7m0s9/ZLOmFkThlj7LM9E/MBLQT0tSmF07u7Ieo7kgmYUFX62jcC0SywTmvFNIl7PE8l3v5fr797Y+gF3PXVoTb7GG6gI716a5AD9wWOOSMh/w6APyhe87HYXNrR6J34ZuHzR6AggaekjtjJd5nmPYUyBeD0dpdF6wBbQXc6xQQEIBhZgcKdFTUEfjQ5AvJ7JRJBXwcl3HVc6t2rVaZjJQ0c1bBFoK/3+S10t0FDlbCYljEL1Hsj34XEc7M1a7voYuSlh+08D6hZVJqnEhJKcWLSG3ZsIX62fAKTsSatD+iv2+TfGy6rBjtMgRPE8X+CK1ywNlhjx9KmcP1Wv4lvA1f6ErnQyPEjAmWRbDOcnEqjgRS6OZt1ta1ZA3Y5f9Uq4s25OIMnOOxk1b5zxzDZdtwpTXo1SqROIi512fzPSk+RO4PnY9aieXtVX/HzVg97/+2QGg8rA8wJcpwa05sXSOUeNRHUKZKusS8fLbkVIwL+U2ybo2PxDo+vEPPOrRhMpxvdPmb02Y+72TRO1uyiofPaOZLPJrKGN16ljtsnRdeB6GUZTDvkcVJyeOuC+gNAZHXq6RsmPriL3LP2MTePxZlwxerufUH0ElZlyO6PJQ6JyiC5DVmYb8KKvMq5dvabHmMaJwPFM07MFs0YAeS+rabnmLAaUvvksyTg8=
+  file_glob: true
+  file: "builds/*"
+  on:
+    repo: pavedroad-io/roadctl
+    branch: release
+    tags: true

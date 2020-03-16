@@ -16,12 +16,12 @@
 *.out
 *.log
 
+.envrc
 bin/
+builds/
 pkg/
-vendor/
 volumes/
-github.com/
 logs/
 .scannerwork/
-templates/
+.templates/
 old/
