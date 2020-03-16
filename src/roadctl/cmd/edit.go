@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// editCmd represents the command line edit command
+// editCmd represents the command line edit cmnd
 var editCmd = &cobra.Command{
 	Use:   "edit",
 	Short: "edit the configuration for the specified resource",

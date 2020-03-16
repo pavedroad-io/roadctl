@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// describeCmd represents the command line describe command
+// describeCmd represents the command line describe cmnd
 var describeCmd = &cobra.Command{
 	Use:   "describe",
 	Short: "describe provides detailed information about a resource",

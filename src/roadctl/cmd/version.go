@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// versionCmd represents the command line version command
+// versionCmd represents the command line version cmnd
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the current version",

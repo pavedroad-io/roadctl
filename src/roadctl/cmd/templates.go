@@ -259,7 +259,7 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 			//At last column for this table
 
 			if itmNum == 0 {
-				//End tables with no children, where mutiple tables.
+				//End tables with no children, where mutiple tables are present.
 				*jsonString += fmt.Sprintf("\n")
 				*jsonString += fmt.Sprintf(jsonObjectEnd)
 

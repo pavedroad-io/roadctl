@@ -29,7 +29,7 @@ import (
 
 var eTLD = "docs"
 
-// explainCmd represents the explain command
+// explainCmd represents the command line explain command
 var explainCmd = &cobra.Command{
 	Use:   "explain",
 	Short: "return documentation about a resource",

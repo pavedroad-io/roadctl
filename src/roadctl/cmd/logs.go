@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// logsCmd represents the command line logs command
+// logsCmd represents the command line logs cmnd
 var logsCmd = &cobra.Command{
 	Use:   "logs",
 	Short: "return logs for a resource",

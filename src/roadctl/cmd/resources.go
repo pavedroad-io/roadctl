@@ -39,7 +39,7 @@ func initResourcetypes() {
 		"deployments"}
 }
 
-//isValidResourceType checks for valid resourses listed
+//isValidResourceType checks for valid resourses
 func isValidResourceType(typeToCheck string) error {
 	for _, val := range resourceTypes {
 		if val == typeToCheck {

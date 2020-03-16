@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// deleteCmd represents the delete command
+// deleteCmd represents the command line delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a resource",
