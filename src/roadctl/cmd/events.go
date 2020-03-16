@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// eventsCmd represents the events command
+// eventsCmd represents the command line events command
 var eventsCmd = &cobra.Command{
 	Use:   "events",
 	Short: "View events",

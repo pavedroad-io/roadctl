@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// replaceCmd represents the replace command
+// replaceCmd represents the command line replace command
 var replaceCmd = &cobra.Command{
 	Use:   "replace",
 	Short: "Delete and recreate the named resource",

@@ -29,7 +29,7 @@ package cmd
 //	_ "fmt"
 //)
 
-// Response must include all three
+// Response must include all three response types
 type Response interface {
 	RespondWithJSON() string
 	RespondWithYAML() string

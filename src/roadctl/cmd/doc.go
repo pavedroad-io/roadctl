@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// docCmd represents the doc command
+// docCmd represents the command line doc command
 var docCmd = &cobra.Command{
 	Use:   "doc",
 	Short: "Generate documentation for your service",
