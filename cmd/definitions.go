@@ -272,6 +272,25 @@ var ErrList *tblDefError //Prior comment for exported format.
 // LastErr is the last error message on ErrList.
 var LastErr *tblDefError //Prior comment for exported format.
 
+//supported column types[key] with JSON tags
+//External to GO
+var valFldTypes = map[string]string{
+	"string":  "string",
+	"number":  "float32",
+	"int":     "int",
+	"int8":    "int8",
+	"int16":   "int16",
+	"integer": "int",
+	"int32":   "int32",
+	"int64":   "int64",
+	"float":   "float32",
+	"float32": "float32",
+	"float64": "float64",
+	"boolean": "bool",
+	"time":    "time.Time",
+	"uuid":    "uuid.UUID",
+}
+
 // tlbDefError
 // implements error.Error() interface
 //
@@ -462,15 +481,9 @@ func (d *tplDef) Validate() *tblDefError {
 	const badMicroserviceName = "yourMicroserviceName"
 	const pavedroadSonarTestOrg = "acme-demo"
 
-	//ErrList := nil
-	//LastErr := nil
-
-	// TODO(sgayle): This defined an empty error message and assigned it
-	// to LastErr.  That caused and error to allways be returned
-	var ErrList *tblDefError
-	//LastErr = ErrList
-
-	//e := tblDefError{}
+	//start of validaion, no errors on list!
+	ErrList = nil
+	LastErr = nil
 
 	//Doing YAML default test first
 	//Template default microservice should be changed
@@ -570,15 +583,6 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 }
 
 func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
-	var validColTypes = []string{
-		"string",
-		"number",
-		"integer",
-		"boolean",
-		"time",
-		"null",
-		"uuid",
-	}
 	var convName string
 
 	// validate:
@@ -588,6 +592,10 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 	//  - Constraints
 	//  - Type *
 	//
+
+	regft := "]"
+	nRegft := "null not allowed, use omitempty as a constraint (if needed)]"
+	sRegft := ""
 
 	for _, v := range t.Columns {
 		//Check the column name
@@ -604,9 +612,14 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		}
 		//Check the column types
 		convName = strings.ToLower(v.Type)
-
-		if !isStringInList(validColTypes, convName) {
-			d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+"]", t.TableName)
+		if convName == "" {
+			//null note
+			sRegft = nRegft
+		} else {
+			sRegft = regft
+		}
+		if _, ok := valFldTypes[convName]; !ok {
+			d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+sRegft, t.TableName)
 
 		}
 

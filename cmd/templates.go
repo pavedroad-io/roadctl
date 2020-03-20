@@ -85,14 +85,15 @@ const strcutComment = `
 
 // JSON formatters
 const (
-	jsonObjectStart = "{\n"
-	jsonObjectEnd   = "}\n"
-	jsonFileEnd     = "}"
-	jsonListStart   = "["
-	jsonListEnd     = "]"
-	jsonSeperator   = ",\n"
-	jsonField       = "\"%v\": "
-	jsonValue       = "\"%v\"" // If new object, or last field strip the comma
+	jsonObjectStart   = "{\n"
+	jsonObjectEnd     = "}\n"
+	jsonFileEnd       = "}"
+	jsonListStart     = "["
+	jsonListEnd       = "]"
+	jsonSeperator     = ",\n"
+	jsonField         = "\"%v\": "
+	jsonQuotedValue   = "\"%v\"" // If new object, or last field strip the comma
+	jsonUnquotedValue = "%v"
 )
 const defMicroserviceName = "yourMicroserviceName"
 const pavedroadSonarTestOrg = "acme-demo"
@@ -331,35 +332,47 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 	// Only add the UUID if this is the parent table
 	if item.Root {
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
-		*jsonString += fmt.Sprintf(jsonValue, RandomUUID())
+		*jsonString += fmt.Sprintf(jsonQuotedValue, RandomUUID())
 		*jsonString += fmt.Sprintf(jsonSeperator)
 	}
 
 	// Add this tables attributes
 	numCol := len(table.Columns)
+	needQuotes := false
 	for idx, col := range table.Columns {
 		// Add it to the dynamic struct
 		var sample interface{}
 		switch col.Type {
 		case "string":
 			sample = RandomString(15)
-		case "int", "integer", "int32", "int64":
+			needQuotes = true
+		case "int", "int8", "int16", "integer", "int32", "int64":
 			sample = RandomInteger(0, 254)
 		case "number", "float", "float32", "float64":
 			sample = RandomFloat()
-		case "bool":
+		case "bool", "boolean":
 			sample = RandomBool()
 		case "time":
 			sample = time.Now().Format(time.RFC3339)
+			needQuotes = true
+		case "uuid":
+			sample = RandomUUID()
+			needQuotes = true
 		}
 
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
-		*jsonString += fmt.Sprintf(jsonValue, sample)
+		if needQuotes {
+			*jsonString += fmt.Sprintf(jsonQuotedValue, sample)
+			needQuotes = false
+		} else {
+			*jsonString += fmt.Sprintf(jsonUnquotedValue, sample)
+		}
 		if idx == numCol-1 {
 			//At last column for this table
 
 			if itmNum == 0 {
-				//End tables with no children, where mutiple tables are present.
+				//End tables with no children
+				//*jsonString += fmt.Sprintf(jsonSeperator)
 				*jsonString += fmt.Sprintf("\n")
 				*jsonString += fmt.Sprintf(jsonObjectEnd)
 
@@ -427,7 +440,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 	tableString := fmt.Sprintf(swaggerRoute, item.Name)
 	tableString += fmt.Sprintf(structOpen, item.Name)
 
-	// Only add the UUID if this is the parent table
+	//Only for the parent table
 	if item.Root {
 		tableString += fmt.Sprintf("// %sUUID into JSONB\n\n",
 			strcase.ToCamel(item.Name))
@@ -435,6 +448,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		tableString += fmt.Sprintf(structUUID,
 			strcase.ToCamel(item.Name), "json",
 			strings.ToLower(item.Name))
+
 	}
 
 	// See if there are any children
@@ -466,14 +480,9 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		}
 
 		tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
-		var fieldType string
-		if col.Type == "time" {
-			fieldType = "time.Time"
-		} else {
-			fieldType = strings.ToLower(col.Type)
-		}
+		//columntype validate already called
+		fieldType := valFldTypes[strings.ToLower(col.Type)]
 
-		//Deal with time types
 		tableString += fmt.Sprintf(structField,
 			strcase.ToCamel(col.Name),
 			fieldType,
