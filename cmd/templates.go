@@ -198,6 +198,7 @@ type tplData struct {
 	DeleteSwaggerDoc        string // swagger for delete method
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
+	//How will DumpStructs be different from PostJSON/PutJSON?
 
 	//JSON data
 	PostJSON string // Sample data for a post
@@ -417,9 +418,9 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 //    command to aid developer debugging and assign it to
 //    tplData.DumpStructs
 //
-func tplGenerateStructurs(defs tplDef, output *tplData) error {
+func tplGenerateStructurs(defs tplDef, output *tplData, dbase int) error {
 	order := defs.devineOrder()
-	tplAddStruct(order, defs, output)
+	tplAddStruct(order, defs, output, dbase)
 	return nil
 }
 
@@ -433,8 +434,13 @@ func tplGenerateStructurs(defs tplDef, output *tplData) error {
 //    - 2 Creates JSON sample data
 //        One for insert, and one for updates
 //
-func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
+func tplAddStruct(item tplTableItem, defs tplDef, output *tplData, dbase int) {
 	table, _ := defs.tableByName(item.Name)
+
+	//Defaulting to CockRoachDB if needed
+	if dbase < 0 || dbase >= UNSUPPORTEDDB {
+		dbase = COCKROACHDB
+	}
 
 	// Start this table
 	tableString := fmt.Sprintf(swaggerRoute, item.Name)
@@ -455,7 +461,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 	if len(item.Children) > 0 {
 		// Add child tables first
 		for _, child := range item.Children {
-			tplAddStruct(*child, defs, output)
+			tplAddStruct(*child, defs, output, dbase)
 
 			// Same as structField except type with be the suitable
 			tableString += fmt.Sprintf(structSubstruct,
@@ -481,7 +487,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 
 		tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
 		//columntype validate already called
-		fieldType := valFldTypes[strings.ToLower(col.Type)]
+		fieldType := valFldTypes[strings.ToLower(col.Type)][dbase]
 
 		tableString += fmt.Sprintf(structField,
 			strcase.ToCamel(col.Name),
@@ -890,7 +896,7 @@ func tplCreate(rn string) string {
 
 	// Generate internal structures
 	if len(defs.TableList) > 0 {
-		err = tplGenerateStructurs(defs, &tplInputData)
+		err = tplGenerateStructurs(defs, &tplInputData, COCKROACHDB)
 		if err != nil {
 			fmt.Println("Generating structures failed: ", err)
 			os.Exit(-1)

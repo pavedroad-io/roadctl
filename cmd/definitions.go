@@ -254,6 +254,13 @@ const (
 	UNKOWN
 )
 
+//constants related to valFldTypes
+const (
+	GOLANG = iota
+	COCKROACHDB
+	UNSUPPORTEDDB
+)
+
 // tblDefError
 // structure for returning table definition errors
 //
@@ -273,22 +280,23 @@ var ErrList *tblDefError //Prior comment for exported format.
 var LastErr *tblDefError //Prior comment for exported format.
 
 //supported column types[key] with JSON tags
-//External to GO
-var valFldTypes = map[string]string{
-	"string":  "string",
-	"number":  "float32",
-	"int":     "int",
-	"int8":    "int8",
-	"int16":   "int16",
-	"integer": "int",
-	"int32":   "int32",
-	"int64":   "int64",
-	"float":   "float32",
-	"float32": "float32",
-	"float64": "float64",
-	"boolean": "bool",
-	"time":    "time.Time",
-	"uuid":    "uuid.UUID",
+//External to GO,to CoackRoch DB(go type)
+//See related constants, if adjusting
+var valFldTypes = map[string][]string{
+	"string":  {"string", "string"},
+	"number":  {"float32", "float64"},
+	"int":     {"int", "int64"},
+	"int8":    {"int8", "int8"},
+	"int16":   {"int16", "int16"},
+	"integer": {"int", "int64"},
+	"int32":   {"int32", "int32"},
+	"int64":   {"int64", "int64"},
+	"float":   {"float32", "float64"},
+	"float32": {"float32", "float32"},
+	"float64": {"float64", "float64"},
+	"boolean": {"bool", "bool"},
+	"time":    {"time.Time", "time.Time"},
+	"uuid":    {"uuid.UUID", "uuid.UUID"},
 }
 
 // tlbDefError
@@ -624,11 +632,8 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		}
 
 		//Check the mapped Name
-		//This wouldn't be an error if it is the functionality
-		//required.
 		if v.MappedName == "" {
 			v.MappedName = strings.ToLower(v.Name)
-			//d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
 		}
 
 	}
