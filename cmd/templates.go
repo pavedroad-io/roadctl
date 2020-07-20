@@ -197,6 +197,9 @@ type tplData struct {
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
+	PrimaryTableName string // Used as the structure name for
+	// Storing user data
+
 	//JSON data
 	PostJSON string // Sample data for a post
 	PutJSON  string // Sample data for a put
@@ -221,6 +224,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.DefFile = tplDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+	output.PrimaryTableName = defs.TableList[0].TableName
 
 	// TODO: Write an SQL safe naming function
 	output.OrgSQLSafe = strcase.ToCamel(defs.Info.Organization)
@@ -985,11 +989,10 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 
 	errs := definitionsStruct.Validate()
 
-	if errs != nil {
+	if errs > 0 {
 		fmt.Println("definitionsStruct.Validate()")
-		for errs != nil {
-			fmt.Println(errs.Error())
-			errs = errs.nextError
+		for _, item := range ErrList {
+			fmt.Println(item.Error())
 		}
 		os.Exit(-1)
 	}
