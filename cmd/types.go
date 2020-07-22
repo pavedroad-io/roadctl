@@ -14,27 +14,29 @@ type mappedTypes struct {
 	validDefinitionType string // acceptable types in a definition file
 	name                string // go built in type or defined type
 	random              interface{}
+	quoted              bool
 }
 
 // builtInTypes
 //
 var builtInTypes = []mappedTypes{
-	{"string", "string", RandomString(15)},
-	{"boolean", "bool", RandomBool()},
-	{"number", "int", RandomInteger(0, 254)},
-	{"int", "int", RandomInteger(0, 254)},
-	{"uint", "uint", RandomInteger(0, 254)},
-	{"byte", "byte", RandomString(1)},
-	{"rune", "byte", RandomString(1)},
-	{"float", "float", RandomFloat()},
-	{"uuid", "uuid", RandomString(44)},
-	{"time", "Time.time", time.Now().Format(time.RFC3339)},
+	{"string", "string", RandomString(15), true},
+	{"boolean", "bool", RandomBool(), false},
+	{"number", "int", RandomInteger(0, 254), false},
+	{"int", "int", RandomInteger(0, 254), false},
+	{"uint", "uint", RandomInteger(0, 254), false},
+	{"byte", "byte", RandomString(1), true},
+	{"rune", "byte", RandomString(1), true},
+	{"float", "float64", RandomFloat(), false},
+	{"float64", "float64", RandomFloat(), false},
+	{"float32", "float32", RandomFloat(), false},
+	{"uuid", "string", RandomUUID(), true},
+	{"time", "time.Time", time.Now().Format(time.RFC3339), true},
 }
 
 func (t *mappedTypes) validInputType(key string) bool {
 	for _, input := range builtInTypes {
 		if input.validDefinitionType == key {
-			fmt.Println("Success: ", input.validDefinitionType, key)
 			return true
 		}
 	}
@@ -51,10 +53,15 @@ func (t *mappedTypes) inputToGoType(key string) string {
 	return ""
 }
 
-func (t *mappedTypes) randomGoData(key string) interface{} {
+func (t *mappedTypes) randomJSONData(key string) interface{} {
 	for _, input := range builtInTypes {
 		if input.validDefinitionType == key {
-			return input.random
+			if input.quoted {
+				v := fmt.Sprintf("\"%v\"", input.random)
+				return v
+			} else {
+				return input.random
+			}
 		}
 	}
 	return ""
