@@ -242,16 +242,12 @@ type tblDefError struct {
 	errorType    int
 	errorMessage string
 	tableName    string
-	nextError    *tblDefError
 }
 
 // ErrList is a list of table definition error messages.
 // Processing is done on all errors instead of exiting for
 // every error.
-var ErrList *tblDefError //Prior comment for exported format.
-
-// LastErr is the last error message on ErrList.
-var LastErr *tblDefError //Prior comment for exported format.
+var ErrList []tblDefError //Prior comment for exported format.
 
 // tlbDefError
 // implements error.Error() interface
@@ -273,14 +269,8 @@ func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
 		tableName:    tName,
 	}
 
-	if LastErr == nil {
-		LastErr = &e
-		ErrList = &e
-	} else {
-		LastErr.nextError = &e
-		LastErr = &e
+	ErrList = append(ErrList, e)
 
-	}
 }
 
 // tplTableItem
@@ -429,20 +419,13 @@ func (d *tplDef) BadgesToString() string {
 //Valid the table(s) definition, and other YAML defaults needed
 //for anticipated execution
 
-func (d *tplDef) Validate() *tblDefError {
+func (d *tplDef) Validate() (errCount int) {
 
 	const badMicroserviceName = "yourMicroserviceName"
 	const pavedroadSonarTestOrg = "acme-demo"
 
-	//ErrList := nil
-	//LastErr := nil
-
 	// TODO(sgayle): This defined an empty error message and assigned it
 	// to LastErr.  That caused and error to allways be returned
-	var ErrList *tblDefError
-	//LastErr = ErrList
-
-	//e := tblDefError{}
 
 	//Doing YAML default test first
 	//Template default microservice should be changed
@@ -456,26 +439,19 @@ func (d *tplDef) Validate() *tblDefError {
 	// Do all tables and report all potential errors
 	for _, t := range d.tables() {
 		// Metadata validation
-		//e := d.validateTableMetaData(t)
+		e := d.validateTableMetaData(t)
+		if e > 0 {
+			return e
+		}
 
-		d.validateTableMetaData(t)
-		//if len(e) > 0 {
-		//	for _, x := range e {
-		//		errList = append(errList, x)
-		//	}
-		//}
 		// Column validation
-		//e = d.validateTableColumns(t)
-
-		d.validateTableColumns(t)
-		//if len(e) > 0 {
-		//	for _, x := range e {
-		//		errList = append(errList, x)
-		//	}
-		//}
-
+		e = d.validateTableColumns(t)
+		if e > 0 {
+			return e
+		}
 	}
-	return ErrList
+
+	return errCount
 }
 
 // validateTableMetaData
@@ -483,7 +459,7 @@ func (d *tplDef) Validate() *tblDefError {
 // Table name only have allowed characters
 // **All table names should be unique (not case sensitive)
 // Table name length
-func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
+func (d *tplDef) validateTableMetaData(t Tables) (errCount int) {
 
 	var validTypes = []string{"JSONB"}
 	const maxLen = 60
@@ -491,11 +467,13 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 	// Make sure table name is set
 	if t.TableName == "" {
 		d.setErrorList(INVALIDTABLENAME, "Missing table name", "")
+		errCount += 1
 	} else {
 
 		if len(t.TableName) > maxLen {
 			e := fmt.Sprintf("Table name length cannot be greater than  %v", maxLen)
 			d.setErrorList(INVALIDTABLENAME, e, t.TableName)
+			errCount += 1
 
 		}
 
@@ -507,7 +485,7 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 
 		if !matched {
 			d.setErrorList(INVALIDTABLENAME, "Bad table name: ["+t.TableName+"]", t.TableName)
-
+			errCount += 1
 		}
 	}
 
@@ -523,7 +501,7 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 
 		if !isValidType {
 			d.setErrorList(INVALIDTABLETYPE, "Bad table type: ["+t.TableType+"]", t.TableName)
-
+			errCount += 1
 		}
 	}
 
@@ -532,22 +510,14 @@ func (d *tplDef) validateTableMetaData(t Tables) *tblDefError {
 		_, e := d.tableByName(t.ParentTable)
 		if e != nil {
 			d.setErrorList(NOPARENT, "Parent table not found: ["+t.ParentTable+"]", t.TableName)
-
+			errCount += 1
 		}
 	}
-	return ErrList
+
+	return errCount
 }
 
-func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
-	var validColTypes = []string{
-		"string",
-		"number",
-		"integer",
-		"boolean",
-		"time",
-		"null",
-		"uuid",
-	}
+func (d *tplDef) validateTableColumns(t Tables) (errCount int) {
 	var convName string
 
 	// validate:
@@ -562,21 +532,24 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		//Check the column name
 		if v.Name == "" {
 			d.setErrorList(INVALIDCOLUMNNAME, "Missing column name", t.TableName)
+			errCount += 1
 		} else {
 
 			matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]*$`, v.Name)
 
 			if !matched {
 				d.setErrorList(INVALIDCOLUMNNAME, "Bad column name: ["+v.Name+"]", t.TableName)
-
+				errCount += 1
 			}
 		}
+
 		//Check the column types
+		m := mappedTypes{}
 		convName = strings.ToLower(v.Type)
 
-		if !isStringInList(validColTypes, convName) {
+		if !m.validInputType(convName) {
 			d.setErrorList(INVALIDCOLUMNTYPE, "Invalid column type: ["+v.Type+"]", t.TableName)
-
+			errCount += 1
 		}
 
 		//Check the mapped Name
@@ -584,11 +557,12 @@ func (d *tplDef) validateTableColumns(t Tables) *tblDefError {
 		//required.
 		if v.MappedName == "" {
 			v.MappedName = strings.ToLower(v.Name)
-			//d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
+			d.setErrorList(NOMAPPEDNAME, "Column : ["+v.MappedName+"] had no mapped name.", t.TableName)
+			errCount += 1
 		}
 
 	}
-	return ErrList
+	return errCount
 }
 
 // isStringInList

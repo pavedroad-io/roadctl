@@ -34,7 +34,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
@@ -92,6 +91,7 @@ const (
 	jsonSeperator   = ",\n"
 	jsonField       = "\"%v\": "
 	jsonValue       = "\"%v\"" // If new object, or last field strip the comma
+	jsonNumber      = "%v"     // If new object, or last field strip the comma
 )
 const defMicroserviceName = "yourMicroserviceName"
 const pavedroadSonarTestOrg = "acme-demo"
@@ -197,6 +197,9 @@ type tplData struct {
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
+	PrimaryTableName string // Used as the structure name for
+	// Storing user data
+
 	//JSON data
 	PostJSON string // Sample data for a post
 	PutJSON  string // Sample data for a put
@@ -221,6 +224,7 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.DefFile = tplDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+	output.PrimaryTableName = defs.TableList[0].TableName
 
 	// TODO: Write an SQL safe naming function
 	output.OrgSQLSafe = strcase.ToCamel(defs.Info.Organization)
@@ -326,24 +330,11 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 
 	// Add this tables attributes
 	numCol := len(table.Columns)
+	m := mappedTypes{}
 	for idx, col := range table.Columns {
-		// Add it to the dynamic struct
-		var sample interface{}
-		switch col.Type {
-		case "string":
-			sample = RandomString(15)
-		case "int", "integer", "int32", "int64":
-			sample = RandomInteger(0, 254)
-		case "number", "float", "float32", "float64":
-			sample = RandomFloat()
-		case "bool":
-			sample = RandomBool()
-		case "time":
-			sample = time.Now().Format(time.RFC3339)
-		}
 
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
-		*jsonString += fmt.Sprintf(jsonValue, sample)
+		*jsonString += fmt.Sprintf("%v", m.randomJSONData(col.Type))
 		if idx < numCol-1 {
 			*jsonString += fmt.Sprintf(jsonSeperator)
 		} else {
@@ -436,12 +427,8 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		}
 
 		tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
-		var fieldType string
-		if col.Type == "time" {
-			fieldType = "time.Time"
-		} else {
-			fieldType = strings.ToLower(col.Type)
-		}
+		m := mappedTypes{}
+		fieldType := m.inputToGoType(strings.ToLower(col.Type))
 
 		//Deal with time types
 		tableString += fmt.Sprintf(structField,
@@ -980,16 +967,16 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 
 	err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
 	if err != nil {
+		fmt.Println("Unmarshal faild", err)
 		return err
 	}
 
 	errs := definitionsStruct.Validate()
 
-	if errs != nil {
+	if errs > 0 {
 		fmt.Println("definitionsStruct.Validate()")
-		for errs != nil {
-			fmt.Println(errs.Error())
-			errs = errs.nextError
+		for _, item := range ErrList {
+			fmt.Println(item.Error())
 		}
 		os.Exit(-1)
 	}
