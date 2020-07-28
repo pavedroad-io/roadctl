@@ -224,7 +224,9 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.DefFile = tplDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
-	output.PrimaryTableName = defs.TableList[0].TableName
+	if len(defs.TableList) > 0 {
+		output.PrimaryTableName = defs.TableList[0].TableName
+	}
 
 	// TODO: Write an SQL safe naming function
 	output.OrgSQLSafe = strcase.ToCamel(defs.Info.Organization)
