@@ -133,9 +133,9 @@ type ProjectFiles struct {
 	Src         string `yaml:"src"`
 }
 
-// Badges are links with graphics to be included in
+// Badge are links with graphics to be included in
 // doc/service.html file.  These go to CI test results
-type Badges struct {
+type Badge struct {
 	Enable bool   `yaml:"enable"`
 	Link   string `yaml:"link"`
 	Name   string `yaml:"name"`
@@ -169,7 +169,7 @@ type KubeConfig struct {
 
 // Integrations CI/CD tools
 type Integrations struct {
-	Badges  []Badges `yaml:"badges,omitempty"`
+	Badges  []string `yaml:"shields,omitempty"`
 	Name    string   `yaml:"name"`
 	Enabled bool     `yaml:"enable"`
 	// TODO: Needs to be more generic
@@ -180,7 +180,7 @@ type Integrations struct {
 		// Project key should be same as the name
 		Key     string `yaml:"key"`
 		Options struct {
-			Badges   []Badges `yaml:"badges"`
+			Badges   []string `yaml:"shields"`
 			Coverage struct {
 				Enable bool   `yaml:"enable"`
 				Report string `yaml:"report"`
@@ -358,7 +358,6 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 				isRoot = true
 			}
 			newrec := tplTableItem{t.TableName, isRoot, c}
-			//fmt.Println(newrec)
 			rlist = append(rlist, newrec)
 		}
 	}
@@ -382,8 +381,8 @@ func (d *tplDef) tableByName(name string) (Tables, error) {
 	return e, errors.New("table not found")
 }
 
-func (d *tplDef) badges() []Badges {
-	var badgelist []Badges
+func (d *tplDef) badges() []string {
+	var badgelist []string
 	for _, rec := range d.Project.Integrations {
 		if len(rec.Badges) > 0 {
 			badgelist = append(badgelist, rec.Badges...)
@@ -408,11 +407,14 @@ func (d *tplDef) findIntegration(name string) Integrations {
 
 func (d *tplDef) BadgesToString() string {
 	badges := ""
-	for _, b := range d.badges() {
-		if b.Enable == true {
-			badges += b.Link + "\n"
+	/*
+		for _, b := range d.badges() {
+			fmt.Println(b)
+				if b.Enable == true {
+					badges += b.Link + "\n"
+				}
 		}
-	}
+	*/
 	return badges
 }
 
