@@ -20,6 +20,67 @@ func validateIntegrations(config *tplData) error {
 	return err
 }
 
+// scConnect return a SonarCloudClient or error
+func scConnnect() (client sonarcloud.SonarCloudClient, err error) {
+	scClient := sonarcloud.SonarCloudClient{}
+
+	// TODO: Make this part of the New() method
+	var token string
+	envVar := os.Getenv("SONARCLOUD_TOKEN")
+	if envVar != "" {
+		token = envVar
+	} else {
+		log.Println("Need SONARCLOUD_TOKEN set to run tests")
+		os.Exit(-1)
+	}
+
+	err = scClient.New(token, 10)
+
+	if err != nil {
+		log.Println("failed to create New SonarCloudClient")
+		return scClient, err
+	}
+	return scClient, nil
+
+}
+
+// scBadges, give a list of valid SonarCloud badges return a
+//   list of emeddable Markdown links
+//   Always include the quality gate badge if SonarCloud is enabled
+func scBadges(
+	config *tplData,
+	badgeList []string) (resultList []string, err error) {
+
+	client, err := scConnnect()
+	if err != nil {
+		fmt.Println("Connection failed: ", err)
+		return resultList, err
+	}
+
+	pk := config.SonarPrefix + config.Name
+
+	if len(badgeList) > 0 {
+		for _, v := range badgeList {
+			var found int
+			if found = client.NameToEnum(v); found == -1 {
+				fmt.Println("Not found: ", v)
+			}
+			// metric, project key, branch
+			rsp, err := client.GetMetric(found, pk, "")
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			badge, _ := ioutil.ReadAll(rsp.Body)
+
+			resultList = append(resultList, string(badge))
+		}
+	}
+
+	return resultList, err
+
+}
+
 // checkSonarCloud validates project key and generates
 // a token if not present
 func checkSonarCloud(config *tplData) error {
@@ -89,7 +150,6 @@ func ensureSonarCloudKeyExists(client sonarcloud.SonarCloudClient,
 	org, key, name string,
 	public bool) error {
 
-	fmt.Printf("SonarCloud Checking org=(%s)  key=(%s)\n", org, key)
 	resp, err := client.GetProject(org, key)
 
 	if err != nil {
