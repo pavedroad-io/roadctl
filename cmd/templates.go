@@ -38,6 +38,9 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
 	"gopkg.in/yaml.v2"
+
+	fossa "github.com/pavedroad-io/integrations/fossa/cmd"
+	gorpt "github.com/pavedroad-io/integrations/go/cmd"
 )
 
 // GitHub repository information for tplPull
@@ -251,7 +254,6 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.Management = defs.Project.Kubernetes.Management
 
 	// CI integrations
-	output.Badges = defs.BadgesToString()
 
 	//Sonarcloud
 	si := defs.findIntegration("sonarcloud")
@@ -264,12 +266,29 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	}
 
 	if output.SonarCloudEnabled {
+		// If sonarcloud is configured validate token and project
+		err := validateIntegrations(output)
+
+		if err != nil {
+			fmt.Println("Validating integrations failed: ", err)
+			os.Exit(-1)
+		}
 		output.CheckBuildTarget = checkWithSonar
 	} else {
 		output.CheckBuildTarget = checkWithoutSonar
 	}
 
+	bl, err := scBadges(output, si.SonarCloudConfig.Options.Badges)
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
+
+	for _, v := range bl {
+		output.Badges += v
+	}
+
 	si = defs.findIntegration("fossa")
+	//	fmt.Println(si)
 	if si.Name != "" {
 		output.FOSSAEnabled = si.Enabled
 	}
@@ -278,12 +297,25 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 		output.FossaBuildSection = fossaSection
 		output.FossaLintSection = fossaLint
 		output.AllBuildTarget = allWithFossa
+		b := fossa.GetBadge(fossa.HTML, fossa.Shield, output.Name)
+		if b != "" {
+			output.Badges += b
+		}
 	} else {
 		output.FossaBuildSection = ""
 		output.FossaLintSection = ""
 		output.AllBuildTarget = allWithoutFossa
 	}
 
+	// This assumes the repository name is the same as the microserice
+	// fine for Go but not other langauges
+	si = defs.findIntegration("go")
+	if si.Name != "" && si.Enabled == true {
+		b := gorpt.GetGoBadge(gorpt.GoHTMLink, output.Organization, output.Name)
+		if b != "" {
+			output.Badges += b
+		}
+	}
 	return nil
 }
 
@@ -802,16 +834,6 @@ func tplCreate(rn string) string {
 		filteredTemplateList = append(filteredTemplateList, rec)
 	}
 
-	// If sonarcloud is configured validate token and project
-	if tplInputData.SonarCloudEnabled {
-		err = validateIntegrations(&tplInputData)
-	}
-
-	if err != nil {
-		fmt.Println("Validating integrations failed: ", err)
-		os.Exit(-1)
-	}
-
 	// Generate internal structures
 	if len(defs.TableList) > 0 {
 		err = tplGenerateStructurs(defs, &tplInputData)
@@ -988,14 +1010,6 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 // tplDescribe Get default template definitions file
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
-
-	/*
-		// read/check template cache
-		_, err := NewTemplateCache()
-		if err.errno != tcSuccess {
-			log.Fatalf("Failed to read template cache, Got (%v)\n", err)
-		}
-	*/
 
 	// Get the list of templates
 	rsp := tplGet("all", rn)

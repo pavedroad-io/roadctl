@@ -101,8 +101,7 @@ type NewProjectResponseObject struct {
 	Visibility string `json:"visibility"`
 }
 
-// SonarCloudClient
-//   type and methods used for accessing SonarCloud API
+// SonarCloudClient type and methods used for accessing SonarCloud API
 type SonarCloudClient struct {
 	//   Client is an http.Client created when New() is called
 	Client *http.Client
@@ -168,7 +167,8 @@ func (e *sonarCloudError) Error() string {
 	return fmt.Sprintf("Err: %v, %v\n", e.errNumber, e.errMsg)
 }
 
-// New(sondarcloudclient, token)
+// New create a new Sonarcloud client
+//   expample New.(sondarcloudclient, token)
 //   token is a valid sonarcloud user token
 //	 if must have admin access
 func (c *SonarCloudClient) New(token string, timeoutSeconds int) error {
@@ -199,7 +199,7 @@ func (c *SonarCloudClient) New(token string, timeoutSeconds int) error {
 	return nil
 }
 
-// GetProject
+// GetProject read a project from sonar cloud
 // TODO make this a vardic function taking a list of project names
 func (c *SonarCloudClient) GetProject(org, name string) (*http.Response, error) {
 	options := "?"
@@ -222,7 +222,8 @@ func (c *SonarCloudClient) GetProject(org, name string) (*http.Response, error) 
 	return resp, nil
 }
 
-// Create Project(Project)
+// CreateProject create a new project on SonarCloud
+//   example: CreateProject.(Project)
 //   Create a new SonarCloud project usinig p
 //   Note SonarCloud expects application/x-www-form-urlencoded
 func (c *SonarCloudClient) CreateProject(p NewProject) (*http.Response, error) {
@@ -259,7 +260,8 @@ func (c *SonarCloudClient) CreateProject(p NewProject) (*http.Response, error) {
 	return rsp, nil
 }
 
-// Delete Project(projectKey)
+// DeleteProject delete a SonarCloud project
+//   Example: DeleteProject.(projectKey)
 //   Delete a new SonarCloud project usinig p
 //   Note SonarCloud expects application/x-www-form-urlencoded
 func (c *SonarCloudClient) DeleteProject(p string) (*http.Response, error) {
@@ -291,7 +293,8 @@ func (c *SonarCloudClient) DeleteProject(p string) (*http.Response, error) {
 	return rsp, nil
 }
 
-// Create Token(tn string)
+// CreateToken  create a new SonarCloud token
+//   example:  CreateToken.(tn string)
 //   Create a new SonarCloud token with the name tn
 //   Note SonarCloud expects application/x-www-form-urlencoded
 func (c *SonarCloudClient) CreateToken(tn string) (*http.Response, error) {
@@ -321,7 +324,8 @@ func (c *SonarCloudClient) CreateToken(tn string) (*http.Response, error) {
 	return rsp, nil
 }
 
-// Revoke Token(tn string)
+// RevokeToken revoke the given token
+//   example: RevokeToken(tn string)
 //   Revoke a SonarCloud token with the name tn
 func (c *SonarCloudClient) RevokeToken(tn string) (*http.Response, error) {
 
@@ -353,7 +357,8 @@ func (c *SonarCloudClient) RevokeToken(tn string) (*http.Response, error) {
 	return rsp, nil
 }
 
-// GetTokens(login)
+// GetTokens get a list of tokens
+// example: GetTokens(login)
 // Return a list of tokens for the current user
 // or if login is specified use it
 //
@@ -381,11 +386,22 @@ func (c *SonarCloudClient) GetTokens(name string) (*http.Response, error) {
 	return resp, nil
 }
 
-// GetMetric(metric, branch string)
+// NameToEnum return integer value of enum or -1 if not found
+func (c *SonarCloudClient) NameToEnum(name string) (enum int) {
+	for i, v := range MetricName {
+		if v == strings.ToLower(name) {
+			return i
+		}
+	}
+	return -1
+}
+
+// GetMetric return a badge for a given metric
+// example: GetMetric(metric, branch string)
 // Return an SVG badge for inclussion in HTML
 //
 // 	metric (required) is one of the following constants:
-//    Bugs
+//  	Bugs
 //		CodeSmells
 //		Coverage
 //		DuplicatedLinesDensity
@@ -423,7 +439,8 @@ func (c *SonarCloudClient) GetMetric(metric int, project, branch string) (*http.
 	return resp, nil
 }
 
-// GetQualityGate(project string) (*http.Response, error)
+// GetQualityGate return badge for a SonarCloud quality gate
+// example: GetQualityGate(project string) (*http.Response, error)
 // Return an SVG badge for inclusion in HTML
 // 	project (required) is a valid project name
 //
