@@ -21,3 +21,6 @@ v0.6.0alpha:
 	    see readme for more details
 
 	```
+## Use NOTES.md
+
+As of versions v1.0.0 we track changes in NOTES.md

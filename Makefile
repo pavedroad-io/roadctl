@@ -1,5 +1,5 @@
 
-VERSION := 0.7.0
+VERSION := v1.0.0alpha
 BUILD := $(shell git rev-parse --short HEAD)
 PROJECTNAME := $(shell basename "$(PWD)")
 PROJDIR := $(shell pwd)
