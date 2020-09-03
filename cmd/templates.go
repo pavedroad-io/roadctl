@@ -1011,14 +1011,6 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
 
-	/*
-		// read/check template cache
-		_, err := NewTemplateCache()
-		if err.errno != tcSuccess {
-			log.Fatalf("Failed to read template cache, Got (%v)\n", err)
-		}
-	*/
-
 	// Get the list of templates
 	rsp := tplGet("all", rn)
 
