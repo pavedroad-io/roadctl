@@ -40,7 +40,9 @@ github.com/magiconair/properties
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
-# github.com/pavedroad-io/integrations v0.0.0-20191104225729-028e8cd2f84f
+# github.com/pavedroad-io/integrations v1.0.0
+github.com/pavedroad-io/integrations/fossa/cmd
+github.com/pavedroad-io/integrations/go/cmd
 github.com/pavedroad-io/integrations/sonarcloud/cmd
 # github.com/pelletier/go-toml v1.6.0
 github.com/pelletier/go-toml
@@ -51,7 +53,7 @@ github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.1
 github.com/spf13/cast
-# github.com/spf13/cobra v0.0.5
+# github.com/spf13/cobra v1.0.0
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.1.0
 github.com/spf13/jwalterweatherman

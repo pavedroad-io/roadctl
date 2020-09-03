@@ -28,7 +28,7 @@ import (
 // describeCmd represents the describe command
 var describeCmd = &cobra.Command{
 	Use:   "describe",
-	Short: "describe provides detailed information about a resource",
+	Short: "Describe provides detailed information about a resource",
 	Long: `Provided detailed information about one or more resources.
 For example:
 

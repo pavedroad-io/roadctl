@@ -26,8 +26,8 @@ import (
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a resource",
-	Long: `delete one or more resources
+	Short: "Delete a resource",
+	Long: `Delete one or more resources
 For example:
   roadctl delete environment test`,
 	Run: func(cmd *cobra.Command, args []string) {

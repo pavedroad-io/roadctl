@@ -34,11 +34,13 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/iancoleman/strcase"
 	"gopkg.in/yaml.v2"
+
+	fossa "github.com/pavedroad-io/integrations/fossa/cmd"
+	gorpt "github.com/pavedroad-io/integrations/go/cmd"
 )
 
 // GitHub repository information for tplPull
@@ -92,6 +94,7 @@ const (
 	jsonSeperator   = ",\n"
 	jsonField       = "\"%v\": "
 	jsonValue       = "\"%v\"" // If new object, or last field strip the comma
+	jsonNumber      = "%v"     // If new object, or last field strip the comma
 )
 const defMicroserviceName = "yourMicroserviceName"
 const pavedroadSonarTestOrg = "acme-demo"
@@ -197,6 +200,9 @@ type tplData struct {
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
+	PrimaryTableName string // Used as the structure name for
+	// Storing user data
+
 	//JSON data
 	PostJSON string // Sample data for a post
 	PutJSON  string // Sample data for a put
@@ -221,6 +227,9 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.DefFile = tplDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+	if len(defs.TableList) > 0 {
+		output.PrimaryTableName = defs.TableList[0].TableName
+	}
 
 	// TODO: Write an SQL safe naming function
 	output.OrgSQLSafe = strcase.ToCamel(defs.Info.Organization)
@@ -245,7 +254,6 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	output.Management = defs.Project.Kubernetes.Management
 
 	// CI integrations
-	output.Badges = defs.BadgesToString()
 
 	//Sonarcloud
 	si := defs.findIntegration("sonarcloud")
@@ -258,12 +266,29 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	}
 
 	if output.SonarCloudEnabled {
+		// If sonarcloud is configured validate token and project
+		err := validateIntegrations(output)
+
+		if err != nil {
+			fmt.Println("Validating integrations failed: ", err)
+			os.Exit(-1)
+		}
 		output.CheckBuildTarget = checkWithSonar
 	} else {
 		output.CheckBuildTarget = checkWithoutSonar
 	}
 
+	bl, err := scBadges(output, si.SonarCloudConfig.Options.Badges)
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
+
+	for _, v := range bl {
+		output.Badges += v
+	}
+
 	si = defs.findIntegration("fossa")
+	//	fmt.Println(si)
 	if si.Name != "" {
 		output.FOSSAEnabled = si.Enabled
 	}
@@ -272,12 +297,25 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 		output.FossaBuildSection = fossaSection
 		output.FossaLintSection = fossaLint
 		output.AllBuildTarget = allWithFossa
+		b := fossa.GetBadge(fossa.HTML, fossa.Shield, output.Name)
+		if b != "" {
+			output.Badges += b
+		}
 	} else {
 		output.FossaBuildSection = ""
 		output.FossaLintSection = ""
 		output.AllBuildTarget = allWithoutFossa
 	}
 
+	// This assumes the repository name is the same as the microserice
+	// fine for Go but not other langauges
+	si = defs.findIntegration("go")
+	if si.Name != "" && si.Enabled == true {
+		b := gorpt.GetGoBadge(gorpt.GoHTMLink, output.Organization, output.Name)
+		if b != "" {
+			output.Badges += b
+		}
+	}
 	return nil
 }
 
@@ -326,24 +364,11 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 
 	// Add this tables attributes
 	numCol := len(table.Columns)
+	m := mappedTypes{}
 	for idx, col := range table.Columns {
-		// Add it to the dynamic struct
-		var sample interface{}
-		switch col.Type {
-		case "string":
-			sample = RandomString(15)
-		case "int", "integer", "int32", "int64":
-			sample = RandomInteger(0, 254)
-		case "number", "float", "float32", "float64":
-			sample = RandomFloat()
-		case "bool":
-			sample = RandomBool()
-		case "time":
-			sample = time.Now().Format(time.RFC3339)
-		}
 
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(col.Name))
-		*jsonString += fmt.Sprintf(jsonValue, sample)
+		*jsonString += fmt.Sprintf("%v", m.randomJSONData(col.Type))
 		if idx < numCol-1 {
 			*jsonString += fmt.Sprintf(jsonSeperator)
 		} else {
@@ -436,12 +461,8 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 		}
 
 		tableString += fmt.Sprintf("// %s\n", strcase.ToCamel(col.Name))
-		var fieldType string
-		if col.Type == "time" {
-			fieldType = "time.Time"
-		} else {
-			fieldType = strings.ToLower(col.Type)
-		}
+		m := mappedTypes{}
+		fieldType := m.inputToGoType(strings.ToLower(col.Type))
 
 		//Deal with time types
 		tableString += fmt.Sprintf(structField,
@@ -813,16 +834,6 @@ func tplCreate(rn string) string {
 		filteredTemplateList = append(filteredTemplateList, rec)
 	}
 
-	// If sonarcloud is configured validate token and project
-	if tplInputData.SonarCloudEnabled {
-		err = validateIntegrations(&tplInputData)
-	}
-
-	if err != nil {
-		fmt.Println("Validating integrations failed: ", err)
-		os.Exit(-1)
-	}
-
 	// Generate internal structures
 	if len(defs.TableList) > 0 {
 		err = tplGenerateStructurs(defs, &tplInputData)
@@ -980,16 +991,16 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 
 	err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
 	if err != nil {
+		fmt.Println("Unmarshal faild", err)
 		return err
 	}
 
 	errs := definitionsStruct.Validate()
 
-	if errs != nil {
+	if errs > 0 {
 		fmt.Println("definitionsStruct.Validate()")
-		for errs != nil {
-			fmt.Println(errs.Error())
-			errs = errs.nextError
+		for _, item := range ErrList {
+			fmt.Println(item.Error())
 		}
 		os.Exit(-1)
 	}
@@ -999,14 +1010,6 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 // tplDescribe Get default template definitions file
 func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 	var response tplDescribeResponse
-
-	/*
-		// read/check template cache
-		_, err := NewTemplateCache()
-		if err.errno != tcSuccess {
-			log.Fatalf("Failed to read template cache, Got (%v)\n", err)
-		}
-	*/
 
 	// Get the list of templates
 	rsp := tplGet("all", rn)
