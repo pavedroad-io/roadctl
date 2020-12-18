@@ -43,29 +43,29 @@ import (
 	gorpt "github.com/pavedroad-io/integrations/go/cmd"
 )
 
-// GitHub repository information for tplPull
+// GitHub repository information for bpPull
 var defaultOrg = "pavedroad-io"
-var defaultRepo = "templates"
+var defaultRepo = "blueprints"
 var defaultPath string
 
-// Default template directory on local machine
-var defaultTemplateDir = "templates"
+// Default blueprint directory on local machine
+var defaultBlueprintDir = "blueprints"
 
 var repoType = "GitHub"
 
 // From CLI
-var tplFile string    // Template name to sue
-var tplDefFile string // Definition file to use form -f option
+var bpFile string    // Blueprint name to sue
+var bpDefFile string // Definition file to use form -f option
 
-// The directory we found this template in
-var tplDirSelected string
+// The directory we found this blueprint in
+var bpDirSelected string
 
-// TEMPLATE needs documentation.
+// BLUEPRINT needs documentation.
 const (
-	tplResourceName = "templates"
-	tplDefinition   = "definition.yaml"
-	// TEMPLATE is the prefix to be replaced in front of the file name
-	TEMPLATE = "template"
+	bpResourceName = "blueprints"
+	bpDefinition   = "definition.yaml"
+	// BLUEPRINT is the prefix to be replaced in front of the file name
+	BLUEPRINT = "blueprint"
 	// ORGANIZATION is the prefix to be replaced in front of the file name
 	ORGANIZATION = "organization"
 
@@ -135,9 +135,9 @@ $(FOSSATEST):
 `
 )
 
-var templates *template.Template
+var blueprints *template.Template
 
-type tplData struct {
+type bpData struct {
 	// Information about company and project
 	Organization        string // Name of Organization
 	OrgSQLSafe          string // Mapped to a safe name for using in SQL
@@ -181,10 +181,10 @@ type tplData struct {
 	SonarCloudEnabled bool
 	FOSSAEnabled      bool
 
-	// Service and tpl-names
+	// Service and bp-names
 	Name         string //service name
 	NameExported string //camel case with first letter cap
-	TplName      string //template name
+	TplName      string //blueprint name
 	DefFile      string //definition file used
 
 	//PR license/copyright should be a function
@@ -215,16 +215,16 @@ type tplData struct {
 
 }
 
-//  tplDataMapper
-//    Map data from definitions file to tplData structure
+//  bpDataMapper
+//    Map data from definitions file to bpData structure
 //    return error if required mappings are missing
 //    TODO: jms
-func tplDataMapper(defs tplDef, output *tplData) error {
+func bpDataMapper(defs bpDef, output *bpData) error {
 	// Docker images names don't allow uppercase letters
 	output.Name = strings.ToLower(defs.Info.Name)
 	output.NameExported = strcase.ToCamel(defs.Info.Name)
 	output.TplName = defs.Info.ID
-	output.DefFile = tplDefFile
+	output.DefFile = bpDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
 	if len(defs.TableList) > 0 {
@@ -319,14 +319,14 @@ func tplDataMapper(defs tplDef, output *tplData) error {
 	return nil
 }
 
-//  tplJSONData
-//    Use the schema definition found in tplDefs to create
+//  bpJSONData
+//    Use the schema definition found in bpDefs to create
 //    Sample JSON data files
 //
-func tplJSONData(defs tplDef, output *tplData) error {
+func bpJSONData(defs bpDef, output *bpData) error {
 	var jsonString string
 	order := defs.devineOrder()
-	tplAddJSON(order, defs, &jsonString)
+	bpAddJSON(order, defs, &jsonString)
 
 	//Make it pretty
 	var pj bytes.Buffer
@@ -340,11 +340,11 @@ func tplJSONData(defs tplDef, output *tplData) error {
 	return nil
 }
 
-// tplAddJSON
+// bpAddJSON
 //
 //   Creates JSON sample data
 //
-func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
+func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 	table, _ := defs.tableByName(item.Name)
 
 	// Start this table
@@ -381,41 +381,41 @@ func tplAddJSON(item tplTableItem, defs tplDef, jsonString *string) {
 		*jsonString += fmt.Sprintf(jsonSeperator)
 		// Add child tables first
 		for _, child := range item.Children {
-			tplAddJSON(*child, defs, jsonString)
+			bpAddJSON(*child, defs, jsonString)
 		}
 	}
 
-	// Close and append to tplData.SwaggerGeneratedStructs
+	// Close and append to bpData.SwaggerGeneratedStructs
 	*jsonString += jsonObjectEnd
 
 	return
 }
 
-//  tplGenerateStructurs
-//    Use the schema definition found in tplDefs to create
-//    Go structures and assign to tplData.SwaggerGeneratedStructs
+//  bpGenerateStructurs
+//    Use the schema definition found in bpDefs to create
+//    Go structures and assign to bpData.SwaggerGeneratedStructs
 //
 //    Use the same schema to generate a formated dump
 //    command to aid developer debugging and assign it to
-//    tplData.DumpStructs
+//    bpData.DumpStructs
 //
-func tplGenerateStructurs(defs tplDef, output *tplData) error {
+func bpGenerateStructurs(defs bpDef, output *bpData) error {
 	order := defs.devineOrder()
-	tplAddStruct(order, defs, output)
+	bpAddStruct(order, defs, output)
 	return nil
 }
 
-// tplAddStruct
+// bpAddStruct
 //
 // Performs two tasks
 //    - 1 Generates the structure as a string that is inserted
-//        into the code template.  This is the "tableString"
+//        into the code blueprint.  This is the "tableString"
 //        variable
 //
 //    - 2 Creates JSON sample data
 //        One for insert, and one for updates
 //
-func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
+func bpAddStruct(item bpTableItem, defs bpDef, output *bpData) {
 	table, _ := defs.tableByName(item.Name)
 
 	// Start this table
@@ -436,7 +436,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 	if len(item.Children) > 0 {
 		// Add child tables first
 		for _, child := range item.Children {
-			tplAddStruct(*child, defs, output)
+			bpAddStruct(*child, defs, output)
 
 			// Same as structField except type with be the suitable
 			tableString += fmt.Sprintf(structSubstruct,
@@ -473,7 +473,7 @@ func tplAddStruct(item tplTableItem, defs tplDef, output *tplData) {
 
 	}
 
-	// Close and append to tplData.SwaggerGeneratedStructs
+	// Close and append to bpData.SwaggerGeneratedStructs
 	tableString += fmt.Sprintf(structClose)
 	output.SwaggerGeneratedStructs += tableString
 
@@ -487,42 +487,42 @@ const structClose = "}\n"
 const structField = "\t%s %s\t`%s:%s%s`\n"
 */
 
-// tplListItem provides information about a template location
+// bpListItem provides information about a blueprint location
 // and status
-type tplListItem struct {
-	Type         string // Type of template, i.e. serverless
+type bpListItem struct {
+	Type         string // Type of blueprint, i.e. serverless
 	Availability string // Availability ga, ....
-	Name         string // Name of template == directory name
-	Path         string // Path to the template
+	Name         string // Name of blueprint == directory name
+	Path         string // Path to the blueprint
 }
 
-// tplLocation
-type tplLocation struct {
-	Name         string //Name of the template file
+// bpLocation
+type bpLocation struct {
+	Name         string //Name of the blueprint file
 	RelativePath string // Path relative to the current directory
 }
 
-type tplExplainItem struct {
+type bpExplainItem struct {
 	Name    string // Name of resource
 	Content string // Text for explain document
 }
 
-type tplDescribeItem struct {
-	Type    string // Type of template, i.e. serverless
-	Name    string // Name of template == directory name
+type bpDescribeItem struct {
+	Type    string // Type of blueprint, i.e. serverless
+	Name    string // Name of blueprint == directory name
 	Content string // YAML configuration data
 }
 
-type tplExplainResponse struct {
-	Templates []tplExplainItem
+type bpExplainResponse struct {
+	Blueprints []bpExplainItem
 }
 
-type tplDescribeResponse struct {
-	Templates []tplDescribeItem
+type bpDescribeResponse struct {
+	Blueprints []bpDescribeItem
 }
 
-type tplListResponse struct {
-	Templates []tplListItem
+type bpListResponse struct {
+	Blueprints []bpListItem
 }
 
 func convert(i interface{}) interface{} {
@@ -541,17 +541,17 @@ func convert(i interface{}) interface{} {
 	return i
 }
 
-func (t tplExplainResponse) RespondWithYAML() string {
+func (t bpExplainResponse) RespondWithYAML() string {
 	return t.RespondWithText() // One in the same for this type
 }
 
-func (t tplExplainResponse) RespondWithJSON() string {
+func (t bpExplainResponse) RespondWithJSON() string {
 	return t.RespondWithText() // One in the same for this type
 }
 
-func (t tplExplainResponse) RespondWithText() string {
+func (t bpExplainResponse) RespondWithText() string {
 	nl := ""
-	for _, val := range t.Templates {
+	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("Name: %v\n", val.Name)
 		nl += fmt.Sprintf("%v\n", val.Content)
 	}
@@ -560,14 +560,14 @@ func (t tplExplainResponse) RespondWithText() string {
 	return nl
 }
 
-func (t tplDescribeResponse) RespondWithYAML() string {
+func (t bpDescribeResponse) RespondWithYAML() string {
 	return t.RespondWithText() // One in the same for this type
 }
 
-func (t tplDescribeResponse) RespondWithJSON() string {
+func (t bpDescribeResponse) RespondWithJSON() string {
 	nl := "{'definitions': ["
 
-	for _, val := range t.Templates {
+	for _, val := range t.Blueprints {
 		//body := make(map[interface{}]interface{})
 		var body interface{}
 		yaml.Unmarshal([]byte(val.Content), &body)
@@ -587,17 +587,17 @@ func (t tplDescribeResponse) RespondWithJSON() string {
 	return nl
 }
 
-func (t tplDescribeResponse) RespondWithText() string {
+func (t bpDescribeResponse) RespondWithText() string {
 	nl := ""
 
-	// Case: no template found
-	if len(t.Templates) == 0 {
-		msg := "Template not found"
+	// Case: no blueprint found
+	if len(t.Blueprints) == 0 {
+		msg := "Blueprint not found"
 		fmt.Println(msg)
 		return msg
 	}
 
-	for _, val := range t.Templates {
+	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("%v\n", val.Content)
 		nl += fmt.Sprintf("---\n") //replies contains multiple documents
 	}
@@ -606,16 +606,16 @@ func (t tplDescribeResponse) RespondWithText() string {
 	return nl
 }
 
-func (t tplListResponse) RespondWithText() string {
-	nl := fmt.Sprintf("%-15v %-20v %-20v\n", "Template Type", "Name", "Release Status")
-	for _, val := range t.Templates {
+func (t bpListResponse) RespondWithText() string {
+	nl := fmt.Sprintf("%-15v %-20v %-20v\n", "Blueprint Type", "Name", "Release Status")
+	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("%-15v %-20v %-15v\n", val.Type, val.Name, val.Availability)
 	}
 	fmt.Println(nl)
 	return nl
 }
 
-func (t tplListResponse) RespondWithJSON() string {
+func (t bpListResponse) RespondWithJSON() string {
 	jb, err := json.Marshal(t)
 	if err != nil {
 		fmt.Println(err)
@@ -625,7 +625,7 @@ func (t tplListResponse) RespondWithJSON() string {
 	return string(jb)
 }
 
-func (t tplListResponse) RespondWithYAML() string {
+func (t bpListResponse) RespondWithYAML() string {
 
 	yb, err := yaml.Marshal(t)
 	if err != nil {
@@ -636,27 +636,27 @@ func (t tplListResponse) RespondWithYAML() string {
 	return string(yb)
 }
 
-// tplClone create the template repository using git clone
+// bpClone create the blueprint repository using git clone
 //   branch: specify a branch to use, default is latest release
-//           can also be changed by setting PR_TEMPLATE_BRANCH
-func tplClone(branch string) error {
+//           can also be changed by setting PR_BLUEPRINT_BRANCH
+func bpClone(branch string) error {
 
-	// Initialize the template cache
-	tc, err := NewTemplateCache()
+	// Initialize the blueprint cache
+	tc, err := NewBlueprintCache()
 
 	if err.errno == tcSuccess {
-		// Found template cache, git is initialized
+		// Found blueprint cache, git is initialized
 		return nil
-	} else if err.errno == tcBadTemplateDirectory {
-		// Unable to locate or create the desired template cache directory
+	} else if err.errno == tcBadBlueprintDirectory {
+		// Unable to locate or create the desired blueprint cache directory
 		return errors.New("Unable to find or create the cache directory")
 	}
 
-	// Create the template cache and the .pr_cache file
+	// Create the blueprint cache and the .pr_cache file
 	return tc.CreateCache(gitclone, branch)
 }
 
-//tplPull pulls templates from a remote repository
+//bpPull pulls blueprints from a remote repository
 //  pullOptions
 //    all: default
 //    microservices:
@@ -667,7 +667,7 @@ func tplClone(branch string) error {
 //  path: path to start in repository
 //  client: a github client
 //
-func tplPull(pullOptions, org, repo, path, outdir string,
+func bpPull(pullOptions, org, repo, path, outdir string,
 	client *github.Client) error {
 
 	opts := github.RepositoryContentGetOptions{}
@@ -706,14 +706,14 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 				dn := outdir + "/" + *item.Path
 				if _, err := os.Stat(dn); os.IsNotExist(err) {
 					os.MkdirAll(dn, os.ModePerm)
-					fmt.Println("Template directory created: ", dn)
+					fmt.Println("Blueprint directory created: ", dn)
 				}
-				_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
+				_ = bpPull(pullOptions, org, repo, *item.Path, outdir, client)
 			}
 
 			// For files, request their content
 			if *item.Type == "file" {
-				_ = tplPull(pullOptions, org, repo, *item.Path, outdir, client)
+				_ = bpPull(pullOptions, org, repo, *item.Path, outdir, client)
 			}
 
 		}
@@ -722,90 +722,90 @@ func tplPull(pullOptions, org, repo, path, outdir string,
 	return nil
 }
 
-// tplCreate
-//   Reads all the templates for a given type/name and then
+// bpCreate
+//   Reads all the blueprints for a given type/name and then
 //   extracts just the file names.  If not specified on the
 //   command line, use the default definition.yaml file
-//   associated this template.
+//   associated this blueprint.
 //
 //   Next, it reads the definitions file and maps the data
-//   attributes to the input structure, tplData, used by all templates
+//   attributes to the input structure, bpData, used by all blueprints
 //
-//   Before templates can be executed, the dynamic code components
-//   must be compiled and also mapped to tplData for:
+//   Before blueprints can be executed, the dynamic code components
+//   must be compiled and also mapped to bpData for:
 //     - Go struts for user defined objects
 //     - SQL Scripts for developer use
 //     - SQL functions for testing
 //
-//   Next, iterate over the templates to generate
+//   Next, iterate over the blueprints to generate
 //
 //   Last, run goimport to check for missing or unused import
 //   statements and clean up any code formatting issues
 //
-func tplCreate(rn string) string {
-	var filelist []tplLocation
+func bpCreate(rn string) string {
+	var filelist []bpLocation
 
-	// Returns a list of all files in the template directory
+	// Returns a list of all files in the blueprint directory
 	// including there path, .datamgr/Makefile ....
-	inputTemplateFiles, err := tplRead(tplFile)
+	inputBlueprintFiles, err := bpRead(bpFile)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	// Read the definition file
-	defs := tplDef{}
+	defs := bpDef{}
 
 	//TODO: should be a method not a function
-	err = tplReadDefinitions(&defs)
+	err = bpReadDefinitions(&defs)
 	if err != nil {
 		return (err.Error())
 	}
 
-	tplInputData := tplData{}
-	err = tplDataMapper(defs, &tplInputData)
+	bpInputData := bpData{}
+	err = bpDataMapper(defs, &bpInputData)
 
-	// Given the list returned in inputTemplateFiles
-	// Create a tplLocation object with the name and path
-	// And a filtered list of template files
-	var filteredTemplateList []string
-	for _, rec := range inputTemplateFiles {
+	// Given the list returned in inputBlueprintFiles
+	// Create a bpLocation object with the name and path
+	// And a filtered list of blueprint files
+	var filteredBlueprintList []string
+	for _, rec := range inputBlueprintFiles {
 		nm := filepath.Base(rec)
-		di := rec[len(tplDirSelected)+1 : len(rec)-len(nm)]
-		li := tplLocation{Name: nm, RelativePath: di}
+		di := rec[len(bpDirSelected)+1 : len(rec)-len(nm)]
+		li := bpLocation{Name: nm, RelativePath: di}
 
 		// This covers two special cases where we want to create a
 		// directory with the name of the microservice.
 		//
-		//   - 1 If the file name is "template", it represents a
+		//   - 1 If the file name is "blueprint", it represents a
 		//       directory to created. Create it but don't add it
-		//       to the list of templates to process.
-		//       {template manifests/kubernetes/dev/}
+		//       to the list of blueprints to process.
+		//       {blueprint manifests/kubernetes/dev/}
 		//
-		//   - 2 If the path contains "/template/", replace the word
-		//       "template" with the name of the microservice and
-		//       add it to the list of templates to process.
-		//       Note: The pattern "/template/" can occur multiple
+		//   - 2 If the path contains "/blueprint/", replace the word
+		//       "blueprint" with the name of the microservice and
+		//       add it to the list of blueprints to process.
+		//       Note: The pattern "/blueprint/" can occur multiple
 		//       times.
-		//       {template-deployment.yaml manifests/kubernetes/dev/template/}
+		//       {blueprint-deployment.yaml manifests/kubernetes/dev/blueprint/}
 
-		if nm == TEMPLATE {
-			nm = tplInputData.Name
+		if nm == BLUEPRINT {
+			nm = bpInputData.Name
 			dirName := di + nm
 			_ = createDirectory(dirName)
 			continue
 		}
 
-		testString1 := "/" + TEMPLATE + "/"
+		testString1 := "/" + BLUEPRINT + "/"
 		if strings.Contains(di, testString1) {
-			replaceString := "/" + tplInputData.Name + "/"
+			replaceString := "/" + bpInputData.Name + "/"
 			li.RelativePath = strings.ReplaceAll(li.RelativePath,
 				testString1, replaceString)
 		}
 
-		// starts with template"/"
-		testString2 := TEMPLATE + "/"
+		// starts with blueprint"/"
+		testString2 := BLUEPRINT + "/"
 		if strings.HasPrefix(di, testString2) {
-			replaceString := tplInputData.Name + "/"
+			replaceString := bpInputData.Name + "/"
 			li.RelativePath = strings.Replace(li.RelativePath,
 				testString2, replaceString, 1)
 		}
@@ -816,7 +816,7 @@ func tplCreate(rn string) string {
 		isHook := strings.Contains(strings.ToLower(li.Name),
 			strings.ToLower(HOOK))
 		if isHook {
-			testName := strings.Replace(li.Name, TEMPLATE, tplInputData.Name, 1)
+			testName := strings.Replace(li.Name, BLUEPRINT, bpInputData.Name, 1)
 			var fileWithPath string
 			if li.RelativePath == "" {
 				fileWithPath = testName
@@ -831,19 +831,19 @@ func tplCreate(rn string) string {
 		}
 
 		filelist = append(filelist, li)
-		filteredTemplateList = append(filteredTemplateList, rec)
+		filteredBlueprintList = append(filteredBlueprintList, rec)
 	}
 
 	// Generate internal structures
 	if len(defs.TableList) > 0 {
-		err = tplGenerateStructurs(defs, &tplInputData)
+		err = bpGenerateStructurs(defs, &bpInputData)
 		if err != nil {
 			fmt.Println("Generating structures failed: ", err)
 			os.Exit(-1)
 		}
 
 		// Generate JSON test data
-		err = tplJSONData(defs, &tplInputData)
+		err = bpJSONData(defs, &bpInputData)
 		if err != nil {
 			fmt.Println("Generating JSON failed: ", err)
 			os.Exit(-1)
@@ -851,27 +851,27 @@ func tplCreate(rn string) string {
 
 	}
 
-	// Build the template cache
-	//templates, err = template.New("").ParseFiles(inputTemplateFiles...)
-	templates, err = template.New("").ParseFiles(filteredTemplateList...)
+	// Build the blueprint cache
+	//blueprints, err = templates.New("").ParseFiles(inputBlueprintFiles...)
+	blueprints, err = template.New("").ParseFiles(filteredBlueprintList...)
 	if err != nil {
-		fmt.Println("Template parsing failed: ", err)
+		fmt.Println("Blueprint parsing failed: ", err)
 		os.Exit(-1)
 	}
 
-	//templates = template.Must(template.ParseFiles(inputTemplateFiles...))
+	//blueprints = blueprint.Must(blueprint.ParseFiles(inputBlueprintFiles...))
 	//TODO: turn into a function
 	var fn string
 	for _, v := range filelist {
-		if v.Name == tplDefinition {
+		if v.Name == bpDefinition {
 			continue
 		}
-		// Replace generic string "template" with the name of the service
+		// Replace generic string "blueprint" with the name of the service
 		// If it is not in the name, the unmodified file name is used
-		if strings.HasPrefix(v.Name, TEMPLATE) {
-			fn = strings.Replace(v.Name, TEMPLATE, tplInputData.Name, 1)
+		if strings.HasPrefix(v.Name, BLUEPRINT) {
+			fn = strings.Replace(v.Name, BLUEPRINT, bpInputData.Name, 1)
 		} else if strings.HasPrefix(v.Name, ORGANIZATION) {
-			fn = strings.Replace(v.Name, ORGANIZATION, tplInputData.Organization, 1)
+			fn = strings.Replace(v.Name, ORGANIZATION, bpInputData.Organization, 1)
 		} else {
 			fn = v.Name
 		}
@@ -901,10 +901,10 @@ func tplCreate(rn string) string {
 		bw := bufio.NewWriter(file)
 
 		fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
-		rawDirectoryName := toInputTemplateName(v.RelativePath, tplInputData.Name)
-		err = templates.ExecuteTemplate(bw, rawDirectoryName+v.Name, tplInputData)
+		rawDirectoryName := toInputBlueprintName(v.RelativePath, bpInputData.Name)
+		err = blueprints.ExecuteTemplate(bw, rawDirectoryName+v.Name, bpInputData)
 		if err != nil {
-			fmt.Printf("Template execution failed for: %v with error %v", v, err)
+			fmt.Printf("Blueprint execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
 		}
 		bw.Flush()
@@ -916,31 +916,31 @@ func tplCreate(rn string) string {
 	return ""
 }
 
-// toInputTemplateName map a directory path to its name
-// in the input template directory
-func toInputTemplateName(path, name string) string {
+// toInputBlueprintName map a directory path to its name
+// in the input blueprint directory
+func toInputBlueprintName(path, name string) string {
 	testString1 := "/" + name + "/"
 	testString2 := name + "/"
 	result := path
 
 	if strings.Contains(path, testString1) {
-		replaceString := "/" + TEMPLATE + "/"
+		replaceString := "/" + BLUEPRINT + "/"
 		result = strings.ReplaceAll(path,
 			testString1, replaceString)
 	}
 
 	if strings.HasPrefix(path, testString2) {
-		replaceString := TEMPLATE + "/"
+		replaceString := BLUEPRINT + "/"
 		result = strings.Replace(path, testString2, replaceString, 1)
 	}
 
 	return result
 }
 
-// tplEdit
+// bpEdit
 //   use the $EDITOR envar to edit the named resource
 //
-func tplEdit(name string) {
+func bpEdit(name string) {
 	editor := os.Getenv("EDITOR")
 
 	if editor == "" {
@@ -972,20 +972,20 @@ func tplEdit(name string) {
 	return
 }
 
-// tplReadDefinitions
+// bpReadDefinitions
 //   Read the definition file and then validate it
 //
-func tplReadDefinitions(definitionsStruct *tplDef) error {
+func bpReadDefinitions(definitionsStruct *bpDef) error {
 
-	fmt.Println("Reading definitions from: ", tplDefFile)
-	df, err := os.Open(tplDefFile)
+	fmt.Println("Reading definitions from: ", bpDefFile)
+	df, err := os.Open(bpDefFile)
 	if err != nil {
-		fmt.Println("failed to open:", tplDefFile, ", error:", err)
+		fmt.Println("failed to open:", bpDefFile, ", error:", err)
 	}
 	defer df.Close()
 	byteValue, e := ioutil.ReadAll(df)
 	if e != nil {
-		fmt.Println("read failed for ", tplDefFile)
+		fmt.Println("read failed for ", bpDefFile)
 		os.Exit(-1)
 	}
 
@@ -1007,15 +1007,15 @@ func tplReadDefinitions(definitionsStruct *tplDef) error {
 	return nil
 }
 
-// tplDescribe Get default template definitions file
-func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
-	var response tplDescribeResponse
+// bpDescribe Get default blueprint definitions file
+func bpDescribe(bpListOption string, rn string) bpDescribeResponse {
+	var response bpDescribeResponse
 
-	// Get the list of templates
-	rsp := tplGet("all", rn)
+	// Get the list of blueprints
+	rsp := bpGet("all", rn)
 
-	// Load the definitions.yaml file in the template directory
-	for _, item := range rsp.Templates {
+	// Load the definitions.yaml file in the blueprint directory
+	for _, item := range rsp.Blueprints {
 		fn := item.Path + "/" + item.Name + "/" + "definition.yaml"
 		if _, err := os.Stat(fn); os.IsNotExist(err) {
 			continue
@@ -1031,37 +1031,37 @@ func tplDescribe(tplListOption string, rn string) tplDescribeResponse {
 
 		byteValue, _ := ioutil.ReadAll(jf)
 		/*
-				Type         string // Type of template, i.e. Server less
-				Name         string // Name of template == directory name
+				Type         string // Type of blueprint, i.e. Server less
+				Name         string // Name of blueprint == directory name
 			  Content      string // YAML configuration data
 		*/
-		nItem := tplDescribeItem{item.Type, item.Name, string(byteValue)}
-		response.Templates = append(response.Templates, nItem)
+		nItem := bpDescribeItem{item.Type, item.Name, string(byteValue)}
+		response.Blueprints = append(response.Blueprints, nItem)
 	}
 
 	return response
 }
 
-// tplExplain
+// bpExplain
 //   is stored in docs/explain.txt
 //
-//   TODO: Make this read from the actual template
+//   TODO: Make this read from the actual blueprint
 //         directory, i.e. datamgr.txt.  Those file
 //         exist now
 //
 //   docs is defined by eTLD
-//   explain is tplResourceName
-func tplExplain(tplListOption string, rn string) tplExplainResponse {
-	var response tplExplainResponse
+//   explain is bpResourceName
+func bpExplain(bpListOption string, rn string) bpExplainResponse {
+	var response bpExplainResponse
 
-	// read/check template cache
-	tc, te := NewTemplateCache()
+	// read/check blueprint cache
+	tc, te := NewBlueprintCache()
 	if te.errno != tcSuccess {
-		log.Fatalf("Failed to read template cache, Got (%v)\n", te)
+		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", te)
 	}
 
 	// Load explanation
-	fn := tc.location.Location() + "/" + eTLD + "/" + tplResourceName + ".txt"
+	fn := tc.location.Location() + "/" + eTLD + "/" + bpResourceName + ".txt"
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		return response
 	}
@@ -1075,36 +1075,36 @@ func tplExplain(tplListOption string, rn string) tplExplainResponse {
 
 	byteValue, _ := ioutil.ReadAll(tf)
 	fmt.Println(string(fn))
-	nItem := tplExplainItem{tplResourceName, string(byteValue)}
-	response.Templates = append(response.Templates, nItem)
+	nItem := bpExplainItem{bpResourceName, string(byteValue)}
+	response.Blueprints = append(response.Blueprints, nItem)
 
 	return response
 }
 
-// tplRead(name)
-//   read all files for the named template
+// bpRead(name)
+//   read all files for the named blueprint
 //   return a slice of paths with file names
-//   "tplDir/TLD/SLD/templateFiles......."
-func tplRead(tplName string) ([]string, error) {
-	var tplFlLst []string
+//   "bpDir/TLD/SLD/blueprintFiles......."
+func bpRead(bpName string) ([]string, error) {
+	var bpFlLst []string
 
-	tplRsp := tplGet(tplResourceName, tplFile)
-	if len(tplRsp.Templates) == 0 {
-		em := errors.New("Template " + tplName + " not found")
-		return tplFlLst, em
+	bpRsp := bpGet(bpResourceName, bpFile)
+	if len(bpRsp.Blueprints) == 0 {
+		em := errors.New("Blueprint " + bpName + " not found")
+		return bpFlLst, em
 	}
 
 	// TODO: allow namespace to include ga, .....
-	if len(tplRsp.Templates) > 1 {
-		em := errors.New("Error: Template " + tplName + " not unique")
-		return tplFlLst, em
+	if len(bpRsp.Blueprints) > 1 {
+		em := errors.New("Error: Blueprint " + bpName + " not unique")
+		return bpFlLst, em
 	}
 
-	tplItem := tplRsp.Templates[0]
-	td := tplItem.Path + "/" + tplItem.Name
+	bpItem := bpRsp.Blueprints[0]
+	td := bpItem.Path + "/" + bpItem.Name
 
 	fmt.Println("Tpl dir", td)
-	tplDirSelected = td
+	bpDirSelected = td
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -1114,13 +1114,13 @@ func tplRead(tplName string) ([]string, error) {
 			if info.IsDir() == false {
 				//Don't include backup files
 				if len(strings.Split(path, "~")) == 1 {
-					tplFlLst = append(tplFlLst, path)
+					bpFlLst = append(bpFlLst, path)
 				}
 			}
 
-			// Special case where the directory name is template
-			if info.IsDir() == true && strings.HasSuffix(path, TEMPLATE) {
-				tplFlLst = append(tplFlLst, path)
+			// Special case where the directory name is blueprint
+			if info.IsDir() == true && strings.HasSuffix(path, BLUEPRINT) {
+				bpFlLst = append(bpFlLst, path)
 			}
 
 			return nil
@@ -1128,26 +1128,26 @@ func tplRead(tplName string) ([]string, error) {
 
 	if err != nil {
 		em := errors.New("Error: Unable to walk directory" + td)
-		return tplFlLst, em
+		return bpFlLst, em
 	}
 
-	return tplFlLst, nil
+	return bpFlLst, nil
 }
 
-// List available templates
-//  tplListOption: TBD
+// List available blueprints
+//  bpListOption: TBD
 //  rn: resource name if specified on the command line
-func tplGet(tplListOption string, rn string) tplListResponse {
-	tplTLD := []string{"crd", "microservices", "serverless"}
-	tplSLD := []string{"ga", "experimental", "incubation"}
-	var response tplListResponse
-	tc, err := NewTemplateCache()
+func bpGet(bpListOption string, rn string) bpListResponse {
+	bpTLD := []string{"crd", "microservices", "serverless"}
+	bpSLD := []string{"ga", "experimental", "incubation"}
+	var response bpListResponse
+	tc, err := NewBlueprintCache()
 	if err.errno != tcSuccess {
-		log.Fatalf("Failed to read template cache, Got (%v)\n", err)
+		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", err)
 	}
 
-	for _, tld := range tplTLD {
-		for _, sld := range tplSLD {
+	for _, tld := range bpTLD {
+		for _, sld := range bpSLD {
 			dn := tc.location.Location() + "/" + tld + "/" + sld
 			if _, err := os.Stat(dn); os.IsNotExist(err) {
 				continue
@@ -1165,14 +1165,14 @@ func tplGet(tplListOption string, rn string) tplListResponse {
 			}
 
 			for _, fn := range list {
-				nrec := tplListItem{tld, sld, fn.Name(), dn}
+				nrec := bpListItem{tld, sld, fn.Name(), dn}
 				// Skip empty directories initialized with a .nothing file
 				if fn.Name() != ".nothing" {
 					if rn != "" && fn.Name() != rn {
 						//n is defined skip records that don't match
 						continue
 					}
-					response.Templates = append(response.Templates, nrec)
+					response.Blueprints = append(response.Blueprints, nrec)
 				}
 			}
 		}

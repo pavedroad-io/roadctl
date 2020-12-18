@@ -99,8 +99,8 @@ func getByResource(r, n string) Response {
 	case "tests":
 		fmt.Println("no tests found")
 		return nil
-	case "templates":
-		rsp = tplGet("all", n)
+	case "blueprints":
+		rsp = bpGet("all", n)
 		return rsp
 	case "integrations":
 		fmt.Println("no integrations found")

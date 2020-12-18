@@ -104,7 +104,7 @@ lint: $(GOFILES)
 	@echo $?
 	$(GOLINT) ./... > $(GOLINTREPORT)
 	@echo "  >  running gosec... > $(GOSECREPORT)"
-	$(shell (gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.templates ./...))
+	$(shell (gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.blueprints ./...))
 	@echo "  >  running go vet... > $(GOVETREPORT)"
 	$(shell (go vet ./... 2> $(GOVETREPORT)))
 

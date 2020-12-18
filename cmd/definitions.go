@@ -1,5 +1,5 @@
 // Package cmd from gobra
-//   types and methods for template definitions file
+//   types and methods for blueprint definitions file
 package cmd
 
 import (
@@ -125,7 +125,7 @@ type Maintainer struct {
 	Web   string `yaml:"web"`
 }
 
-// ProjectFiles template files to be included
+// ProjectFiles blueprint files to be included
 type ProjectFiles struct {
 	Description string `yaml:"description"`
 	Name        string `yaml:"name"`
@@ -211,7 +211,7 @@ type Project struct {
 	Kubernetes    KubeConfig     `yaml:"kubernetes"`
 }
 
-type tplDef struct {
+type bpDef struct {
 	TableList []Tables  `yaml:"tables"`
 	Community Community `yaml:"community"`
 	Info      Info      `yaml:"info"`
@@ -261,7 +261,7 @@ func (d *tblDefError) Error() string {
 	return e
 }
 
-func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
+func (d *bpDef) setErrorList(msgNum int, msg string, tName string) {
 
 	e := tblDefError{
 		errorType:    msgNum,
@@ -273,15 +273,15 @@ func (d *tplDef) setErrorList(msgNum int, msg string, tName string) {
 
 }
 
-// tplTableItem
-type tplTableItem struct {
+// bpTableItem
+type bpTableItem struct {
 	// The name of this table
 	Name string
 
 	Root bool
 	// Children: a list of table items containing
 	//           child tables
-	Children []*tplTableItem
+	Children []*bpTableItem
 }
 
 // devineOrder: Determine primary table and its
@@ -289,7 +289,7 @@ type tplTableItem struct {
 // found or more than one primary is found
 // TODO: The above logic needs to be specific to
 //       the type of service build built
-func (d *tplDef) devineOrder() tplTableItem {
+func (d *bpDef) devineOrder() bpTableItem {
 	ptName := ""
 
 	// Get primary table and make sure it is the only primary
@@ -313,7 +313,7 @@ func (d *tplDef) devineOrder() tplTableItem {
 
 // walkOrder: Given a parent, print out all of its
 //   children
-func (d *tplDef) walkOrder(item tplTableItem) {
+func (d *bpDef) walkOrder(item bpTableItem) {
 
 	if len(item.Children) > 0 {
 		for _, v := range item.Children {
@@ -328,7 +328,7 @@ func (d *tplDef) walkOrder(item tplTableItem) {
 
 // addChildren: Add children to a parent, then
 //  add any children they may have recursively
-func (d *tplDef) addChildren(parent *tplTableItem) {
+func (d *bpDef) addChildren(parent *bpTableItem) {
 
 	c := d.findTables(parent.Name)
 
@@ -346,18 +346,18 @@ func (d *tplDef) addChildren(parent *tplTableItem) {
 
 // findTables: Find primary parent table, or
 // children for a given table
-func (d *tplDef) findTables(parent string) []tplTableItem {
-	rlist := []tplTableItem{}
+func (d *bpDef) findTables(parent string) []bpTableItem {
+	rlist := []bpTableItem{}
 	//	tlist := d.tables()
 
 	for _, t := range d.TableList {
 		if t.ParentTable == parent {
-			c := make([]*tplTableItem, 0, 20)
+			c := make([]*bpTableItem, 0, 20)
 			var isRoot = false
 			if parent == "" {
 				isRoot = true
 			}
-			newrec := tplTableItem{t.TableName, isRoot, c}
+			newrec := bpTableItem{t.TableName, isRoot, c}
 			rlist = append(rlist, newrec)
 		}
 	}
@@ -366,12 +366,12 @@ func (d *tplDef) findTables(parent string) []tplTableItem {
 }
 
 // tables(): return a pointer(a copy?) to definitions Tables
-func (d *tplDef) tables() []Tables {
+func (d *bpDef) tables() []Tables {
 	return d.TableList
 }
 
 // Search for Table by name
-func (d *tplDef) tableByName(name string) (Tables, error) {
+func (d *bpDef) tableByName(name string) (Tables, error) {
 	e := Tables{}
 	for _, v := range d.TableList {
 		if v.TableName == name {
@@ -381,7 +381,7 @@ func (d *tplDef) tableByName(name string) (Tables, error) {
 	return e, errors.New("table not found")
 }
 
-func (d *tplDef) badges() []string {
+func (d *bpDef) badges() []string {
 	var badgelist []string
 	for _, rec := range d.Project.Integrations {
 		if len(rec.Badges) > 0 {
@@ -395,7 +395,7 @@ func (d *tplDef) badges() []string {
 	return badgelist
 }
 
-func (d *tplDef) findIntegration(name string) Integrations {
+func (d *bpDef) findIntegration(name string) Integrations {
 	for _, rec := range d.Project.Integrations {
 		if strings.ToLower(rec.Name) == strings.ToLower(name) {
 			return rec
@@ -405,7 +405,7 @@ func (d *tplDef) findIntegration(name string) Integrations {
 	return a
 }
 
-func (d *tplDef) BadgesToString() string {
+func (d *bpDef) BadgesToString() string {
 	badges := ""
 	/*
 		for _, b := range d.badges() {
@@ -421,7 +421,7 @@ func (d *tplDef) BadgesToString() string {
 //Valid the table(s) definition, and other YAML defaults needed
 //for anticipated execution
 
-func (d *tplDef) Validate() (errCount int) {
+func (d *bpDef) Validate() (errCount int) {
 
 	const badMicroserviceName = "yourMicroserviceName"
 	const pavedroadSonarTestOrg = "acme-demo"
@@ -430,7 +430,7 @@ func (d *tplDef) Validate() (errCount int) {
 	// to LastErr.  That caused and error to allways be returned
 
 	//Doing YAML default test first
-	//Template default microservice should be changed
+	//Blueprint default microservice should be changed
 	//if sonar cloud testing under pavedroadSonarTestOrg is
 	//needed.
 
@@ -461,7 +461,7 @@ func (d *tplDef) Validate() (errCount int) {
 // Table name only have allowed characters
 // **All table names should be unique (not case sensitive)
 // Table name length
-func (d *tplDef) validateTableMetaData(t Tables) (errCount int) {
+func (d *bpDef) validateTableMetaData(t Tables) (errCount int) {
 
 	var validTypes = []string{"JSONB"}
 	const maxLen = 60
@@ -519,7 +519,7 @@ func (d *tplDef) validateTableMetaData(t Tables) (errCount int) {
 	return errCount
 }
 
-func (d *tplDef) validateTableColumns(t Tables) (errCount int) {
+func (d *bpDef) validateTableColumns(t Tables) (errCount int) {
 	var convName string
 
 	// validate:

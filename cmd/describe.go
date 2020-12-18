@@ -32,7 +32,7 @@ var describeCmd = &cobra.Command{
 	Long: `Provided detailed information about one or more resources.
 For example:
 
-  roadctl describe template datamgr`,
+  roadctl describe blueprint datamgr`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("requires a resource type with an optional resource name")
@@ -101,8 +101,8 @@ func describeResource(r, n string) Response {
 	case "tests":
 		fmt.Println("no tests found")
 		return nil
-	case "templates":
-		rsp = tplDescribe("all", n)
+	case "blueprints":
+		rsp = bpDescribe("all", n)
 		return rsp
 	case "integrations":
 		fmt.Println("no integrations found")
@@ -124,7 +124,7 @@ func describeResource(r, n string) Response {
 func init() {
 	rootCmd.AddCommand(describeCmd)
 	/*
-	  describeCmd.SetUsageTemplate("usage: foobar")
+	  describeCmd.SetUsageBlueprint("usage: foobar")
 	*/
 	describeCmd.SetUsageFunc(func(cmd *cobra.Command) error {
 		return errors.New("Usage: roadctl VERB NOUN NAME")

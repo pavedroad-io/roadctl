@@ -5,7 +5,7 @@
 # Roadctl
 Roadctl is a command line interface for:
 
-- Creating microservices, CRDs, and serverless functions from low-code templates
+- Creating microservices, CRDs, and serverless functions from low-code blueprints
 - Managing a preconfigured CI/CD pipeline
 - Controlling deployment options
 
@@ -22,10 +22,10 @@ Where command, TYPE, NAME, and flags are:
 - TYPE: Specifies the resource type. Resource types are case insensitive and you can specify the singular, or plural forms. For example, the following commands produce the same output:
 
 ```
-    $ roadctl get template template1
-    $ roadctl get templates template1
+    $ roadctl get blueprint blueprint1
+    $ roadctl get blueprints blueprint1
 ```
-- NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get templates
+- NAME: Specifies the name of the resource. Names are case-sensitive. If the name is omitted, details for all resources are displayed, for example roadctl get blueprints
 - flags: Specify roadctl global options or command specific options
 
 ## Resource Types
@@ -38,7 +38,7 @@ The following table includes a list of all the supported resource types:
 |packagers|Create images/containers along with manifest for docker, docker-compose, and Kubernetes|
 |taggers|Support tagging artifacts, images, and releases|
 |tests|Manage unit, function, benchmarks, and container tests|
-|templates|Allow applications to be built from predefined templates such as API gateways or data managers|
+|blueprints|Allow applications to be built from predefined blueprints such as API gateways or data managers|
 |integrations|Allows you to tailor the preconfigured integrations|
 |artifacts|Manage development artifacts such as logs and code coverage|
 |providers|Manage local and cloud providers you want to deploy to|
@@ -77,21 +77,21 @@ definitions file you don't need it.
 ## Examples: Common Operations
 
 ### Initialize a Local Template Repository
-The following command populates available templates on your local hard
-drive.  By default, they are placed $HOME/.pavedroad.d/templates.
+The following command populates available blueprints on your local hard
+drive.  By default, they are placed $HOME/.pavedroad.d/blueprints.
 
 `$ roadctl init`
 
 ###
 ### Print a List of Available Templates
-The roadctl command can print all available templates or verify an individual template name.
-The output includes the template type, name and its release status.
+The roadctl command can print all available blueprints or verify an individual blueprints name.
+The output includes the blueprints type, name and its release status.
 
-`$ roadctl get templates`
+`$ roadctl get blueprints`
 
 **Or**
 
-`$ roadctl get templates name`
+`$ roadctl get blueprints name`
 
 Example output for the above command with no name specified:
 
@@ -112,22 +112,22 @@ The meaning for each type of release status is as follows:
 | Release Status | Meaning |
 |:---------------|:------- |
 | ga             | For general availability|
-| incubation     | For templates working towards ga|
+| incubation     | For blueprints working towards ga|
 | experimental   | Not stable or work in progress or simple examples|
 
 ### Create and Edit a Template Definitions File
-The template definitions file allow you to tailor your application to your requirements, such as:
+The blueprints definitions file allow you to tailor your application to your requirements, such as:
 
 - Define fields and structures to create
 - Specify community files
 - Tailor the initial integrations that get included
 - Set organizational and project information like: license, company name, or project description
 
-Each template comes with a default definitions file you can use as a beginning point.
+Each blueprints comes with a default definitions file you can use as a beginning point.
 
 Use the describe command to create your definitions file:
 
-`$ roadctl describe templates datamgr > myNewService.yaml`
+`$ roadctl describe blueprints datamgr > myNewService.yaml`
 
 Partial example output:
 
@@ -180,23 +180,23 @@ Then edit it using vi:
 `$ vi myNewService.yaml`
 
 ### To See Valid Contents of a Template
-Use the explain command to learn the valid syntax for the named templates is:
+Use the explain command to learn the valid syntax for the named blueprints is:
 
-`$ roadctl explain templates datamgr`
+`$ roadctl explain blueprints datamgr`
 
 Partial example output:
 
 ```
-Name: templates
+Name: blueprints
 
 DESCRIPTION:
 Templates provide a low-code environment for serverless, CRD, and microservices.
-The roadctl CLI uses the template skaffold combined code generation to create your
+The roadctl CLI uses the blueprints skaffold combined code generation to create your
 application, CI, and test framework.
 
 FIELDS:
 name <string>
-     A user friendly name for this template
+     A user friendly name for this blueprints
 api-version <string>
      API version used to generate it
 version <string>
@@ -209,7 +209,7 @@ id <string>
 ### Generate an Application
 Will build your source code, test cases, integrations, documentation, and CI pipeline
 
-`$ roadctl create templates datamgr -f myNewService.yaml`
+`$ roadctl create blueprints datamgr -f myNewService.yaml`
 
 To compile and invoke the CI/CD pipeline enter:
 
@@ -255,10 +255,10 @@ Make can be executed with the following options:
 
 ## Initializing the Template Repository
 
-A GitHub repository stores the PavedRoad templates.
+A GitHub repository stores the PavedRoad blueprints.
 
 As of version 0.6, the git clone command is the default method for creating
-template repositories.  The default is to checkout the "release" branch:
+blueprints repositories.  The default is to checkout the "release" branch:
 
 `$ roadctl init`
 
@@ -268,16 +268,16 @@ To use a different branch, use the _--branch_ option:
 
 ### Templates Location
 
-The default location for the templates is \$HOME/.pavedroad.d/templates.
+The default location for the blueprints is \$HOME/.pavedroad.d/blueprints.
 
 This can be changed by setting the PR_TEMPLATE_DIR environment variable, or via the
-roadctl command line with the _--templates_ flag.
+roadctl command line with the _--blueprints flag.
 
 ## GitHub Authentication
 
 For backward compatibility, use the _--api_ option with authentication.
 
-The GitHub API enforces rate limits that may affect your ability to download templates.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
+The GitHub API enforces rate limits that may affect your ability to download blueprints.  Authenticated users have significantly higher rate limits.  You can provide GitHub authentication using HTTP basic authentication or an OAUTH2 access token.
 
 ### From the Command Line
 `$ roadctl init --api --password XXXXXXX --user YYYYYYY`

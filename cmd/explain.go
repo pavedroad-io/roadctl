@@ -33,7 +33,7 @@ var explainCmd = &cobra.Command{
 	Short: "Return documentation about a resource",
 	Long: `Return documentation about the structure of a resource
   For example:
-    roadctl explain template`,
+    roadctl explain blueprint`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("requires a resource type with an optional resource name")
@@ -66,8 +66,8 @@ func explainResource(r, n string) Response {
 	case "tests":
 		fmt.Println("no tests found")
 		return nil
-	case "templates":
-		rsp = tplExplain("all", n)
+	case "blueprints":
+		rsp = bpExplain("all", n)
 		return rsp
 	case "integrations":
 		fmt.Println("no integrations found")
