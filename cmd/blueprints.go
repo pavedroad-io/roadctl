@@ -64,8 +64,8 @@ var bpDirSelected string
 const (
 	bpResourceName = "blueprints"
 	bpDefinition   = "definition.yaml"
-	// BLUEPRINT is the prefix to be replaced in front of the file name
-	BLUEPRINT = "blueprint"
+	// PREFIX is the prefix to be replaced in front of the file name
+	PREFIX = "template"
 	// ORGANIZATION is the prefix to be replaced in front of the file name
 	ORGANIZATION = "organization"
 
@@ -121,8 +121,8 @@ const (
 	allWithFossa    string = "all: $(PREFLIGHT) $(FOSSATEST) compile check"
 	allWithoutFossa string = "all: $(PREFLIGHT) compile check"
 
-	checkWithSonar    string = "check: lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
-	checkWithoutSonar string = "check: lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithSonar    string = "check: dbclean lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithoutSonar string = "check: dbclean lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 
 	// Fossa has a build section and a lint section
 	fossaSection string = `
@@ -788,14 +788,14 @@ func bpCreate(rn string) string {
 		//       times.
 		//       {blueprint-deployment.yaml manifests/kubernetes/dev/blueprint/}
 
-		if nm == BLUEPRINT {
+		if nm == PREFIX {
 			nm = bpInputData.Name
 			dirName := di + nm
 			_ = createDirectory(dirName)
 			continue
 		}
 
-		testString1 := "/" + BLUEPRINT + "/"
+		testString1 := "/" + PREFIX + "/"
 		if strings.Contains(di, testString1) {
 			replaceString := "/" + bpInputData.Name + "/"
 			li.RelativePath = strings.ReplaceAll(li.RelativePath,
@@ -803,7 +803,7 @@ func bpCreate(rn string) string {
 		}
 
 		// starts with blueprint"/"
-		testString2 := BLUEPRINT + "/"
+		testString2 := PREFIX + "/"
 		if strings.HasPrefix(di, testString2) {
 			replaceString := bpInputData.Name + "/"
 			li.RelativePath = strings.Replace(li.RelativePath,
@@ -816,7 +816,7 @@ func bpCreate(rn string) string {
 		isHook := strings.Contains(strings.ToLower(li.Name),
 			strings.ToLower(HOOK))
 		if isHook {
-			testName := strings.Replace(li.Name, BLUEPRINT, bpInputData.Name, 1)
+			testName := strings.Replace(li.Name, PREFIX, bpInputData.Name, 1)
 			var fileWithPath string
 			if li.RelativePath == "" {
 				fileWithPath = testName
@@ -868,8 +868,8 @@ func bpCreate(rn string) string {
 		}
 		// Replace generic string "blueprint" with the name of the service
 		// If it is not in the name, the unmodified file name is used
-		if strings.HasPrefix(v.Name, BLUEPRINT) {
-			fn = strings.Replace(v.Name, BLUEPRINT, bpInputData.Name, 1)
+		if strings.HasPrefix(v.Name, PREFIX) {
+			fn = strings.Replace(v.Name, PREFIX, bpInputData.Name, 1)
 		} else if strings.HasPrefix(v.Name, ORGANIZATION) {
 			fn = strings.Replace(v.Name, ORGANIZATION, bpInputData.Organization, 1)
 		} else {
@@ -924,13 +924,13 @@ func toInputBlueprintName(path, name string) string {
 	result := path
 
 	if strings.Contains(path, testString1) {
-		replaceString := "/" + BLUEPRINT + "/"
+		replaceString := "/" + PREFIX + "/"
 		result = strings.ReplaceAll(path,
 			testString1, replaceString)
 	}
 
 	if strings.HasPrefix(path, testString2) {
-		replaceString := BLUEPRINT + "/"
+		replaceString := PREFIX + "/"
 		result = strings.Replace(path, testString2, replaceString, 1)
 	}
 
@@ -1119,7 +1119,7 @@ func bpRead(bpName string) ([]string, error) {
 			}
 
 			// Special case where the directory name is blueprint
-			if info.IsDir() == true && strings.HasSuffix(path, BLUEPRINT) {
+			if info.IsDir() == true && strings.HasSuffix(path, PREFIX) {
 				bpFlLst = append(bpFlLst, path)
 			}
 
