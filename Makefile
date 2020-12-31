@@ -1,5 +1,5 @@
 
-VERSION := v1.0.0alpha
+VERSION := v1.0.0beta
 BUILD := $(shell git rev-parse --short HEAD)
 PROJECTNAME := $(shell basename "$(PWD)")
 PROJDIR := $(shell pwd)
@@ -56,10 +56,8 @@ build: $(BUILDS)
 	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(GOFILES)
 # make this conditional on build GOARCH
 	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(GOFILES)
-	go build -mod=vendor $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(GOFILES)
 	cp $(GOBIN)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH)
 	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"amd64" $(BUILDS)/$(PROJECTNAME)-"darwin"-"amd64"
-	cp $(GOBIN)/$(PROJECTNAME)-"darwin"-"386" $(BUILDS)/$(PROJECTNAME)-"darwin"-"386"
 	cp $(BUILDS)/$(PROJECTNAME)-$(GOOS)-$(GOARCH) $(PROJECTNAME)
 
 
@@ -104,7 +102,7 @@ lint: $(GOFILES)
 	@echo $?
 	$(GOLINT) ./... > $(GOLINTREPORT)
 	@echo "  >  running gosec... > $(GOSECREPORT)"
-	$(shell (gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.templates ./...))
+	$(shell (gosec -fmt=sonarqube -tests -out $(GOSECREPORT) -exclude-dir=.blueprints ./...))
 	@echo "  >  running go vet... > $(GOVETREPORT)"
 	$(shell (go vet ./... 2> $(GOVETREPORT)))
 

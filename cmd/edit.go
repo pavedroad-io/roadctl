@@ -31,7 +31,7 @@ var editCmd = &cobra.Command{
 	Long: `Invoke the configured $EDITOR and load the current configuration
   for the named resource.
   For example:
-    roadctl edit template foo`,
+    roadctl edit blueprint foo`,
 	Run: func(cmd *cobra.Command, args []string) {
 		runEdit(cmd, args)
 	},
@@ -72,8 +72,8 @@ func editResource(r, n string) {
 	case "tests":
 		fmt.Println("no tests found")
 		return
-	case "templates":
-		tplEdit(n)
+	case "blueprints":
+		bpEdit(n)
 		return
 	case "integrations":
 		fmt.Println("no integrations found")

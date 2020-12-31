@@ -32,23 +32,23 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// The release branch stores released templates
+// The release branch stores released blueprints
 // The latest and stable tags are used to select which release
 const (
-	gitTemplateBranch  plumbing.ReferenceName = "refs/heads/release"
-	gitLatestTag       plumbing.ReferenceName = "refs/heads/latest"
-	gitStableTag       plumbing.ReferenceName = "refs/heads/stable"
-	templateRepository                        = "https://github.com/pavedroad-io/templates"
-	githubAPI                                 = "GitHub API"
-	gitclone                                  = "git clone"
+	gitBlueprintBranch  plumbing.ReferenceName = "refs/heads/release"
+	gitLatestTag        plumbing.ReferenceName = "refs/heads/latest"
+	gitStableTag        plumbing.ReferenceName = "refs/heads/stable"
+	blueprintRepository                        = "https://github.com/pavedroad-io/blueprints"
+	githubAPI                                  = "GitHub API"
+	gitclone                                   = "git clone"
 
 	// File that holds meta-data about a cache
-	tplCacheFileName string = ".pr_cache"
+	bpCacheFileName string = ".pr_cache"
 )
 
-// tplDirectory manages template directory locations
-type tplDirectory struct {
-	// Full path to the template directory
+// bpDirectory manages blueprint directory locations
+type bpDirectory struct {
+	// Full path to the blueprint directory
 	location string
 
 	// Is it initialized
@@ -59,43 +59,43 @@ type tplDirectory struct {
 	locationFrom string
 }
 
-// tplCache manages information about templates
-//  stored in a template directory
-type tplCache struct {
+// bpCache manages information about blueprints
+//  stored in a blueprint directory
+type bpCache struct {
 	// What directory is it in
-	location *tplDirectory
+	location *bpDirectory
 
 	// Persist information to disk in a cache file
-	CacheFile tplCacheFile `json:"cache_file"`
+	CacheFile bpCacheFile `json:"cache_file"`
 }
 
-// errno constants for tplCacheError
+// errno constants for bpCacheError
 const (
-	tcBadTemplateDirectory = iota
+	tcBadBlueprintDirectory = iota
 	tcNoCacheFile
 	tcBadCacheFile
 	tcSuccess
 )
 
-// errmsg constants for tplCacheError
+// errmsg constants for bpCacheError
 const (
-	TcBadTemplateDirectory = "Unable to create template directory, Got (%v)\n"
-	TcNoCacheFile          = "Cache file not found (%v)\n"
-	TcBadCacheFile         = "Bad cache file (%v)\n"
+	TcBadBlueprintDirectory = "Unable to create blueprint directory, Got (%v)\n"
+	TcNoCacheFile           = "Cache file not found (%v)\n"
+	TcBadCacheFile          = "Bad cache file (%v)\n"
 )
 
-// tplCacheError
-type tplCacheError struct {
+// bpCacheError
+type bpCacheError struct {
 	errno  int
 	errmsg string
 }
 
-func (tc *tplCacheError) Error() string {
+func (tc *bpCacheError) Error() string {
 	return tc.errmsg
 }
 
-// tplCacheFile Store information to disk for later access
-type tplCacheFile struct {
+// bpCacheFile Store information to disk for later access
+type bpCacheFile struct {
 	// Cache file syntax version
 	Version string `json:"version"`
 
@@ -118,9 +118,9 @@ type tplCacheFile struct {
 	Tags []string `json:"tags"`
 }
 
-// Location returns the location of the template directory
+// Location returns the location of the blueprint directory
 // Initialize if necessary
-func (t *tplDirectory) Location() string {
+func (t *bpDirectory) Location() string {
 
 	if !t.initialized {
 		err := t.initialize()
@@ -133,40 +133,40 @@ func (t *tplDirectory) Location() string {
 }
 
 // initialize a private function for initializing
-//   the template directory location, not the
-//   templates
-func (t *tplDirectory) initialize() error {
+//   the blueprint directory location, not the
+//   blueprints
+func (t *bpDirectory) initialize() error {
 	// Order of precedence
 	//   - roadctl CLI
-	//   - PR_TEMPLATE_DIR
-	//   - defaultTemplateDir
+	//   - PR_BLUEPRINT_DIR
+	//   - defaultBlueprintDir
 
-	env := os.Getenv("PR_TEMPLATE_DIR")
+	env := os.Getenv("PR_BLUEPRINT_DIR")
 
-	if templateDirectoryLocation != "" {
+	if blueprintDirectoryLocation != "" {
 		// Make sure they
-		if strings.Contains(templateDirectoryLocation, "/"+defaultTemplateDir) {
-			fmt.Printf("Don't include /template with --template option\n")
-			if string(templateDirectoryLocation[len(templateDirectoryLocation)-1]) == "/" {
-				fmt.Printf("Use: --template %s\n",
-					strings.TrimSuffix(templateDirectoryLocation, "/"+defaultTemplateDir+"/"))
+		if strings.Contains(blueprintDirectoryLocation, "/"+defaultBlueprintDir) {
+			fmt.Printf("Don't include /blueprint with --blueprint option\n")
+			if string(blueprintDirectoryLocation[len(blueprintDirectoryLocation)-1]) == "/" {
+				fmt.Printf("Use: --blueprint %s\n",
+					strings.TrimSuffix(blueprintDirectoryLocation, "/"+defaultBlueprintDir+"/"))
 			} else {
-				fmt.Printf("Use: --template %s\n",
-					strings.TrimSuffix(templateDirectoryLocation, "/"+defaultTemplateDir))
+				fmt.Printf("Use: --blueprint %s\n",
+					strings.TrimSuffix(blueprintDirectoryLocation, "/"+defaultBlueprintDir))
 			}
 			os.Exit(-1)
 
 		}
-		t.location = templateDirectoryLocation + "/" + defaultTemplateDir
+		t.location = blueprintDirectoryLocation + "/" + defaultBlueprintDir
 		t.locationFrom = "CLI"
-		if defaultTemplateDir != t.location {
-			defaultTemplateDir = t.location
+		if defaultBlueprintDir != t.location {
+			defaultBlueprintDir = t.location
 		}
-	} else if env != "" && templateDirectoryLocation == "" {
-		t.location = env + "/" + defaultTemplateDir
-		t.locationFrom = "PR_TEMPLATE_DIR"
-		if defaultTemplateDir != t.location {
-			defaultTemplateDir = t.location
+	} else if env != "" && blueprintDirectoryLocation == "" {
+		t.location = env + "/" + defaultBlueprintDir
+		t.locationFrom = "PR_BLUEPRINT_DIR"
+		if defaultBlueprintDir != t.location {
+			defaultBlueprintDir = t.location
 		}
 	} else {
 
@@ -174,13 +174,13 @@ func (t *tplDirectory) initialize() error {
 		if err != nil {
 			fmt.Println("error setting home directory")
 		}
-		home = home + "/" + prHome + "/" + defaultTemplateDir
+		home = home + "/" + prHome + "/" + defaultBlueprintDir
 
 		t.location = home
-		// TODO: remove this hack once defaultTemplateDir is removed
+		// TODO: remove this hack once defaultBlueprintDir is removed
 		// For now, avoid duplicating the location string
-		if home != defaultTemplateDir {
-			defaultTemplateDir = home
+		if home != defaultBlueprintDir {
+			defaultBlueprintDir = home
 		}
 
 		t.locationFrom = "default"
@@ -196,16 +196,16 @@ func (t *tplDirectory) initialize() error {
 	return nil
 }
 
-func (t *tplDirectory) getDefault() string {
+func (t *bpDirectory) getDefault() string {
 
 	return ""
 }
 
-// New create a tplCache
+// New create a bpCache
 // If it does not exists, initialize it using method specified
-//   td: a tplDirectory type
+//   td: a bpDirectory type
 //   method: GitHub API or git clone
-func (tc *tplCache) CreateCache(method, branch string) error {
+func (tc *bpCache) CreateCache(method, branch string) error {
 	log.Println("Cloning with method: ", method)
 	switch method {
 	case gitclone:
@@ -218,15 +218,15 @@ func (tc *tplCache) CreateCache(method, branch string) error {
 	return nil
 }
 
-// NewTemplateCache read the template directory and it's meta-data
-func NewTemplateCache() (*tplCache, tplCacheError) {
-	t := &tplDirectory{}
-	tc := &tplCache{location: t}
-	te := tplCacheError{errno: tcSuccess}
+// NewBlueprintCache read the blueprint directory and it's meta-data
+func NewBlueprintCache() (*bpCache, bpCacheError) {
+	t := &bpDirectory{}
+	tc := &bpCache{location: t}
+	te := bpCacheError{errno: tcSuccess}
 
 	if dir := t.Location(); dir == "" {
-		te.errno = tcBadTemplateDirectory
-		te.errmsg = fmt.Sprintf(TcBadTemplateDirectory, dir)
+		te.errno = tcBadBlueprintDirectory
+		te.errmsg = fmt.Sprintf(TcBadBlueprintDirectory, dir)
 		return tc, te
 	}
 	err := tc.readCache()
@@ -241,7 +241,7 @@ func NewTemplateCache() (*tplCache, tplCacheError) {
 
 // Clone Do a git clone if the repository doesn't exist
 // in the desired directory
-func (tc *tplCache) Clone(branch string) error {
+func (tc *bpCache) Clone(branch string) error {
 
 	// See if it already has been cloned
 	if e := tc.readCache(); e == nil {
@@ -250,14 +250,14 @@ func (tc *tplCache) Clone(branch string) error {
 	}
 
 	/* TODO: Fix this
-	   cb := gitTemplateBranch
-	   if branch != gitTemplateBranch.String() {
+	   cb := gitBlueprintBranch
+	   if branch != gitBlueprintBranch.String() {
 	       cb = plumbing.ReferenceName(branch)
 	   }
 	*/
 
-	_, err := git.PlainClone(defaultTemplateDir, false, &git.CloneOptions{
-		URL:           templateRepository,
+	_, err := git.PlainClone(defaultBlueprintDir, false, &git.CloneOptions{
+		URL:           blueprintRepository,
 		ReferenceName: "refs/heads/release",
 		//ReferenceName: cb,
 	})
@@ -271,9 +271,9 @@ func (tc *tplCache) Clone(branch string) error {
 	tc.CacheFile.InitializedFrom = "clone"
 	tc.CacheFile.Version = "1.0.0alpha"
 	tc.CacheFile.Initialized = true
-	tc.CacheFile.Branch = gitTemplateBranch.String()
+	tc.CacheFile.Branch = gitBlueprintBranch.String()
 
-	if err = tc.writeCache(defaultTemplateDir); err != nil {
+	if err = tc.writeCache(defaultBlueprintDir); err != nil {
 		log.Fatal(err)
 	}
 
@@ -282,7 +282,7 @@ func (tc *tplCache) Clone(branch string) error {
 
 // writeCache save cache file in repository
 //   dir is set if not using tc.location
-func (tc *tplCache) writeCache(dir string) error {
+func (tc *bpCache) writeCache(dir string) error {
 	var cfn string
 
 	fileData, err := yaml.Marshal(tc.CacheFile)
@@ -291,9 +291,9 @@ func (tc *tplCache) writeCache(dir string) error {
 	}
 
 	if dir != "" {
-		cfn = dir + "/" + tplCacheFileName
+		cfn = dir + "/" + bpCacheFileName
 	} else {
-		cfn = tc.location.Location() + "/" + tplCacheFileName
+		cfn = tc.location.Location() + "/" + bpCacheFileName
 	}
 
 	err = ioutil.WriteFile(cfn, fileData, 0644)
@@ -306,8 +306,8 @@ func (tc *tplCache) writeCache(dir string) error {
 }
 
 // readCache Opens the cache file and reads contents
-func (tc *tplCache) readCache() error {
-	fl := tc.location.Location() + "/" + tplCacheFileName
+func (tc *bpCache) readCache() error {
+	fl := tc.location.Location() + "/" + bpCacheFileName
 	if _, err := os.Stat(fl); os.IsNotExist(err) {
 		return errors.New("Not found")
 	}
