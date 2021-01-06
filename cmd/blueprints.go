@@ -1043,14 +1043,10 @@ func bpDescribe(bpListOption string, rn string) bpDescribeResponse {
 }
 
 // bpExplain
-//   is stored in docs/explain.txt
-//
-//   TODO: Make this read from the actual blueprint
-//         directory, i.e. datamgr.txt.  Those file
-//         exist now
+//   is stored in docs/
+//   There is a name.txt file for each blueprint
 //
 //   docs is defined by eTLD
-//   explain is bpResourceName
 func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	var response bpExplainResponse
 
@@ -1061,7 +1057,7 @@ func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	}
 
 	// Load explanation
-	fn := tc.location.Location() + "/" + eTLD + "/" + bpResourceName + ".txt"
+	fn := tc.location.Location() + "/" + eTLD + "/" + rn + ".txt"
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		return response
 	}
