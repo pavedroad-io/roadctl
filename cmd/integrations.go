@@ -13,7 +13,7 @@ import (
 
 // validateIntegrations for all valid integrations
 // verify the configurations are good or complete them
-func validateIntegrations(config *tplData) error {
+func validateIntegrations(config *bpData) error {
 
 	err := checkSonarCloud(config)
 
@@ -48,7 +48,7 @@ func scConnnect() (client sonarcloud.SonarCloudClient, err error) {
 //   list of emeddable Markdown links
 //   Always include the quality gate badge if SonarCloud is enabled
 func scBadges(
-	config *tplData,
+	config *bpData,
 	badgeList []string) (resultList []string, err error) {
 
 	client, err := scConnnect()
@@ -83,7 +83,7 @@ func scBadges(
 
 // checkSonarCloud validates project key and generates
 // a token if not present
-func checkSonarCloud(config *tplData) error {
+func checkSonarCloud(config *bpData) error {
 	scClient := sonarcloud.SonarCloudClient{}
 
 	// TODO: Make this part of the New() method

@@ -37,7 +37,7 @@ var createCmd = &cobra.Command{
 	Long: `create a new resource taking input from stdin or a file
 For example:
 
-roadctl create templates template-name -f definition.yaml`,
+roadctl create blueprints blueprints-name -f definition.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		runCreate(cmd, args)
 	},
@@ -51,15 +51,15 @@ func runCreate(cmd *cobra.Command, args []string) string {
 	r := args[0]
 
 	if len(args) != 2 {
-		fmt.Println("Usage: roadctl create templates templateName -f definition.yaml")
-		fmt.Printf("       templateName missing\n")
+		fmt.Println("Usage: roadctl create blueprints blueprintName -f definition.yaml")
+		fmt.Printf("       blueprintName missing\n")
 		return msg
 	}
 
-	tplFile = args[1]
+	bpFile = args[1]
 
-	if tplDefFile == "" {
-		fmt.Println("Usage: roadctl create templates templateName -f definition.yaml")
+	if bpDefFile == "" {
+		fmt.Println("Usage: roadctl create blueprints blueprintName -f definition.yaml")
 		fmt.Printf("       -f definitions file  missing\n")
 		return msg
 	}
@@ -85,8 +85,8 @@ func createResource(rn string) string {
 	case "tests":
 		fmt.Println("no tests found")
 		return ""
-	case "templates":
-		return tplCreate(rn)
+	case "blueprints":
+		return bpCreate(rn)
 	case "integrations":
 		fmt.Println("no integrations found")
 		return ""
@@ -109,13 +109,13 @@ func init() {
 
 	//Set up expected command line flags
 
-	//tplfile defined in templates.go
+	//bpfile defined in blueprints.go
 	//Required!
-	// createCmd.Flags().StringVarP(&tplFile, "template", "t",
-	//	"datamgr", "Template file name to use")
+	// createCmd.Flags().StringVarP(&bpFile, "blueprint", "t",
+	//	"datamgr", "Blueprint file name to use")
 
-	// tplDefFile defined in templates.go
-	// Expected YAML originally generated from $roadctl describe templates >> myservice.yaml
-	createCmd.Flags().StringVarP(&tplDefFile, "file", "f",
+	// bpDefFile defined in blueprints.go
+	// Expected YAML originally generated from $roadctl describe blueprints >> myservice.yaml
+	createCmd.Flags().StringVarP(&bpDefFile, "file", "f",
 		"", "Service definition file to use")
 }

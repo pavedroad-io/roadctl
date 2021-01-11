@@ -57,35 +57,35 @@ func runInit(cmd *cobra.Command, args []string) {
 	phome := home + "/" + prHome
 	createDirectory(phome)
 
-	// See if we need to update or initialize the template repository
+	// See if we need to update or initialize the blueprints repository
 	apiTrue := cmd.Flag("api")
-	initTemplates(apiTrue)
+	initBlueprints(apiTrue)
 }
 
-// initTemplates: Download templates from GitHub
-// If the template dir is location, you can prefix
+// initBlueprints: Download blueprints from GitHub
+// If the blueprint dir is location, you can prefix
 // with "_" or "." to have go skip them when compiling
 //
-func initTemplates(api *pflag.Flag) {
-	fmt.Println("Initializing template repository")
+func initBlueprints(api *pflag.Flag) {
+	fmt.Println("Initializing blueprint repository")
 	if api.Value.String() == "true" {
-		// Create template dir if necessary
-		if _, err := os.Stat(defaultTemplateDir); os.IsNotExist(err) {
-			fmt.Println("defaultTemplateDir")
-			os.MkdirAll(defaultTemplateDir, os.ModePerm)
+		// Create blueprint dir if necessary
+		if _, err := os.Stat(defaultBlueprintDir); os.IsNotExist(err) {
+			fmt.Println("defaultBlueprintDir")
+			os.MkdirAll(defaultBlueprintDir, os.ModePerm)
 		}
 		client := getClient()
-		tplPull("all", defaultOrg, defaultRepo, defaultPath, defaultTemplateDir, client)
+		bpPull("all", defaultOrg, defaultRepo, defaultPath, defaultBlueprintDir, client)
 	} else {
-		tplClone(branch)
+		bpClone(branch)
 	}
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	initCmd.Flags().BoolP("api", "a", false, "Initialize template repository using GitHub API")
-	initCmd.Flags().StringVarP(&repository, "repo", "r", "https://github.pavedroad-io/templates",
-		"Change default repository for templates")
+	initCmd.Flags().BoolP("api", "a", false, "Initialize blueprint repository using GitHub API")
+	initCmd.Flags().StringVarP(&repository, "repo", "r", "https://github.pavedroad-io/blueprints",
+		"Change default repository for blueprints")
 	initCmd.Flags().StringVarP(&branch, "branch", "b", "release", "Branch to clone (default release)")
 }

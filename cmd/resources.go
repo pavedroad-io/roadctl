@@ -30,7 +30,7 @@ func initResourcetypes() {
 		"packagers",
 		"taggers",
 		"tests",
-		"templates",
+		"blueprints",
 		"integrations",
 		"artifacts",
 		"providers",
