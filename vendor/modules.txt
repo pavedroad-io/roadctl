@@ -30,6 +30,8 @@ github.com/hashicorp/hcl/json/token
 github.com/iancoleman/strcase
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
+# github.com/janeczku/go-spinner v0.0.0-20150530144529-cf8ef1d64394
+github.com/janeczku/go-spinner
 # github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
 github.com/jbenet/go-context/io
 # github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd
@@ -87,6 +89,7 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/knownhosts
+golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp

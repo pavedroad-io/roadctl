@@ -1,0 +1,45 @@
+package cmd
+
+var GorillaRouteBlocks CodeFragment = CodeFragment{
+	Family:        "gorilla/mux",
+	BaseDirectory: "/common/go/code_fragments/gorilla/",
+	HTTPMappings: []HTTPMethodTemplateMap{
+		{
+			HTTPMethods: []string{"GET", "HEAD", "DELETE", "PATCH", "PUT"},
+			FileName:    "keyed_route.tpl",
+			TemplatePtr: nil,
+		}, {
+			HTTPMethods: []string{"LIST"},
+			FileName:    "list_route.tpl",
+			TemplatePtr: nil,
+		}, {
+			HTTPMethods: []string{"POST", "OPTIONS", "TRACE"},
+			FileName:    "non_keyed_route.tpl",
+			TemplatePtr: nil,
+		},
+	},
+}
+
+var GorillaMethodBlocks CodeFragment = CodeFragment{
+	Family:        "gorilla/mux",
+	BaseDirectory: "/common/go/code_fragments/gorilla/",
+	HTTPMappings: []HTTPMethodTemplateMap{
+		{
+			HTTPMethods: []string{"GET", "HEAD", "DELETE", "PATCH", "PUT"},
+			FileName:    "keyed_method.tpl",
+			TemplatePtr: nil,
+		}, {
+			HTTPMethods: []string{"LIST"},
+			FileName:    "list_method.tpl",
+			TemplatePtr: nil,
+		}, {
+			HTTPMethods: []string{"OPTIONS", "TRACE"},
+			FileName:    "non_keyed_method.tpl",
+			TemplatePtr: nil,
+		}, {
+			HTTPMethods: []string{"POST"},
+			FileName:    "post_method.tpl",
+			TemplatePtr: nil,
+		},
+	},
+}

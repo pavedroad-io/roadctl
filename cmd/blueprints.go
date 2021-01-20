@@ -173,6 +173,9 @@ type bpData struct {
 	// Metrics endpoint name
 	Management string
 
+	// Returns API documentation in Swagger syntax
+	Explain string
+
 	// Integrations
 	Badges            string // badges to include docs
 	SonarKey          string
@@ -197,8 +200,14 @@ type bpData struct {
 	PutSwaggerDoc           string // swagger for put method
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
+	ExplainSwaggerDoc       string // swagger for explain endpoint
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
+
+	// Service blueprint specific
+	ServiceRoutes  string // Holds gorilla routes to function initialization
+	ServiceMethods string // Holds methods for each route
+	ServiceHooks   string // Generated pre/post hook functions for selected methods
 
 	PrimaryTableName string // Used as the structure name for
 	// Storing user data
@@ -288,7 +297,6 @@ func bpDataMapper(defs bpDef, output *bpData) error {
 	}
 
 	si = defs.findIntegration("fossa")
-	//	fmt.Println(si)
 	if si.Name != "" {
 		output.FOSSAEnabled = si.Enabled
 	}
@@ -507,6 +515,11 @@ type bpExplainItem struct {
 	Content string // Text for explain document
 }
 
+type bpGenericResponseItem struct {
+	Name    string // Name of resource
+	Content string // Text for explain document
+}
+
 type bpDescribeItem struct {
 	Type    string // Type of blueprint, i.e. serverless
 	Name    string // Name of blueprint == directory name
@@ -515,6 +528,10 @@ type bpDescribeItem struct {
 
 type bpExplainResponse struct {
 	Blueprints []bpExplainItem
+}
+
+type bpCreateResponse struct {
+	Blueprints []bpGenericResponseItem
 }
 
 type bpDescribeResponse struct {
@@ -550,6 +567,25 @@ func (t bpExplainResponse) RespondWithJSON() string {
 }
 
 func (t bpExplainResponse) RespondWithText() string {
+	nl := ""
+	for _, val := range t.Blueprints {
+		nl += fmt.Sprintf("Name: %v\n", val.Name)
+		nl += fmt.Sprintf("%v\n", val.Content)
+	}
+	nl += "\n"
+	fmt.Println(nl)
+	return nl
+}
+
+func (t bpCreateResponse) RespondWithYAML() string {
+	return t.RespondWithText() // One in the same for this type
+}
+
+func (t bpCreateResponse) RespondWithJSON() string {
+	return t.RespondWithText() // One in the same for this type
+}
+
+func (t bpCreateResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("Name: %v\n", val.Name)
@@ -742,15 +778,13 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 //   Last, run goimport to check for missing or unused import
 //   statements and clean up any code formatting issues
 //
-func bpCreate(rn string) string {
+//func bpCreate(rn string)  bpCreateResponse {
+func bpCreate(rn string) (reply bpCreateResponse) {
 	var filelist []bpLocation
 
 	// Returns a list of all files in the blueprint directory
 	// including there path, .datamgr/Makefile ....
 	inputBlueprintFiles, err := bpRead(bpFile)
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	// Read the definition file
 	defs := bpDef{}
@@ -758,15 +792,48 @@ func bpCreate(rn string) string {
 	//TODO: should be a method not a function
 	err = bpReadDefinitions(&defs)
 	if err != nil {
-		return (err.Error())
+		var errorReply bpGenericResponseItem = bpGenericResponseItem{
+			Name:    rn,
+			Content: "Failed reading defintions file",
+		}
+
+		reply.Blueprints = append(reply.Blueprints, errorReply)
+		return (reply)
 	}
 
+	lb := startBlocksSpinner("Loading blocks")
 	bpInputData := bpData{}
 	err = bpDataMapper(defs, &bpInputData)
+
+	var newEndPoint endpointConfig
+	if epList, err := newEndPoint.loadFromDefinitions(defs); err != nil {
+		msg := fmt.Errorf("Endpoints warning: [%v]'\n", err)
+		fmt.Println(msg)
+	} else {
+		for _, ep := range epList {
+			routes, err := ep.GenerateRoutes()
+			incSpinner()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			methods, err := ep.GenerateMethods()
+			incSpinner()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			bpInputData.ServiceRoutes += string(routes)
+			bpInputData.ServiceMethods += string(methods)
+		}
+	}
+
+	lb.Stop()
 
 	// Given the list returned in inputBlueprintFiles
 	// Create a bpLocation object with the name and path
 	// And a filtered list of blueprint files
+	ebps := startBlocksSpinner("Load and execute blueprint")
 	var filteredBlueprintList []string
 	for _, rec := range inputBlueprintFiles {
 		nm := filepath.Base(rec)
@@ -825,7 +892,7 @@ func bpCreate(rn string) string {
 			}
 			e := skipExistingHookFile(fileWithPath)
 			if e {
-				fmt.Printf("Skipping processing of hook file %v\n", fileWithPath)
+				//fmt.Printf("Skipping processing of hook file %v\n", fileWithPath)
 				continue
 			}
 		}
@@ -862,6 +929,8 @@ func bpCreate(rn string) string {
 	//blueprints = blueprint.Must(blueprint.ParseFiles(inputBlueprintFiles...))
 	//TODO: turn into a function
 	var fn string
+	incSpinner()
+	//	fmt.Printf("Executing  %s blueprint for new service %s\n", defs.Info.ID, defs.Info.Name)
 	for _, v := range filelist {
 		if v.Name == bpDefinition {
 			continue
@@ -900,7 +969,7 @@ func bpCreate(rn string) string {
 
 		bw := bufio.NewWriter(file)
 
-		fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
+		//fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
 		rawDirectoryName := toInputBlueprintName(v.RelativePath, bpInputData.Name)
 		err = blueprints.ExecuteTemplate(bw, rawDirectoryName+v.Name, bpInputData)
 		if err != nil {
@@ -911,9 +980,20 @@ func bpCreate(rn string) string {
 		file.Close()
 	}
 
-	// Execute goimport for code formatting
+	ebps.Stop()
 
-	return ""
+	var successReply bpGenericResponseItem = bpGenericResponseItem{
+		Name: rn,
+		Content: `
+			Create succeeded
+			run make to compile your applications
+			$ make <CR>
+			`,
+	}
+	reply.Blueprints = append(reply.Blueprints, successReply)
+	return reply
+
+	// TODO: Execute goimport for code formatting
 }
 
 // toInputBlueprintName map a directory path to its name
@@ -977,24 +1057,28 @@ func bpEdit(name string) {
 //
 func bpReadDefinitions(definitionsStruct *bpDef) error {
 
-	fmt.Println("Reading definitions from: ", bpDefFile)
+	msg := fmt.Sprintf("Reading definitions from: %s", bpDefFile)
+	s := startBlocksSpinner(msg)
 	df, err := os.Open(bpDefFile)
 	if err != nil {
 		fmt.Println("failed to open:", bpDefFile, ", error:", err)
 	}
 	defer df.Close()
+	incSpinner()
 	byteValue, e := ioutil.ReadAll(df)
 	if e != nil {
 		fmt.Println("read failed for ", bpDefFile)
 		os.Exit(-1)
 	}
 
+	incSpinner()
 	err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
 	if err != nil {
 		fmt.Println("Unmarshal faild", err)
 		return err
 	}
 
+	incSpinner()
 	errs := definitionsStruct.Validate()
 
 	if errs > 0 {
@@ -1002,8 +1086,11 @@ func bpReadDefinitions(definitionsStruct *bpDef) error {
 		for _, item := range ErrList {
 			fmt.Println(item.Error())
 		}
+		s.Stop()
+
 		os.Exit(-1)
 	}
+	s.Stop()
 	return nil
 }
 
@@ -1077,6 +1164,49 @@ func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	return response
 }
 
+/* TODO: remove dead code
+// bpReadCodeFragment given a list of modules return a list of filesystem
+//   locations to read
+func bpReadCodeFragment(modules []string) (moduleTemplates []bpLocation, err error) {
+	// read/check blueprint cache
+	tc, te := NewBlueprintCache()
+	if te.errno != tcSuccess {
+		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", te)
+	}
+
+	for _, m := range modules {
+		// Test the directory location
+		readPath := tc.location.Location() + "/" + m
+		if _, err := os.Stat(readPath); os.IsNotExist(err) {
+			msg := fmt.Errorf("Directory not found: [%s]\n", readPath)
+			return nil, msg
+		}
+
+		f, err := os.Open(readPath)
+		if err != nil {
+			msg := fmt.Errorf("Failed to read templates: [%s]\n", readPath)
+			return nil, msg
+		}
+
+		list, err := f.Readdir(-1)
+		f.Close()
+
+		if err != nil {
+			msg := fmt.Errorf("Failed to read templates contents: [%s]\n", readPath)
+			return nil, msg
+		}
+
+		for _, fn := range list {
+			i := bpLocation{
+				Name:         fn.Name(),
+				RelativePath: readPath}
+			moduleTemplates = append(moduleTemplates, i)
+		}
+	}
+
+	return moduleTemplates, nil
+}
+*/
 // bpRead(name)
 //   read all files for the named blueprint
 //   return a slice of paths with file names
@@ -1099,7 +1229,6 @@ func bpRead(bpName string) ([]string, error) {
 	bpItem := bpRsp.Blueprints[0]
 	td := bpItem.Path + "/" + bpItem.Name
 
-	fmt.Println("Tpl dir", td)
 	bpDirSelected = td
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {

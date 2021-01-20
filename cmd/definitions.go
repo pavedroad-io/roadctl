@@ -165,6 +165,9 @@ type KubeConfig struct {
 
 	// Management endpoint
 	Management string `yaml:"management"`
+
+	// Explain endpoint
+	Explain string `yaml:"explain"`
 }
 
 // Integrations CI/CD tools
@@ -198,6 +201,24 @@ type Integrations struct {
 	ConfigurationFile ConfigurationFile `yaml:"configuration-file,omitempty"`
 }
 
+// Query parameter
+type queryParm struct {
+	Name        string `json:"name"`
+	DataType    string `json:"datatype"`
+	Description string `json:"description"`
+}
+
+type httpMethod struct {
+	Method string      `json:"method"`
+	QP     []queryParm `json:"qp"`
+}
+
+// Endpoints
+type endPoint struct {
+	Name    string       `json:"name"`
+	Methods []httpMethod `json:"methods"`
+}
+
 // Project information
 type Project struct {
 	TLD           string         `yaml:"top_level_domain"`
@@ -209,6 +230,7 @@ type Project struct {
 	ProjectFiles  []ProjectFiles `yaml:"project-files"`
 	Integrations  []Integrations `yaml:"integrations"`
 	Kubernetes    KubeConfig     `yaml:"kubernetes"`
+	Endpoints     []endPoint     `yaml:"endpoints"`
 }
 
 type bpDef struct {

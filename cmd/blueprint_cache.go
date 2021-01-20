@@ -177,12 +177,6 @@ func (t *bpDirectory) initialize() error {
 		home = home + "/" + prHome + "/" + defaultBlueprintDir
 
 		t.location = home
-		// TODO: remove this hack once defaultBlueprintDir is removed
-		// For now, avoid duplicating the location string
-		if home != defaultBlueprintDir {
-			defaultBlueprintDir = home
-		}
-
 		t.locationFrom = "default"
 	}
 
