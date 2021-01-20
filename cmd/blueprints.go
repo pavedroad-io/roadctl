@@ -173,6 +173,9 @@ type bpData struct {
 	// Metrics endpoint name
 	Management string
 
+	// Returns API documentation in Swagger syntax
+	Explain string
+
 	// Integrations
 	Badges            string // badges to include docs
 	SonarKey          string
@@ -197,8 +200,14 @@ type bpData struct {
 	PutSwaggerDoc           string // swagger for put method
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
+	ExplainSwaggerDoc       string // swagger for explain endpoint
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
+
+	// Service blueprint specific
+	ServiceRoutes string // Holds gorilla routes to function initialization
+	RouterMethods string // Holds methods for each route
+	ServiceHooks  string // Generated pre/post hook functions for selected methods
 
 	PrimaryTableName string // Used as the structure name for
 	// Storing user data
@@ -288,7 +297,6 @@ func bpDataMapper(defs bpDef, output *bpData) error {
 	}
 
 	si = defs.findIntegration("fossa")
-	//	fmt.Println(si)
 	if si.Name != "" {
 		output.FOSSAEnabled = si.Enabled
 	}
@@ -748,9 +756,25 @@ func bpCreate(rn string) string {
 	// Returns a list of all files in the blueprint directory
 	// including there path, .datamgr/Makefile ....
 	inputBlueprintFiles, err := bpRead(bpFile)
+
+	//TODO(jscharber): read from definitions file
+
+	// TODO: construct from microservice name and
+	//       definitions file
+	myEndpoint := endpointConfig{
+		MicroServiceName: "puzzle",
+		APIVersion:       "1",
+		Namespace:        "pr",
+		ResourceType:     "puzzle",
+		EndPointName:     "Puzzle",
+		Methods:          []string{"GET", "HEAD"},
+	}
+	fmt.Println(myEndpoint)
+	routes, err := myEndpoint.GenerateRoutes()
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println("New route fragments: ", string(routes))
 
 	// Read the definition file
 	defs := bpDef{}
@@ -1075,6 +1099,48 @@ func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	response.Blueprints = append(response.Blueprints, nItem)
 
 	return response
+}
+
+// bpReadCodeFragment given a list of modules return a list of filesystem
+//   locations to read
+func bpReadCodeFragment(modules []string) (moduleTemplates []bpLocation, err error) {
+	// read/check blueprint cache
+	tc, te := NewBlueprintCache()
+	if te.errno != tcSuccess {
+		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", te)
+	}
+
+	for _, m := range modules {
+		// Test the directory location
+		readPath := tc.location.Location() + "/" + m
+		if _, err := os.Stat(readPath); os.IsNotExist(err) {
+			msg := fmt.Errorf("Directory not found: [%s]\n", readPath)
+			return nil, msg
+		}
+
+		f, err := os.Open(readPath)
+		if err != nil {
+			msg := fmt.Errorf("Failed to read templates: [%s]\n", readPath)
+			return nil, msg
+		}
+
+		list, err := f.Readdir(-1)
+		f.Close()
+
+		if err != nil {
+			msg := fmt.Errorf("Failed to read templates contents: [%s]\n", readPath)
+			return nil, msg
+		}
+
+		for _, fn := range list {
+			i := bpLocation{
+				Name:         fn.Name(),
+				RelativePath: readPath}
+			moduleTemplates = append(moduleTemplates, i)
+		}
+	}
+
+	return moduleTemplates, nil
 }
 
 // bpRead(name)
