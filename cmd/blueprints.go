@@ -54,7 +54,7 @@ var defaultBlueprintDir = "blueprints"
 var repoType = "GitHub"
 
 // From CLI
-var bpFile string    // Blueprint name to sue
+var bpFile string    // Blueprint name to use
 var bpDefFile string // Definition file to use form -f option
 
 // The directory we found this blueprint in
@@ -570,7 +570,7 @@ func (t bpExplainResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("Name: %v\n", val.Name)
-		nl += fmt.Sprintf("%v\n", val.Content)
+		nl += fmt.Sprintf("Content: %v\n", val.Content)
 	}
 	nl += "\n"
 	fmt.Println(nl)
@@ -589,7 +589,7 @@ func (t bpCreateResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("Name: %v\n", val.Name)
-		nl += fmt.Sprintf("%v\n", val.Content)
+		nl += fmt.Sprintf("Content: %v\n", val.Content)
 	}
 	nl += "\n"
 	fmt.Println(nl)
@@ -984,10 +984,9 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 
 	var successReply bpGenericResponseItem = bpGenericResponseItem{
 		Name: rn,
-		Content: `
-			Create succeeded
-			run make to compile your applications
-			$ make <CR>
+		Content: `Create succeeded
+run make to compile your applications
+$ make <CR>
 			`,
 	}
 	reply.Blueprints = append(reply.Blueprints, successReply)
@@ -1157,7 +1156,6 @@ func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	defer tf.Close()
 
 	byteValue, _ := ioutil.ReadAll(tf)
-	fmt.Println(string(fn))
 	nItem := bpExplainItem{bpResourceName, string(byteValue)}
 	response.Blueprints = append(response.Blueprints, nItem)
 

@@ -65,6 +65,8 @@ func runCreate(cmd *cobra.Command, args []string) bpCreateResponse {
 		return reply
 	}
 
+	bpFile = args[1]
+
 	if err := isValidResourceType(r); err == nil {
 		reply = bpCreate(r)
 	}
@@ -133,15 +135,6 @@ func createResource(rn string) bpCreateResponse {
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	//Set up expected command line flags
-
-	//bpfile defined in blueprints.go
-	//Required!
-	// createCmd.Flags().StringVarP(&bpFile, "blueprint", "t",
-	//	"datamgr", "Blueprint file name to use")
-
-	// bpDefFile defined in blueprints.go
-	// Expected YAML originally generated from $roadctl describe blueprints >> myservice.yaml
 	createCmd.Flags().StringVarP(&bpDefFile, "file", "f",
 		"", "Service definition file to use")
 }

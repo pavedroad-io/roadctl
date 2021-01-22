@@ -2,7 +2,7 @@
 package cmd
 
 /*
-Copyright © 2019 PavedRoad <info@pavedroad.io>
+Copyright © 2019,2020,2021 PavedRoad <info@pavedroad.io>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
