@@ -34,8 +34,14 @@ var userName string
 var userPassword string
 var userAccessToken string
 var blueprintDirectoryLocation string
+
+// GitTag
 var GitTag string
+
+// Version
 var Version string
+
+// Build
 var Build string
 
 // rootCmd represents the base command when called without any subcommands

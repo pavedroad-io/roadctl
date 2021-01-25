@@ -55,7 +55,11 @@ func runInit(cmd *cobra.Command, args []string) {
 	}
 
 	phome := home + "/" + prHome
-	createDirectory(phome)
+	if err := createDirectory(phome); err != nil {
+		msg := fmt.Errorf("Creating %s failed with error %v\n", phome, err)
+		fmt.Println(msg.Error())
+		return
+	}
 
 	// See if we need to update or initialize the blueprints repository
 	apiTrue := cmd.Flag("api")

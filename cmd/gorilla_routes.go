@@ -1,5 +1,6 @@
 package cmd
 
+// GorillaRouteBlocks
 var GorillaRouteBlocks CodeFragment = CodeFragment{
 	Family:        "gorilla/mux",
 	BaseDirectory: "/common/go/code_fragments/gorilla/",
@@ -20,6 +21,7 @@ var GorillaRouteBlocks CodeFragment = CodeFragment{
 	},
 }
 
+// GorillaMethodBlocks
 var GorillaMethodBlocks CodeFragment = CodeFragment{
 	Family:        "gorilla/mux",
 	BaseDirectory: "/common/go/code_fragments/gorilla/",

@@ -149,7 +149,7 @@ type ConfigurationFile struct {
 	Src          string `yaml:"src"`
 }
 
-// Kubernetes configurations
+// KubeConfig
 type KubeConfig struct {
 	// Namespace to use when constructing URLs
 	Namespace string `yaml:"namespace"`
@@ -491,13 +491,13 @@ func (d *bpDef) validateTableMetaData(t Tables) (errCount int) {
 	// Make sure table name is set
 	if t.TableName == "" {
 		d.setErrorList(INVALIDTABLENAME, "Missing table name", "")
-		errCount += 1
+		errCount++
 	} else {
 
 		if len(t.TableName) > maxLen {
 			e := fmt.Sprintf("Table name length cannot be greater than  %v", maxLen)
 			d.setErrorList(INVALIDTABLENAME, e, t.TableName)
-			errCount += 1
+			errCount++
 
 		}
 
@@ -509,7 +509,7 @@ func (d *bpDef) validateTableMetaData(t Tables) (errCount int) {
 
 		if !matched {
 			d.setErrorList(INVALIDTABLENAME, "Bad table name: ["+t.TableName+"]", t.TableName)
-			errCount += 1
+			errCount++
 		}
 	}
 

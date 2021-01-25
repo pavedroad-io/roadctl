@@ -606,7 +606,10 @@ func (t bpDescribeResponse) RespondWithJSON() string {
 	for _, val := range t.Blueprints {
 		//body := make(map[interface{}]interface{})
 		var body interface{}
-		yaml.Unmarshal([]byte(val.Content), &body)
+		if err := yaml.Unmarshal([]byte(val.Content), &body); err != nil {
+			fmt.Errorf("Marshaling JSON response failed %v\n", err)
+			return err.Error()
+		}
 
 		body = convert(body)
 		jb, err := json.Marshal(body)
@@ -727,9 +730,12 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 		dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
 		fp := outdir + "/" + *fileContent.Path
 		if _, err := os.Stat(fp); os.IsNotExist(err) {
-			os.Create(fp)
+			if _, err := os.Create(fp); err != nil {
+				msg := fmt.Errorf("Creating file %s failed with error %s\n", fp, err)
+				return msg
+			}
 		}
-		err = ioutil.WriteFile(fp, dstr, 0644)
+		err = ioutil.WriteFile(fp, dstr, 0600)
 		if err != nil {
 			log.Printf("ioutil.WriteFile error %v\n", err.Error())
 		}
@@ -741,7 +747,11 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 			if *item.Type == "dir" {
 				dn := outdir + "/" + *item.Path
 				if _, err := os.Stat(dn); os.IsNotExist(err) {
-					os.MkdirAll(dn, os.ModePerm)
+					if err := os.MkdirAll(dn, os.ModePerm); err != nil {
+						fmt.Errorf("Failed creating directory %s with error %s\n",
+							dn, err)
+						return err
+					}
 					fmt.Println("Blueprint directory created: ", dn)
 				}
 				_ = bpPull(pullOptions, org, repo, *item.Path, outdir, client)
@@ -801,6 +811,7 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 		return (reply)
 	}
 
+	// TODO: move to a function
 	lb := startBlocksSpinner("Loading blocks")
 	bpInputData := bpData{}
 	err = bpDataMapper(defs, &bpInputData)
@@ -811,13 +822,14 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 		fmt.Println(msg)
 	} else {
 		for _, ep := range epList {
-			routes, err := ep.GenerateRoutes()
+			// TODO: future support for other request routers
+			routes, err := ep.GenerateRoutes(GorillaRouteBlocks)
 			incSpinner()
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			methods, err := ep.GenerateMethods()
+			methods, err := ep.GenerateMethods(GorillaMethodBlocks)
 			incSpinner()
 			if err != nil {
 				fmt.Println(err)
@@ -948,7 +960,7 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 		// Ensure the path to the file exists
 		if v.RelativePath != "" {
 			if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
-				err := os.MkdirAll(v.RelativePath, 0766)
+				err := os.MkdirAll(v.RelativePath, 0750)
 				if err != nil {
 					fmt.Println("Failed to make directory: ", v.RelativePath)
 				}
@@ -976,8 +988,16 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 			fmt.Printf("Blueprint execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
 		}
-		bw.Flush()
-		file.Close()
+		if err := bw.Flush(); err != nil {
+			fmt.Errorf("Flush for file %s failed with error %v\n",
+				file.Name(), err)
+			os.Exit(-1)
+		}
+		if err := file.Close(); err != nil {
+			fmt.Errorf("Close for file %s failed with error %v\n",
+				file.Name(), err)
+			os.Exit(-1)
+		}
 	}
 
 	ebps.Stop()
@@ -1281,7 +1301,7 @@ func bpGet(bpListOption string, rn string) bpListResponse {
 			}
 
 			list, err := f.Readdir(-1)
-			f.Close()
+			defer f.Close()
 
 			if err != nil {
 				continue
@@ -1319,7 +1339,6 @@ func createDirectory(path string) error {
 func skipExistingHookFile(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
-	} else {
-		return true
 	}
+	return true
 }

@@ -20,6 +20,7 @@ import (
 //
 // endpointConfig template variables for generating routes and
 // associates handlers
+// TODO: remove unused configuration variables
 type endpointConfig struct {
 	MicroServiceName string   `json:"microServiceName"`
 	APIVersion       string   `json:"apiVersion"`
@@ -72,16 +73,16 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 // TODO move this into, move these dependencies into
 // CodeFragment so support programmatic invocation
 
-func (hc *endpointConfig) GenerateRoutes() (configFragment []byte, err error) {
+func (hc *endpointConfig) GenerateRoutes(block CodeFragment) (configFragment []byte, err error) {
 	var configFragments strings.Builder
 
 	for _, m := range hc.Methods {
 
-		if found, fragement := findHTTPTemplate(m, GorillaMethodBlocks); found {
+		if found, fragement := findHTTPTemplate(m, block); found {
 			//			fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
-			tplName := GorillaRouteBlocks.BaseDirectory + fragement.FileName
+			tplName := block.BaseDirectory + fragement.FileName
 			if fragement.TemplatePtr == nil {
-				if tpl, err := loadTemplate(tplName, GorillaMethodBlocks.Family); err != nil {
+				if tpl, err := loadTemplate(tplName, block.Family); err != nil {
 					msg := fmt.Errorf("File not found: [%s][%v'\n", tplName, err)
 					return nil, msg
 				} else {
@@ -97,7 +98,7 @@ func (hc *endpointConfig) GenerateRoutes() (configFragment []byte, err error) {
 			}
 			e := fragement.TemplatePtr.ExecuteTemplate(&b, fragement.FileName, &tplData)
 			if e != nil {
-				msg := fmt.Errorf("Template execution failed : [%s][%v]\n", tplName, e)
+				msg := fmt.Errorf("template execution failed : [%s][%v]", tplName, e)
 				return nil, msg
 			}
 			configFragments.WriteString(b.String())
@@ -117,17 +118,17 @@ func (hc *endpointConfig) GenerateRoutes() (configFragment []byte, err error) {
 // TODO move this into, move these dependencies into
 // CodeFragment so support programmatic invocation
 
-func (hc *endpointConfig) GenerateMethods() (configFragment []byte, err error) {
+func (hc *endpointConfig) GenerateMethods(block CodeFragment) (configFragment []byte, err error) {
 	var configFragments strings.Builder
 
 	for _, m := range hc.Methods {
 
-		if found, fragement := findHTTPTemplate(m, GorillaRouteBlocks); found {
+		if found, fragement := findHTTPTemplate(m, block); found {
 			// fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
-			tplName := GorillaRouteBlocks.BaseDirectory + fragement.FileName
+			tplName := block.BaseDirectory + fragement.FileName
 			if fragement.TemplatePtr == nil {
-				if tpl, err := loadTemplate(tplName, GorillaRouteBlocks.Family); err != nil {
-					msg := fmt.Errorf("File not found: [%s][%v'\n", tplName, err)
+				if tpl, err := loadTemplate(tplName, block.Family); err != nil {
+					msg := fmt.Errorf("file not found: [%s][%v]'", tplName, err)
 					return nil, msg
 				} else {
 					fragement.TemplatePtr = tpl
@@ -173,12 +174,15 @@ type CodeFragment struct {
 	EventMappings []EventMethodTemplateMap `json:"eventMappings"` // Mapping of methods to templates
 }
 
+// HTTPMethodTemplateMap a list of methods, the assoicated tpl file,
+// and a ptr to a compiled instance of it
 type HTTPMethodTemplateMap struct {
 	HTTPMethods []string           `json:"http_methods"` // HTTP methods using this template
 	FileName    string             `json:"file_name"`    // Name of the template file
 	TemplatePtr *template.Template `json:"templatePtr"`  // Pointer to a compiled template or nil
 }
 
+// EventMethodTemplateMap
 type EventMethodTemplateMap struct {
 	Events      []string           `json:"events"`      // Events using this template
 	FileName    string             `json:"file_name"`   // Name of the template file
