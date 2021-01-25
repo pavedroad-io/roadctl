@@ -823,13 +823,13 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 	} else {
 		for _, ep := range epList {
 			// TODO: future support for other request routers
-			routes, err := ep.GenerateRoutes(GorillaRouteBlocks)
+			routes, err := ep.GenerateBlock(GorillaRouteBlocks)
 			incSpinner()
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			methods, err := ep.GenerateMethods(GorillaMethodBlocks)
+			methods, err := ep.GenerateBlock(GorillaMethodBlocks)
 			incSpinner()
 			if err != nil {
 				fmt.Println(err)
@@ -1004,10 +1004,8 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 
 	var successReply bpGenericResponseItem = bpGenericResponseItem{
 		Name: rn,
-		Content: `Create succeeded
-run make to compile your applications
-$ make <CR>
-			`,
+		Content: `Create succeeded run make to compile your applications
+$ make <CR>`,
 	}
 	reply.Blueprints = append(reply.Blueprints, successReply)
 	return reply

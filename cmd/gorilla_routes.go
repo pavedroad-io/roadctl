@@ -1,7 +1,7 @@
 package cmd
 
 // GorillaRouteBlocks
-var GorillaRouteBlocks CodeFragment = CodeFragment{
+var GorillaRouteBlocks BlockFragment = BlockFragment{
 	Family:        "gorilla/mux",
 	BaseDirectory: "/blocks/go/gorilla/",
 	HTTPMappings: []HTTPMethodTemplateMap{
@@ -22,7 +22,7 @@ var GorillaRouteBlocks CodeFragment = CodeFragment{
 }
 
 // GorillaMethodBlocks
-var GorillaMethodBlocks CodeFragment = CodeFragment{
+var GorillaMethodBlocks BlockFragment = BlockFragment{
 	Family:        "gorilla/mux",
 	BaseDirectory: "/blocks/go/gorilla/",
 	HTTPMappings: []HTTPMethodTemplateMap{

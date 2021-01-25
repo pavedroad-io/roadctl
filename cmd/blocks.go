@@ -25,7 +25,6 @@ type endpointConfig struct {
 	MicroServiceName string   `json:"microServiceName"`
 	APIVersion       string   `json:"apiVersion"`
 	Namespace        string   `json:"namespace"`
-	ResourceType     string   `json:"resourceType"`
 	EndPointName     string   `json:"endPointName"`
 	Methods          []string `json:"methods"` // HTTP methods
 }
@@ -49,10 +48,9 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 			methodList = append(methodList, m.Method)
 		}
 		newEP := endpointConfig{
-			MicroServiceName: ep.Name,
+			MicroServiceName: defs.Info.Name,
 			APIVersion:       defs.Info.APIVersion,
 			Namespace:        defs.Project.Kubernetes.Namespace,
-			ResourceType:     defs.Info.Name,
 			EndPointName:     ep.Name,
 			Methods:          methodList,
 		}
@@ -73,7 +71,7 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 // TODO move this into, move these dependencies into
 // CodeFragment so support programmatic invocation
 
-func (hc *endpointConfig) GenerateRoutes(block CodeFragment) (configFragment []byte, err error) {
+func (hc *endpointConfig) GenerateBlock(block BlockFragment) (configFragment []byte, err error) {
 	var configFragments strings.Builder
 
 	for _, m := range hc.Methods {
@@ -107,51 +105,6 @@ func (hc *endpointConfig) GenerateRoutes(block CodeFragment) (configFragment []b
 	return []byte(configFragments.String()), nil
 }
 
-// executing each one for HTTP methods and/or events defined
-// return the combined code framgent as []byte
-//
-// Executing a method template requires all data passed in as
-// a single go object, that is the function of the
-// tplRouteObject.  TODO: greate tplMethodObject
-//
-// If a route requires template function maps if required
-// TODO move this into, move these dependencies into
-// CodeFragment so support programmatic invocation
-
-func (hc *endpointConfig) GenerateMethods(block CodeFragment) (configFragment []byte, err error) {
-	var configFragments strings.Builder
-
-	for _, m := range hc.Methods {
-
-		if found, fragement := findHTTPTemplate(m, block); found {
-			// fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
-			tplName := block.BaseDirectory + fragement.FileName
-			if fragement.TemplatePtr == nil {
-				if tpl, err := loadTemplate(tplName, block.Family); err != nil {
-					msg := fmt.Errorf("file not found: [%s][%v]'", tplName, err)
-					return nil, msg
-				} else {
-					fragement.TemplatePtr = tpl
-				}
-			}
-			var b strings.Builder
-			var tplData = tplRouteObject{
-				APIVersion:   hc.APIVersion,
-				EndPointName: hc.EndPointName,
-				Namespace:    hc.Namespace,
-				Method:       m,
-			}
-			e := fragement.TemplatePtr.ExecuteTemplate(&b, fragement.FileName, &tplData)
-			if e != nil {
-				msg := fmt.Errorf("Template execution failed : [%s][%v]\n", tplName, e)
-				return nil, msg
-			}
-			configFragments.WriteString(b.String())
-		}
-	}
-	return []byte(configFragments.String()), nil
-}
-
 // Composite objects for templale execution
 
 // tplRouteObject for building HTTP gorilla routes
@@ -167,7 +120,7 @@ type tplRouteObject struct {
 // CodeFragment defines a family of teplates and the directory location
 // Then a list HTTP methods or Kafka events that trigger generating the code
 // using the specified templates
-type CodeFragment struct {
+type BlockFragment struct {
 	Family        string                   `json:"family"`        // Family these templates belong too
 	BaseDirectory string                   `json:"baseDirectory"` // Directory relative to TLD of blueprints
 	HTTPMappings  []HTTPMethodTemplateMap  `json:"httpMappings"`  // Mapping of methods to templates
@@ -194,7 +147,7 @@ type EventMethodTemplateMap struct {
 //   use for code generation
 //
 //
-func findHTTPTemplate(method string, cf CodeFragment) (bool, *HTTPMethodTemplateMap) {
+func findHTTPTemplate(method string, cf BlockFragment) (bool, *HTTPMethodTemplateMap) {
 	for _, m := range cf.HTTPMappings {
 		// HTTPMethods holds a list methods supported by a template
 		if t, _ := containsString(method, m.HTTPMethods); t == true {
