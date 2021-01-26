@@ -20,7 +20,6 @@ import (
 //
 // endpointConfig template variables for generating routes and
 // associates handlers
-// TODO: remove unused configuration variables
 type endpointConfig struct {
 	MicroServiceName string   `json:"microServiceName"`
 	APIVersion       string   `json:"apiVersion"`
@@ -61,7 +60,7 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 
 // GenerateRoutes given a configFragmenet, load its templates
 // executing each one for HTTP methods and/or events defined
-// return the combined code framgent as []byte
+// return the combined code fragment as []byte
 //
 // Executing a route template requires all data passed in as
 // a single go object, that is the function of the
@@ -69,22 +68,22 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 //
 // If a route requires template function maps if required
 // TODO move this into, move these dependencies into
-// CodeFragment so support programmatic invocation
+// Block so support programmatic invocation
 
-func (hc *endpointConfig) GenerateBlock(block BlockFragment) (configFragment []byte, err error) {
+func (hc *endpointConfig) GenerateBlock(block Block) (configFragment []byte, err error) {
 	var configFragments strings.Builder
 
 	for _, m := range hc.Methods {
 
 		if found, fragement := findHTTPTemplate(m, block); found {
 			//			fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
-			tplName := block.BaseDirectory + fragement.FileName
-			if fragement.TemplatePtr == nil {
+			tplName := block.BaseDirectory + fragement.Template.FileName
+			if fragement.Template.TemplatePtr == nil {
 				if tpl, err := loadTemplate(tplName, block.Family); err != nil {
 					msg := fmt.Errorf("File not found: [%s][%v'\n", tplName, err)
 					return nil, msg
 				} else {
-					fragement.TemplatePtr = tpl
+					fragement.Template.TemplatePtr = tpl
 				}
 			}
 			var b strings.Builder
@@ -94,7 +93,7 @@ func (hc *endpointConfig) GenerateBlock(block BlockFragment) (configFragment []b
 				Namespace:    hc.Namespace,
 				Method:       m,
 			}
-			e := fragement.TemplatePtr.ExecuteTemplate(&b, fragement.FileName, &tplData)
+			e := fragement.Template.TemplatePtr.ExecuteTemplate(&b, fragement.Template.FileName, &tplData)
 			if e != nil {
 				msg := fmt.Errorf("template execution failed : [%s][%v]", tplName, e)
 				return nil, msg
@@ -105,7 +104,7 @@ func (hc *endpointConfig) GenerateBlock(block BlockFragment) (configFragment []b
 	return []byte(configFragments.String()), nil
 }
 
-// Composite objects for templale execution
+// Composite objects for template execution
 
 // tplRouteObject for building HTTP gorilla routes
 type tplRouteObject struct {
@@ -115,39 +114,90 @@ type tplRouteObject struct {
 	Method       string `json:"method"`
 }
 
-// Template based classes
-
-// CodeFragment defines a family of teplates and the directory location
+// Block defines a family of templates and the directory location
 // Then a list HTTP methods or Kafka events that trigger generating the code
 // using the specified templates
-type BlockFragment struct {
-	Family        string                   `json:"family"`        // Family these templates belong too
-	BaseDirectory string                   `json:"baseDirectory"` // Directory relative to TLD of blueprints
-	HTTPMappings  []HTTPMethodTemplateMap  `json:"httpMappings"`  // Mapping of methods to templates
-	EventMappings []EventMethodTemplateMap `json:"eventMappings"` // Mapping of methods to templates
+type Block struct {
+
+	// Inverted namespace ID unique to these templates
+	ID string `json:"id"` // io.pavedroard.core.loggers.http_access
+
+	// BlockType A type that determines how this block is processed
+	BlockType string `json:"block_type"` // type of block; i.e. template, function
+
+	// Description a human readable description
+	Description string `json:"description"` // Friendly Description of this template
+
+	// Family friendly name for this grouping of templates or functions
+	Family string `json:"family"` // Family these templates belong too
+
+	// Imports required modules for these templates
+	Imports []string `json:"imports"` // Required package imports
+
+	// Language the computer programming language
+	Language string `json:"language"` // Programming language
+
+	// BaseDirectory in blueprints repository
+	BaseDirectory string `json:"base_drectory"` // Directory relative to TLD of blueprints
+
+	// Mapping methods for functions and templates
+	//
+
+	// TemplateMap a simple map
+	TemplateMap []TemplateItem `json:"template_map"` // Directory relative to TLD of blueprintsm
+	// HTTPMappings templates mapped by HTTP methods
+	HTTPMappings []HTTPMethodTemplateMap `json:"http_mappings"` // HTTP to template mappings
+	// EventMappings templates mapped by events
+	EventMappings []EventMethodTemplateMap `json:"event_appings"` // Event to template mapping
+
+	// TemplateExports
+	TemplateExports []ExportedItem `json:"exported_template_variables"` // Directory relative to TLD of blueprintsm
+}
+
+// TemplateItem
+// Templates that are not tied to events or methods
+type TemplateItem struct {
+
+	// FileName the file name of this template in the directory
+	FileName string `json:"file_name"` // Name of the template file
+
+	// TemplateFunction the name of the function map required for this template
+	TemplateFunction string `json:"template_function"` // Name of the template file
+
+	// TemplatePtr a pointer if the template if already initialized
+	TemplatePtr *template.Template `json:"templatePtr"` // Pointer to a compiled template or nil
+}
+
+// ExporteddItem
+// Template variables exported by this template
+type ExportedItem struct {
+
+	// TemplateVar the names or functions available for inclusion in this templates
+	TemplateVar string `json:"templateVar"`
+
+	// SourceInDefinitions where in the definitions file this value is populated from
+	SourceInDefinitions string `json:"source_in_definitions"`
 }
 
 // HTTPMethodTemplateMap a list of methods, the assoicated tpl file,
 // and a ptr to a compiled instance of it
 type HTTPMethodTemplateMap struct {
-	HTTPMethods []string           `json:"http_methods"` // HTTP methods using this template
-	FileName    string             `json:"file_name"`    // Name of the template file
-	TemplatePtr *template.Template `json:"templatePtr"`  // Pointer to a compiled template or nil
+	HTTPMethods []string     `json:"http_methods"` // HTTP methods using this template
+	Template    TemplateItem `json:"template"`
 }
 
 // EventMethodTemplateMap
 type EventMethodTemplateMap struct {
-	Events      []string           `json:"events"`      // Events using this template
-	FileName    string             `json:"file_name"`   // Name of the template file
-	TemplatePtr *template.Template `json:"templatePtr"` // Pointer to a compiled template or nil
+	Events   []string     `json:"events"` // Events using this template
+	Template TemplateItem `json:"template"`
 }
 
-// findHTTPTemplate give an CodeFragment object and an HTTP method
+// findHTTPTemplate give an Block object and an HTTP method
 //   return an HTTPMethodTemplateMap containing template to
 //   use for code generation
 //
 //
-func findHTTPTemplate(method string, cf BlockFragment) (bool, *HTTPMethodTemplateMap) {
+func findHTTPTemplate(method string, cf Block) (bool, *HTTPMethodTemplateMap) {
 	for _, m := range cf.HTTPMappings {
 		// HTTPMethods holds a list methods supported by a template
 		if t, _ := containsString(method, m.HTTPMethods); t == true {
