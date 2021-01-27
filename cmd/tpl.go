@@ -15,26 +15,38 @@ import (
 //
 type TemplateItem struct {
 
-	// FileName the file name of this template in the directory
-	FileName string `json:"file_name"` // Name of the template file
+	// FileName the file name of this template in
+	// the directory
+	FileName string `json:"file_name"`
 
-	// TemplateFunction the name of the function map required for this template
-	TemplateFunction interface{} `json:"template_function"` // Name of the template file
+	// TemplateFunction the name of the function map
+	// required for this template
+	TemplateFunction interface{} `json:"template_function"`
 
-	// TemplatePtr a pointer if the template if already initialized
-	TemplatePtr *template.Template `json:"templatePtr"` // Pointer to a compiled template or nil
+	// TemplatePtr a pointer if the template if already
+	// initialized or nil
+	TemplatePtr *template.Template `json:"templatePtr"`
+
+	// Description user friendly description
+	Description string `json:"description"`
 }
 
 // HTTPMethodTemplateMap a list of methods, the assoicated tpl file,
 // and a ptr to a compiled instance of it
 type HTTPMethodTemplateMap struct {
-	HTTPMethods []string     `json:"http_methods"` // HTTP methods using this template
-	Template    TemplateItem `json:"template"`
+	// HTTP methods using this template
+	HTTPMethods []string `json:"http_methods"`
+
+	// Template a TemplateItem
+	Template TemplateItem `json:"template"`
 }
 
 // EventMethodTemplateMap
 type EventMethodTemplateMap struct {
-	Events   []string     `json:"events"` // Events using this template
+	// Events using this template
+	Events []string `json:"events"`
+
+	// Template a TemplateItem
 	Template TemplateItem `json:"template"`
 }
 
@@ -91,9 +103,6 @@ type tplRouteObject struct {
 //
 // Location is relative to the currently configured blueprints
 // directory, i.e. the default $HOME/.pavedroad/blueprints
-//
-// TODO: rewrite to take Block and input and load the proper
-// template funcs
 func loadTemplate(location, name string, tplFunc interface{}) (tpl *template.Template, e error) {
 	// read blueprint cache
 	tc, te := NewBlueprintCache()
