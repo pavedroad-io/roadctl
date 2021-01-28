@@ -65,18 +65,36 @@ type Block struct {
 	TemplateExports []ExportedItem `json:"exported_template_variables"`
 }
 
+// UsageRights terms of service, licensing, and access tokens
 type UsageRights struct {
+	// TermsOfService for example, as is
 	TermsOfService string
-	Licenses       string
-	AccessToken    string
+
+	// Licenses cost for example,  annual, per use, perpetual
+	Licenses string
+
+	// ContributeLink for donation to the developer
+	ContributeLink string
+
+	// AccessToken for downloading this block
+	AccessToken string
 }
 
+// Metrics that support data driven development
+// and operations
 type Metrics struct {
+
+	// DORA metrics
 	DORAStatistics DORA
-	GitHub         GitStatistics
-	Operations     OperationalStatictics
+
+	// GitHub metrics
+	GitHub GitStatistics
+
+	// Operations metrics developed by PavedRoad
+	Operations OperationalStatictics
 }
 
+// GitStatistics tracked from GitHub repositories holding blocks
 type GitStatistics struct {
 	Stars     int
 	Forks     int
@@ -85,9 +103,20 @@ type GitStatistics struct {
 	Downloads int
 }
 
+// OperationalStatictics created automatically when deploying on
+// the PR SaaS service
 type OperationalStatictics struct {
+	// NumberOfTimesDeployed
 	NumberOfTimesDeployed int
-	ActiveDeployments     int
+
+	// ActiveDeployments
+	ActiveDeployments int
+
+	// Failures int
+	Failures int
+
+	// Response times per HTTP method or pub/sub event
+	Performance map[string]int
 }
 
 // DORA metrics are a result of six years worth of surveys
