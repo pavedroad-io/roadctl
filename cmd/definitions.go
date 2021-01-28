@@ -231,6 +231,7 @@ type Project struct {
 	Integrations  []Integrations `yaml:"integrations"`
 	Kubernetes    KubeConfig     `yaml:"kubernetes"`
 	Endpoints     []endPoint     `yaml:"endpoints"`
+	Loggers       []Logger       `yaml:"loggers"`
 }
 
 type bpDef struct {

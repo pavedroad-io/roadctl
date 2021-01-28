@@ -221,7 +221,6 @@ type bpData struct {
 	AllBuildTarget    string //build line for check section
 	FossaBuildSection string //build target for Fossa
 	FossaLintSection  string //lint section for Fossa
-
 }
 
 //  bpDataMapper

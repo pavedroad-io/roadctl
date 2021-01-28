@@ -23,6 +23,9 @@ type Block struct {
 
 	// Kind a type that determines how this block
 	// is processed
+	// - template
+	// - function
+	// - fileTemplate a template that also creates thefile
 	Kind string `json:"block_type"` // i.e. template, function
 
 	// Metadata for this block
@@ -36,6 +39,7 @@ type Block struct {
 	// or functions, for example, gorilla/mux
 	Family string `json:"family"`
 
+	// UsageRights for using the block
 	UsageRights UsageRights
 
 	// Imports required modules for these templates
@@ -47,6 +51,15 @@ type Block struct {
 
 	// BaseDirectory in blueprints repository
 	BaseDirectory string `json:"base_drectory"`
+
+	// HomeDirectory to place a fileTemplate in
+	HomeDirectory string `json:"home_directory"`
+
+	// HomeFileName to create
+	HomeFilename string `json:"home_filename"`
+
+	// Environment this template applies to
+	Environment string `json:"environment"`
 
 	//
 	// Mapping methods for functions and templates
@@ -65,18 +78,36 @@ type Block struct {
 	TemplateExports []ExportedItem `json:"exported_template_variables"`
 }
 
+// UsageRights terms of service, licensing, and access tokens
 type UsageRights struct {
+	// TermsOfService for example, as is
 	TermsOfService string
-	Licenses       string
-	AccessToken    string
+
+	// Licenses cost for example,  annual, per use, perpetual
+	Licenses string
+
+	// ContributeLink for donation to the developer
+	ContributeLink string
+
+	// AccessToken for downloading this block
+	AccessToken string
 }
 
+// Metrics that support data driven development
+// and operations
 type Metrics struct {
+
+	// DORA metrics
 	DORAStatistics DORA
-	GitHub         GitStatistics
-	Operations     OperationalStatictics
+
+	// GitHub metrics
+	GitHub GitStatistics
+
+	// Operations metrics developed by PavedRoad
+	Operations OperationalStatictics
 }
 
+// GitStatistics tracked from GitHub repositories holding blocks
 type GitStatistics struct {
 	Stars     int
 	Forks     int
@@ -85,9 +116,20 @@ type GitStatistics struct {
 	Downloads int
 }
 
+// OperationalStatictics created automatically when deploying on
+// the PR SaaS service
 type OperationalStatictics struct {
+	// NumberOfTimesDeployed
 	NumberOfTimesDeployed int
-	ActiveDeployments     int
+
+	// ActiveDeployments
+	ActiveDeployments int
+
+	// Failures int
+	Failures int
+
+	// Response times per HTTP method or pub/sub event
+	Performance map[string]int
 }
 
 // DORA metrics are a result of six years worth of surveys

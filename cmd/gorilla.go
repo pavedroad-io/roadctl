@@ -3,7 +3,7 @@ package cmd
 // GorillaRouteBlocks
 var GorillaRouteBlocks Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "PavedRoad.template",
+	Kind:       "Template",
 	ID:         "io.pavedroard.http.routers.gorilla",
 	Family:     "gorilla/mux",
 	Metadata: Metadata{
@@ -91,7 +91,7 @@ var GorillaRouteBlocks Block = Block{
 // GorillaMethodBlocks
 var GorillaMethodBlocks Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "PavedRoad.template",
+	Kind:       "Template",
 	ID:         "io.pavedroard.http.methods.gorilla",
 	Family:     "gorilla/mux",
 	Metadata: Metadata{
