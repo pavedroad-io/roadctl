@@ -2,18 +2,34 @@
 package cmd
 
 // Skaffold
-var SkaffoldConfigBlock = Block{
+var SkaffoldDBConfigBlock = Block{
 	APIVersion: "v1beta",
 	Kind:       "FileTemplate",
 	ID:         "io.pavedroard.core.skaffold.config",
 	Family:     "pavedroad/core/skaffold",
 	Metadata: Metadata{
-		Labels: []string{"pavedroad", "skaffold", "skaffold",
-			"W3C"},
-		Tags: []string{"pavedroad", "skaffold", "skaffold"},
+		Labels: []string{
+			"pavedroad",
+			"skaffold",
+			"ci",
+			"kubernetes",
+			"cockroach",
+			"debug",
+			"microservice",
+			"insecure registry",
+			"sha256 tagging"},
+		Tags: []string{"pavedroad",
+			"skaffold",
+			"ci",
+			"kubernetes",
+			"cockroach",
+			"debug",
+			"microservice",
+			"insecure registry",
+			"sha256 tagging"},
 		Information: BlockInformation{
-			Description: "Generate skaffold file",
-			Title:       "Generate skaffold file",
+			Description: "Skaffold file supporting Cockroachdb and debugging",
+			Title:       "Skaffold file with cockroachdb",
 			Contact: Contact{
 				Author:       "John Scharber",
 				Organization: "PavedRoad",
@@ -29,7 +45,6 @@ var SkaffoldConfigBlock = Block{
 		AccessToken:    "",
 	},
 	Language:      "go",
-	Imports:       []string{`log "github.com/pavedroad-io/skaffold/skaffold"`},
 	BaseDirectory: "/blocks/go/pavedroad/core/skaffold/",
 	HomeDirectory: "/manifests/",
 	HomeFilename:  "skaffold.yaml",
@@ -37,24 +52,43 @@ var SkaffoldConfigBlock = Block{
 
 	TemplateMap: []TemplateItem{
 		{
-			FileName:         "skaffold_config.tpl",
-			TemplateFunction: nil,
+			FileName:         "skaffold_cockroach.tpl",
+			TemplateFunction: stringFunctionMap(),
 			TemplatePtr:      nil,
 			Description:      "Generate skaffold config for this micro-service",
 		},
 	},
 	TemplateExports: []ExportedItem{
 		{
-			TemplateVar:         "{{.Skaffold.Build}}",
+			TemplateVar:         "{{.SkaffoldExports.Build}}",
 			SourceInDefinitions: "",
 		},
 		{
-			TemplateVar:         "{{.Skaffold.Deploy}}",
+			TemplateVar:         "{{.SkaffoldExports.Deploy}}",
 			SourceInDefinitions: "",
 		},
 		{
-			TemplateVar:         "{{.Skaffold.Profile}}",
+			TemplateVar:         "{{.SkaffoldExports.Profile}}",
 			SourceInDefinitions: "",
 		},
 	},
+}
+
+//
+// Input definitions
+//
+
+type SkaffoldInputs struct {
+	Organization     string
+	MicroserviceName string
+}
+
+//
+// Exports
+//
+
+type SkaffoldExports struct {
+	Build   string
+	Deploy  string
+	Profile string
 }

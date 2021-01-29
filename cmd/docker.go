@@ -29,7 +29,6 @@ var DockerCompose Block = Block{
 		AccessToken:    "",
 	},
 	Language:      "go",
-	Imports:       []string{`log "github.com/pavedroad-io/docker/docker-compose"`},
 	BaseDirectory: "/blocks/go/pavedroad/core/docker/",
 	HomeDirectory: "/manifests/",
 	HomeFilename:  "docker-compose.yaml",
@@ -64,7 +63,7 @@ var DockerCompose Block = Block{
 }
 
 // DockerCompose for database only
-var DockerCompose Block = Block{
+var DBOnlyDockerCompose Block = Block{
 	APIVersion: "v1beta",
 	Kind:       "FileTemplate",
 	ID:         "io.pavedroard.core.docker.compose",
@@ -91,7 +90,6 @@ var DockerCompose Block = Block{
 		AccessToken:    "",
 	},
 	Language:      "go",
-	Imports:       []string{`log "github.com/pavedroad-io/docker/docker-compose"`},
 	BaseDirectory: "/blocks/go/pavedroad/core/docker/",
 	HomeDirectory: "/manifests/",
 	HomeFilename:  "docker-db-only.yaml",
