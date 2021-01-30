@@ -8,9 +8,8 @@ var DockerCompose Block = Block{
 	ID:         "io.pavedroard.core.docker.compose",
 	Family:     "pavedroad/core/docker",
 	Metadata: Metadata{
-		Labels: []string{"pavedroad", "docker", "docker-compose",
-			"W3C"},
-		Tags: []string{"pavedroad", "docker-compoase", "docker"},
+		Labels: []string{"pavedroad", "docker", "docker-compose"},
+		Tags:   []string{"pavedroad", "docker-compoase", "docker"},
 		Information: BlockInformation{
 			Description: "Generate docker-compose file",
 			Title:       "Generate docker-compose file",

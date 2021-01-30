@@ -26,7 +26,7 @@ type Block struct {
 	// - template
 	// - function
 	// - fileTemplate a template that also creates thefile
-	Kind string `json:"block_type"` // i.e. template, function
+	Kind string `json:"kind"` // i.e. template, function
 
 	// Metadata for this block
 	Metadata Metadata `json:"metadata"`
@@ -45,6 +45,9 @@ type Block struct {
 	// Imports required modules for these templates
 	// Required package imports
 	Imports []string `json:"imports"`
+
+	// ImportedBlocks additional blocks imported by this block
+	ImportedBlocks []Block
 
 	// Language the computer programming language
 	Language string `json:"language"`

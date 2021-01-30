@@ -11,6 +11,7 @@ var SkaffoldDBConfigBlock = Block{
 		Labels: []string{
 			"pavedroad",
 			"skaffold",
+			"helm3",
 			"ci",
 			"kubernetes",
 			"cockroach",
@@ -19,9 +20,16 @@ var SkaffoldDBConfigBlock = Block{
 			"insecure registry",
 			"sha256 tagging"},
 		Tags: []string{"pavedroad",
+			"go",
 			"skaffold",
+			"management API",
+			"metrics API",
+			"RESTAPI",
+			"events",
 			"ci",
 			"kubernetes",
+			"database",
+			"postgresql",
 			"cockroach",
 			"debug",
 			"microservice",
@@ -49,27 +57,26 @@ var SkaffoldDBConfigBlock = Block{
 	HomeDirectory: "/manifests/",
 	HomeFilename:  "skaffold.yaml",
 	Environment:   "dev",
-
 	TemplateMap: []TemplateItem{
 		{
 			FileName:         "skaffold_cockroach.tpl",
 			TemplateFunction: stringFunctionMap(),
 			TemplatePtr:      nil,
-			Description:      "Generate skaffold config for this micro-service",
+			Description:      "Generate skaffold config for a database micro-service",
 		},
 	},
-	TemplateExports: []ExportedItem{
-		{
-			TemplateVar:         "{{.SkaffoldExports.Build}}",
-			SourceInDefinitions: "",
-		},
-		{
-			TemplateVar:         "{{.SkaffoldExports.Deploy}}",
-			SourceInDefinitions: "",
-		},
-		{
-			TemplateVar:         "{{.SkaffoldExports.Profile}}",
-			SourceInDefinitions: "",
+	ImportedBlocks: []Block{
+		{ID: "io.pavedroard.core.skaffold.build"},
+		{ID: "io.pavedroard.core.skaffold.deploy"},
+		{ID: "io.pavedroard.core.skaffold.profile",
+			Metadata: Metadata{
+				Labels: []string{
+					"skaffold",
+					"profile",
+					"go",
+					"debug",
+				},
+			},
 		},
 	},
 }
@@ -87,8 +94,20 @@ type SkaffoldInputs struct {
 // Exports
 //
 
+/*
+This is a possible second way of handling these files
+Load the major sections and combine them to create the template
+
+Then execute the template using the inputs
+
+
 type SkaffoldExports struct {
 	Build   string
 	Deploy  string
 	Profile string
 }
+
+func (sc *SkaffoldInputs) readAndSave(url url.URL, block Block, in SkaffoldInputs) (err erorr) {
+
+}
+*/
