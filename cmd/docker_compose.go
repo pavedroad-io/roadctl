@@ -4,7 +4,7 @@ package cmd
 // DockerCompose for main docker-file
 var DockerCompose Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "FileTemplate",
+	Kind:       "DockerComposeBlock",
 	ID:         "io.pavedroard.core.docker.compose",
 	Family:     "pavedroad/core/docker",
 	Metadata: Metadata{
@@ -64,7 +64,7 @@ var DockerCompose Block = Block{
 // DockerCompose for database only
 var DBOnlyDockerCompose Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "FileTemplate",
+	Kind:       "DockerComposeBlock",
 	ID:         "io.pavedroard.core.docker.compose",
 	Family:     "pavedroad/core/docker",
 	Metadata: Metadata{

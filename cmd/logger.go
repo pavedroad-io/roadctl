@@ -4,7 +4,7 @@ package cmd
 // PRApplicationLogger
 var PRApplicationLogger Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "Template",
+	Kind:       "FileBlock",
 	ID:         "io.pavedroard.core.loggers.application",
 	Family:     "pavedroad/core/logger",
 	Metadata: Metadata{
