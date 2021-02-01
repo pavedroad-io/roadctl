@@ -1,16 +1,23 @@
 // cmd
 package cmd
 
+import "fmt"
+
 // PRApplicationLogger
 var PRApplicationLogger Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "Template",
+	Kind:       "FileBlock",
 	ID:         "io.pavedroard.core.loggers.application",
 	Family:     "pavedroad/core/logger",
 	Metadata: Metadata{
-		Labels: []string{"pavedroad", "logger", "http access",
+		Labels: []string{
+			"pavedroad",
+			"logger",
+			"http access",
 			"W3C"},
-		Tags: []string{"pavedroad", "HTTP access logger"},
+		Tags: []string{
+			"pavedroad",
+			"HTTP access logger"},
 		Information: BlockInformation{
 			Description: "Application debug log",
 			Title:       "Application debug log",
@@ -95,57 +102,105 @@ var PRApplicationLogger Block = Block{
 // file
 type Logger struct {
 	// ID BlockID
-	ID string
+	ID string `json:"id"`
 
 	// APIVersion API version
-	APIVersion string
+	APIVersion string `json:"apiVersion"`
 
 	// Name of the logger
-	Name string
+	Name string `json:"name"`
+
+	Metadata Metadata
+
+	// AutoInit true or false
+	AutoInit bool `json:"autoInit"`
+
+	// ConfigType env
+	ConfigType string `json:"configType"`
 
 	// EnableDocker support
-	EnableDocker bool
+	EnableDocker bool `json:"enableDocker"`
 
 	// EnableKubernetes support
-	EnableKubernetes bool
+	EnableKubernetes bool `json:"enableKubernetes"`
 
 	// Outputs to enable
-	Outputs LogOutput
-}
-
-// FileOutput configuration
-type FileOutput struct {
-	// Enable or disable
-	Enable bool
-
-	// Directory to place log in
-	Directory string
-
-	// FileName of log
-	FileName string
+	Outputs LogOutput `json:"outputs"`
 }
 
 // LogOutput configuration
 type LogOutput struct {
 	// Console logging
-	Console bool
+	Console bool `json:"console"`
 
 	// Disk logging
-	Disk FileOutput
+	Disk FileOutput `json:"disk"`
 
 	// EventStream logging
-	EventStream EventOutput
+	EventStream EventOutput `json:"eventStream"`
+}
+
+// FileOutput configuration
+type FileOutput struct {
+	// Enable or disable
+	Enable bool `json:"enable"`
+
+	// FileFormant text, JSON, etc
+	FileFormant string `json:"fileFormant"`
+
+	// Directory to place log in
+	Directory string `json:"directory"`
+
+	// FileName of log
+	FileName string `json:"fileName"`
 }
 
 // EventOutput configuration
 type EventOutput struct {
 	// Enable or disable
-	Enable bool
+	Enable bool `json:"enable"`
 
 	// OutputTopics a list of topics to publish
 	// to
-	OutputTopics []Topic
+	OutputTopics []Topic `json:"outputTopics"`
+
+	// KafkaBrokers "kafka:9092", ....
+	KafkaBrokers string `json:"kafkaBrokers"`
 
 	// EnableCloudEvents use cloud event formatting
-	EnableCloudEvents bool
+	EnableCloudEvents bool `json:"enableCloudEvents"`
+}
+
+func (l *Logger) getLoggerImports(defs bpDef) (imports []string, err error) {
+	b := Block{}
+	var uniqueImports []string
+
+	if len(defs.Project.Loggers) == 0 {
+		msg := fmt.Errorf("No loggers found")
+		return uniqueImports, msg
+	}
+
+	for _, l := range defs.Project.Loggers {
+
+		if l.ID == "" {
+			msg := fmt.Errorf("Warning no ID specified in call to loadBlock: [%v]'\n", l.ID)
+			fmt.Println(msg)
+
+		}
+
+		nb := &Block{}
+		if nb, err = b.loadBlock(l.ID, l.Metadata.Labels); err != nil {
+			msg := fmt.Errorf("Loading block failed for ID[%s]: [%v]'\n", l.ID)
+			fmt.Println(msg)
+		}
+
+		for _, i := range nb.Imports {
+			if test, _ := containsString(i, uniqueImports); test == true {
+				continue
+			}
+			uniqueImports = append(uniqueImports, i)
+		}
+	}
+
+	return uniqueImports, nil
 }

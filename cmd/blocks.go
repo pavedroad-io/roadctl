@@ -153,6 +153,8 @@ type DORA struct {
 	CFR float64
 }
 
+// TODO: break into its own go file for use in
+// other types
 type Metadata struct {
 	// Label's allow blueprints to be associated
 	Labels []string `json:"labels"`
@@ -191,4 +193,22 @@ type Contact struct {
 
 	// Support channel like slack URL
 	Support string `json:"support"`
+}
+
+// loadBlock populate a block given its ID
+// and a set of lables
+func (b *Block) loadBlock(ID string, labels []string) (block *Block, err error) {
+
+	// TODO: fix this hack
+	switch ID {
+	case "io.pavedroard.core.loggers.application":
+		b = &PRApplicationLogger
+		break
+	}
+
+	return b, nil
+}
+
+func (b *Block) getImports() []string {
+	return b.Imports
 }

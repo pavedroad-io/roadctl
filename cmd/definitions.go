@@ -234,6 +234,15 @@ type Project struct {
 	Loggers       []Logger       `yaml:"loggers"`
 }
 
+type Go struct {
+	DependencyManager string `yaml:"dependency-manager"`
+}
+
+// Core capabilities to enable / configure
+type Core struct {
+	Loggers []Logger `yaml:"loggers"`
+}
+
 type bpDef struct {
 	TableList []Tables  `yaml:"tables"`
 	Community Community `yaml:"community"`

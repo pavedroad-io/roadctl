@@ -4,7 +4,7 @@ package cmd
 // Skaffold
 var SkaffoldDBConfigBlock = Block{
 	APIVersion: "v1beta",
-	Kind:       "FileTemplate",
+	Kind:       "SkaffoldBlock",
 	ID:         "io.pavedroard.core.skaffold.config",
 	Family:     "pavedroad/core/skaffold",
 	Metadata: Metadata{

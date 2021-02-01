@@ -3,7 +3,7 @@ package cmd
 // GorillaRouteBlocks
 var GorillaRouteBlocks Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "Template",
+	Kind:       "EndpointsBlock",
 	ID:         "io.pavedroard.http.routers.gorilla",
 	Family:     "gorilla/mux",
 	Metadata: Metadata{
@@ -28,8 +28,8 @@ var GorillaRouteBlocks Block = Block{
 	},
 	Language: "go",
 	Imports: []string{
-		"github.com/gorilla/mux",
-		"_github.com/lib/pq"},
+		`"github.com/gorilla/mux"`,
+		`"_github.com/lib/pq"`},
 	BaseDirectory: "/blocks/go/gorilla/",
 	HTTPMappings: []HTTPMethodTemplateMap{
 		{
@@ -91,7 +91,7 @@ var GorillaRouteBlocks Block = Block{
 // GorillaMethodBlocks
 var GorillaMethodBlocks Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "Template",
+	Kind:       "EndpointsBlocks",
 	ID:         "io.pavedroard.http.methods.gorilla",
 	Family:     "gorilla/mux",
 	Metadata: Metadata{
@@ -109,6 +109,10 @@ var GorillaMethodBlocks Block = Block{
 			},
 		},
 	},
+	Language: "go",
+	Imports: []string{
+		`"github.com/gorilla/mux"`,
+		`"_github.com/lib/pq"`},
 	UsageRights: UsageRights{
 		TermsOfService: "As is",
 		Licenses:       "Apache 2",

@@ -144,8 +144,9 @@ type bpData struct {
 	OrganazationInfo    string // Name of Organization
 	OrganizationLicense string // Org license/copyright
 	ProjectInfo         string // Project/service description
-	SchedulerName       string // For worker polls specifies the type of
+
 	//   scheduler to create
+	SchedulerName string // For worker polls specifies the type of
 
 	MaintainerName  string
 	MaintainerEmail string
@@ -176,7 +177,7 @@ type bpData struct {
 	// Returns API documentation in Swagger syntax
 	Explain string
 
-	// Integrations
+	// Integration's
 	Badges            string // badges to include docs
 	SonarKey          string
 	SonarLogin        string
@@ -194,6 +195,8 @@ type bpData struct {
 	PavedroadInfo string //PR license/copyright
 
 	//Swagger headers probably turn these into functions
+	// TODO: remove these old swagger doc statements from blueprints
+	//       they are now generated with blocks
 	AllRoutesSwaggerDoc     string
 	GetAllSwaggerDoc        string // swagger for list method
 	GetSwaggerDoc           string // swagger for get method
@@ -204,13 +207,16 @@ type bpData struct {
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
-	// Service blueprint specific
-	ServiceRoutes  string // Holds gorilla routes to function initialization
-	ServiceMethods string // Holds methods for each route
-	ServiceHooks   string // Generated pre/post hook functions for selected methods
+	// Endpoints blueprint specific
+	EndpointRoutes   string // Holds gorilla routes to function initialization
+	EndpointHandlers string // Holds methods for each route
+	EndpointHooks    string // Generated pre/post hook functions for selected methods
 
 	PrimaryTableName string // Used as the structure name for
 	// Storing user data
+
+	// Language specific inputs
+	GoImports string // Imports added by digital blocks
 
 	//JSON data
 	PostJSON string // Sample data for a post
@@ -790,6 +796,7 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 //func bpCreate(rn string)  bpCreateResponse {
 func bpCreate(rn string) (reply bpCreateResponse) {
 	var filelist []bpLocation
+	var importList []string
 
 	// Returns a list of all files in the blueprint directory
 	// including there path, .datamgr/Makefile ....
@@ -810,7 +817,6 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 		return (reply)
 	}
 
-	// TODO: move to a function
 	lb := startBlocksSpinner("Loading blocks")
 	bpInputData := bpData{}
 	err = bpDataMapper(defs, &bpInputData)
@@ -823,23 +829,36 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 		for _, ep := range epList {
 			// TODO: future support for other request routers
 			routes, err := ep.GenerateBlock(GorillaRouteBlocks)
-			incSpinner()
+			importList = append(importList, GorillaRouteBlocks.getImports()...)
 			if err != nil {
 				fmt.Println(err)
 			}
 
 			methods, err := ep.GenerateBlock(GorillaMethodBlocks)
+			importList = append(importList, GorillaMethodBlocks.getImports()...)
 			incSpinner()
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			bpInputData.ServiceRoutes += string(routes)
-			bpInputData.ServiceMethods += string(methods)
+			bpInputData.EndpointRoutes += string(routes)
+			bpInputData.EndpointHandlers += string(methods)
 		}
 	}
 
 	lb.Stop()
+
+	b := Logger{}
+	var loggerImports []string
+	// reads a list of logger blocks and returns
+	// required imports
+	if loggerImports, err = b.getLoggerImports(defs); err != nil {
+		msg := fmt.Errorf("Failed loading import: [%s]\n", err)
+		fmt.Println(msg)
+	}
+	importList = append(importList, loggerImports...)
+
+	bpInputData.GoImports = flattenUniqueStrings(importList)
 
 	// Given the list returned in inputBlueprintFiles
 	// Create a bpLocation object with the name and path
@@ -1193,8 +1212,6 @@ func bpReadCodeFragment(modules []string) (moduleTemplates []bpLocation, err err
 		// Test the directory location
 		readPath := tc.location.Location() + "/" + m
 		if _, err := os.Stat(readPath); os.IsNotExist(err) {
-			msg := fmt.Errorf("Directory not found: [%s]\n", readPath)
-			return nil, msg
 		}
 
 		f, err := os.Open(readPath)
