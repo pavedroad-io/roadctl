@@ -8,6 +8,9 @@ const (
 	// CoreBlock a block that integrates core libraries
 	CoreBlock = "CoreBlock"
 
+	// CompositeBlock a block that integrates core libraries
+	CompositeBlock = "CompositeBlock"
+
 	// WebFileBlock a block generated from a file
 	// containing a Go template using the HTML safe
 	// typing processor

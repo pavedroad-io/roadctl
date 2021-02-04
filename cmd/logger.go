@@ -6,7 +6,7 @@ import "fmt"
 // PRApplicationLogger
 var PRApplicationLogger Block = Block{
 	APIVersion: "v1beta",
-	Kind:       "FileBlock",
+	Kind:       "CompositeBlock",
 	ID:         "io.pavedroard.core.loggers.application",
 	Family:     "pavedroad/core/logger",
 	Metadata: Metadata{
@@ -35,63 +35,34 @@ var PRApplicationLogger Block = Block{
 		Licenses:       "Apache 2",
 		AccessToken:    "",
 	},
-	Language:      "go",
-	Imports:       []string{`log "github.com/pavedroad-io/go-core/logger"`},
-	BaseDirectory: "/blocks/go/pavedroad/core/logger/",
-	TemplateMap: []TemplateItem{
+	Language: "go",
+	Imports:  []string{`log "github.com/pavedroad-io/go-core/logger"`},
+	ImportedBlocks: []Block{
 		{
-			FileName:         "docker_compose.tpl",
-			TemplateFunction: nil,
-			TemplatePtr:      nil,
-			Description:      "Generate docker config for this micro-service",
+			ID: "io.pavedroard.core.manifests.kubernetes.kustomize",
+			Metadata: Metadata{
+				Labels: []string{
+					"kubernetes",
+					"kafka",
+					"zookepper",
+					"kustomize",
+					"envconfiguration",
+					"dev",
+				},
+			},
 		},
 		{
-			FileName:         "kubernetes_kafka_service.tpl",
-			TemplateFunction: nil,
-			TemplatePtr:      nil,
-			Description:      "Create a k8s service for kafka",
-		},
-		{
-			FileName:         "kubernetes_kafka_deployment.tpl",
-			TemplateFunction: nil,
-			TemplatePtr:      nil,
-			Description:      "Create a k8s deployment for kafka",
-		},
-		{
-			FileName:         "kubernetes_zookeeper_service.tpl",
-			TemplateFunction: nil,
-			TemplatePtr:      nil,
-			Description:      "Create a k8s service for zookeeper",
-		},
-		{
-			FileName:         "kubernetes_zookeeper_deployment.tpl",
-			TemplateFunction: nil,
-			TemplatePtr:      nil,
-			Description:      "Create a k8s deployment for zookeeper",
-		},
-		{
-			FileName:         "kustomize.tpl",
-			TemplateFunction: nil,
-			TemplatePtr:      nil,
-			Description:      "Kustomize configuration for logging",
-		},
-	},
-	TemplateExports: []ExportedItem{
-		{
-			TemplateVar:         "{{.Docker.Service.Environment}}",
-			SourceInDefinitions: "",
-		},
-		{
-			TemplateVar:         "{{.Docker.Service.DependsOn}}",
-			SourceInDefinitions: "",
-		},
-		{
-			TemplateVar:         "{{.Docker.Kafka}}",
-			SourceInDefinitions: "",
-		},
-		{
-			TemplateVar:         "{{.Docker.Zookepper}}",
-			SourceInDefinitions: "",
+			ID: "io.pavedroard.core.manifests.docker.docker-compoase",
+			Metadata: Metadata{
+				Labels: []string{
+					"docker",
+					"docker-compose",
+					"kafka",
+					"zookepper",
+					"envconfiguration",
+					"dev",
+				},
+			},
 		},
 	},
 }
@@ -110,7 +81,7 @@ type Logger struct {
 	// Name of the logger
 	Name string `json:"name"`
 
-	Metadata Metadata
+	Metadata Metadata `json:"metadata"`
 
 	// AutoInit true or false
 	AutoInit bool `json:"autoInit"`
