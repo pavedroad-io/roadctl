@@ -5,7 +5,7 @@ package cmd
 var DockerCompose Block = Block{
 	APIVersion: "v1beta",
 	Kind:       "DockerComposeBlock",
-	ID:         "io.pavedroard.core.docker.compose",
+	ID:         "http://io.pavedroardr/.core.docker.compose",
 	Family:     "pavedroad/core/docker",
 	Metadata: Metadata{
 		Labels: []string{"pavedroad", "docker", "docker-compose"},

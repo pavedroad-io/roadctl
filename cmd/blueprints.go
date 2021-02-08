@@ -848,6 +848,13 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 
 	lb.Stop()
 
+	for _, projectBlocks := range defs.Project.Blocks {
+		nb, _ := projectBlocks.loadBlock(
+			projectBlocks.ID,
+			projectBlocks.Metadata.Labels)
+		fmt.Println(nb.ID)
+	}
+
 	b := Logger{}
 	var loggerImports []string
 	// reads a list of logger blocks and returns

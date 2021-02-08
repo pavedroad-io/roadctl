@@ -5,6 +5,16 @@
 
 package cmd
 
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/url"
+	"os"
+
+	"gopkg.in/yaml.v2"
+)
+
 //
 // HTTP blocks configuration objects
 //
@@ -198,6 +208,18 @@ type Contact struct {
 // loadBlock populate a block given its ID
 // and a set of lables
 func (b *Block) loadBlock(ID string, labels []string) (block *Block, err error) {
+	var u *url.URL
+
+	if u, err = url.Parse(ID); err != nil {
+		log.Fatalf("Failed to parse ID (%s) error (%v)\n", ID, err)
+	}
+
+	switch u.Scheme {
+	case "cache":
+		return b.loadBlockFromCache(u, labels)
+	case "http", "https":
+		return b.loadBlockFromNetwork(ID, labels)
+	}
 
 	// TODO: fix this hack
 	switch ID {
@@ -206,6 +228,65 @@ func (b *Block) loadBlock(ID string, labels []string) (block *Block, err error) 
 		break
 	}
 
+	return b, nil
+}
+
+func (b *Block) loadBlockFromCache(u *url.URL, labels []string) (block *Block, err error) {
+	tc, te := NewBlueprintCache()
+	if te.errno != tcSuccess {
+		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", te)
+	}
+
+	fn := tc.location.Location() + "/" + u.Host + u.Path
+
+	// If it is a directory, use default.yaml as the file
+	fileInfo, err := os.Stat(fn)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return b, err
+	}
+	if fileInfo.IsDir() {
+		fn = checkDefault(fn)
+	}
+
+	df, err := os.Open(fn)
+	if err != nil {
+		fmt.Println("failed to open:", fn, ", error:", err)
+	}
+	defer df.Close()
+
+	byteValue, e := ioutil.ReadAll(df)
+	if e != nil {
+		fmt.Println("read failed for ", df)
+		os.Exit(-1)
+	}
+
+	err = yaml.Unmarshal([]byte(byteValue), b)
+	if err != nil {
+		fmt.Println("Unmarshal faild", err)
+		return b, err
+	}
+
+	for i, sb := range b.ImportedBlocks {
+		su, _ := url.Parse(sb.ID)
+		nb, _ := sb.loadBlockFromCache(su, sb.Metadata.Labels)
+		b.ImportedBlocks[i] = *nb
+
+	}
+
+	return b, nil
+}
+
+// checkDefault if you yaml file is specified look for
+// default.yaml in the directory given
+func checkDefault(s string) string {
+	if s[len(s)-4:len(s)] == "yaml" && s[len(s)-3:len(s)] == "yml" {
+		return s
+	}
+	return s + "/default.yaml"
+}
+
+func (b *Block) loadBlockFromNetwork(ID string, labels []string) (block *Block, err error) {
 	return b, nil
 }
 
