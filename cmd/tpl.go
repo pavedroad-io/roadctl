@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
+	"path/filepath"
 	"text/template"
 )
 
@@ -17,37 +17,37 @@ type TemplateItem struct {
 
 	// FileName the file name of this template in
 	// the directory
-	FileName string `json:"file_name"`
+	FileName string `yaml:"fileName"`
 
 	// TemplateFunction the name of the function map
 	// required for this template
-	TemplateFunction interface{} `json:"template_function"`
+	TemplateFunction interface{} `yaml:"templateFunction"`
 
 	// TemplatePtr a pointer if the template if already
 	// initialized or nil
-	TemplatePtr *template.Template `json:"templatePtr"`
+	TemplatePtr *template.Template `yaml:"templatePtr"`
 
 	// Description user friendly description
-	Description string `json:"description"`
+	Description string `yaml:"description"`
 }
 
 // HTTPMethodTemplateMap a list of methods, the assoicated tpl file,
 // and a ptr to a compiled instance of it
 type HTTPMethodTemplateMap struct {
 	// HTTP methods using this template
-	HTTPMethods []string `json:"http_methods"`
+	HTTPMethods []string `yaml:"httpMethods"`
 
 	// Template a TemplateItem
-	Template TemplateItem `json:"template"`
+	Template TemplateItem `yaml:"template"`
 }
 
 // EventMethodTemplateMap
 type EventMethodTemplateMap struct {
 	// Events using this template
-	Events []string `json:"events"`
+	Events []string `yaml:"events"`
 
 	// Template a TemplateItem
-	Template TemplateItem `json:"template"`
+	Template TemplateItem `yaml:"template"`
 }
 
 // ExportedItem
@@ -55,16 +55,16 @@ type EventMethodTemplateMap struct {
 type ExportedItem struct {
 
 	// TemplateVar the names or functions available for inclusion in this templates
-	TemplateVar string `json:"templateVar"`
+	TemplateVar string `yaml:"templateVar"`
 
 	// SourceInDefinitions where in the definitions file this value is populated from
-	SourceInDefinitions string `json:"source_in_definitions"`
+	SourceInDefinitions string `yaml:"sourceInDefinitions"`
 
 	// Description of this blocks capabilities
-	Description string `json:"description"`
+	Description string `yaml:"description"`
 
 	// Required is this item required in a blueprint using this block
-	Required bool `json:"required"`
+	Required bool `yaml:"required"`
 }
 
 //
@@ -76,16 +76,16 @@ type ExportedItem struct {
 // tplRouteObject for building HTTP gorilla routes
 type tplRouteObject struct {
 	// APIVersion i,e. 1, 2, 3
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `yaml:"apiVersion"`
 
 	// Namespace in Kubernetes cluster
-	Namespace string `json:"namespace"`
+	Namespace string `yaml:"namespace"`
 
 	// EndPointName name used in URL as a end point
-	EndPointName string `json:"endPointName"`
+	EndPointName string `yaml:"endPointName"`
 
 	// Method the HTTP method to create a route for
-	Method string `json:"method"`
+	Method string `yaml:"method"`
 }
 
 //
@@ -112,23 +112,24 @@ func loadTemplate(location, name string, tplFunc interface{}) (tpl *template.Tem
 
 	// Test the directory location
 	fileList := []string{}
-	readPath := tc.location.Location() + location
+	readPath := filepath.Join(tc.location.Location(), location)
 	if _, err := os.Stat(readPath); os.IsNotExist(err) {
 		msg := fmt.Errorf("File not found: [%s]\n", readPath)
 		return nil, msg
 	}
 
 	fileList = append(fileList, readPath)
+
 	// err := template.Must(template.New("").ParseFiles(fileList...))
 
 	var err error
 
-	// TypeOf will return nil is assertion fails
-	t := reflect.TypeOf(tplFunc.(template.FuncMap))
-	if t == nil {
+	// TypeOf will return nil if assertion fails
+	f, ok := tplFunc.(template.FuncMap)
+	if !ok {
 		tpl, err = template.New(name).ParseFiles(fileList...)
 	} else {
-		tpl, err = template.New(name).Funcs(tplFunc.(template.FuncMap)).ParseFiles(fileList...)
+		tpl, err = template.New(name).Funcs(f).ParseFiles(fileList...)
 	}
 	if err != nil {
 		msg := fmt.Errorf("Parsing tpl [%s] failed with error [%s]\n", readPath, err)

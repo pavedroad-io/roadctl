@@ -232,6 +232,7 @@ type Project struct {
 	Kubernetes    KubeConfig     `yaml:"kubernetes"`
 	Endpoints     []endPoint     `yaml:"endpoints"`
 	Loggers       []Logger       `yaml:"loggers"`
+	Blocks        []Block        `yaml:"blocks"`
 }
 
 type Go struct {

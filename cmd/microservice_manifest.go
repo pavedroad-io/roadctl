@@ -5,8 +5,8 @@ package cmd
 var PRMicroServiceManifests Block = Block{
 	APIVersion: "v1beta",
 	Kind:       "CompositeBlock",
-	ID:         "io.pavedroard.blueprints.microservice.manifests",
-	Family:     "pavedroad/blueprints/manifests",
+	ID:         "cache://io.pavedroard.blocks/microservice/manifests",
+	Family:     "pavedroad/microservice/blocks/manifests",
 	Metadata: Metadata{
 		Labels: []string{
 			"pavedroad",
@@ -44,9 +44,10 @@ var PRMicroServiceManifests Block = Block{
 	Language: "go",
 	ImportedBlocks: []Block{
 		{
-			ID: "io.pavedroard.core.manifests.kubernetes.kustomize",
+			ID: "cache://io.pavedroard.blocks/microservice/manifests/kubernetes/kustomize",
 			Metadata: Metadata{
 				Labels: []string{
+					"pavedroad",
 					"kubernetes",
 					"kafka",
 					"zookepper",
@@ -58,9 +59,10 @@ var PRMicroServiceManifests Block = Block{
 			},
 		},
 		{
-			ID: "io.pavedroard.core.manifests.docker.docker-compoase",
+			ID: "cache://io.pavedroard.blocks/microservice/manifests/docker/docker-compose.yaml",
 			Metadata: Metadata{
 				Labels: []string{
+					"pavedroad",
 					"docker",
 					"docker-compose",
 					"kafka",
@@ -72,9 +74,10 @@ var PRMicroServiceManifests Block = Block{
 			},
 		},
 		{
-			ID: "io.pavedroard.core.manifests.docker.dockerfile",
+			ID: "cache://io.pavedroard.blocks/microservice/manifests/docker/dockerfile.yaml",
 			Metadata: Metadata{
 				Labels: []string{
+					"pavedroad",
 					"docker",
 					"dockerfile",
 					"microservice",
@@ -83,9 +86,10 @@ var PRMicroServiceManifests Block = Block{
 			},
 		},
 		{
-			ID: "io.pavedroard.core.manifests.skaffold.config",
+			ID: "cache://io.pavedroard.blocks/microservice/manifests/skaffold",
 			Metadata: Metadata{
 				Labels: []string{
+					"pavedroad",
 					"skaffold",
 					"kustomize",
 					"microservice",

@@ -5,6 +5,20 @@
 
 package cmd
 
+import (
+	"bufio"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"gopkg.in/yaml.v2"
+)
+
 //
 // HTTP blocks configuration objects
 //
@@ -19,81 +33,81 @@ type Block struct {
 	// access to blocks
 	// i.e. templatedir/v1/block
 	// TODO: implement this
-	APIVersion string `json:"api_version`
+	APIVersion string `yaml:"apiVersion"`
 
 	// Kind a type that determines how this block
 	// is processed
 	// - template
 	// - function
 	// - fileTemplate a template that also creates thefile
-	Kind string `json:"kind"` // i.e. template, function
+	Kind string `yaml:"kind"` // i.e. template, function
 
 	// Metadata for this block
-	Metadata Metadata `json:"metadata"`
+	Metadata Metadata `yaml:"metadata"`
 
 	// Inverted namespace ID unique to these templates
 	// For example, io.pavedroard.core.loggers.http_access
-	ID string `json:"id"`
+	ID string `yaml:"id"`
 
 	// Family friendly name for this grouping of templates
 	// or functions, for example, gorilla/mux
-	Family string `json:"family"`
+	Family string `yaml:"family"`
 
 	// UsageRights for using the block
-	UsageRights UsageRights
+	UsageRights UsageRights `yaml:"usageRights"`
 
 	// Imports required modules for these templates
 	// Required package imports
-	Imports []string `json:"imports"`
+	Imports []string `yaml:"imports"`
 
 	// ImportedBlocks additional blocks imported by this block
-	ImportedBlocks []Block
+	ImportedBlocks []Block `yaml:"importedBlocks"`
 
 	// Language the computer programming language
-	Language string `json:"language"`
+	Language string `yaml:"language"`
 
 	// BaseDirectory in blueprints repository
-	BaseDirectory string `json:"base_drectory"`
+	BaseDirectory string `yaml:"baseDirectory"`
 
 	// HomeDirectory to place a fileTemplate in
-	HomeDirectory string `json:"home_directory"`
+	HomeDirectory string `yaml:"homeDirectory"`
 
 	// HomeFileName to create
-	HomeFilename string `json:"home_filename"`
+	HomeFilename string `yaml:"homeFilename"`
 
 	// Environment this template applies to
-	Environment string `json:"environment"`
+	Environment string `yaml:"environment"`
 
 	//
 	// Mapping methods for functions and templates
 	//
 
 	// TemplateMap a simple map
-	TemplateMap []TemplateItem `json:"template_map"`
+	TemplateMap []TemplateItem `yaml:"templateMap"`
 
 	// HTTPMappings templates mapped by HTTP methods
-	HTTPMappings []HTTPMethodTemplateMap `json:"http_mappings"`
+	HTTPMappings []HTTPMethodTemplateMap `yaml:"httpMappings"`
 	// EventMappings templates mapped by events
-	EventMappings []EventMethodTemplateMap `json:"event_appings"`
+	EventMappings []EventMethodTemplateMap `yaml:"eventMappings"`
 
 	// TemplateExports variables for templates and the
 	// data source that provides them
-	TemplateExports []ExportedItem `json:"exported_template_variables"`
+	TemplateExports []ExportedItem `yaml:"templateExports"`
 }
 
 // UsageRights terms of service, licensing, and access tokens
 type UsageRights struct {
 	// TermsOfService for example, as is
-	TermsOfService string
+	TermsOfService string `yaml:"termsOfService"`
 
 	// Licenses cost for example,  annual, per use, perpetual
-	Licenses string
+	Licenses string `yaml:"licenses"`
 
 	// ContributeLink for donation to the developer
-	ContributeLink string
+	ContributeLink string `yaml:"contributeLink"`
 
 	// AccessToken for downloading this block
-	AccessToken string
+	AccessToken string `yaml:"accessToken"`
 }
 
 // Metrics that support data driven development
@@ -101,38 +115,38 @@ type UsageRights struct {
 type Metrics struct {
 
 	// DORA metrics
-	DORAStatistics DORA
+	DORAStatistics DORA `yaml:"doraStatistics"`
 
 	// GitHub metrics
-	GitHub GitStatistics
+	GitHub GitStatistics `yaml:"gitHub"`
 
 	// Operations metrics developed by PavedRoad
-	Operations OperationalStatictics
+	Operations OperationalStatictics `yaml:"operations"`
 }
 
 // GitStatistics tracked from GitHub repositories holding blocks
 type GitStatistics struct {
-	Stars     int
-	Forks     int
-	Clones    int
-	Watchers  int
-	Downloads int
+	Stars     int `yaml:"stars"`
+	Forks     int `yaml:"forks"`
+	Clones    int `yaml:"clones"`
+	Watchers  int `yaml:"watchers"`
+	Downloads int `yaml:"downloads"`
 }
 
 // OperationalStatictics created automatically when deploying on
 // the PR SaaS service
 type OperationalStatictics struct {
 	// NumberOfTimesDeployed
-	NumberOfTimesDeployed int
+	NumberOfTimesDeployed int `yaml:"numberOfTimesDeployed"`
 
 	// ActiveDeployments
-	ActiveDeployments int
+	ActiveDeployments int `yaml:"activeDeployments"`
 
 	// Failures int
-	Failures int
+	Failures int `yaml:"failures"`
 
 	// Response times per HTTP method or pub/sub event
-	Performance map[string]int
+	Performance map[string]int `yaml:"performance"`
 }
 
 // DORA metrics are a result of six years worth of surveys
@@ -141,63 +155,75 @@ type OperationalStatictics struct {
 // at DevOps - ranging from elite performer
 type DORA struct {
 	// DF deployment Frequency
-	DF float64
+	DF float64 `yaml:"df"`
 
 	// MLT mean Lead Time for changes
-	MLT float64
+	MLT float64 `yaml:"mlt"`
 
 	// MTTR Mean Time To Recover
-	MTTR float64
+	MTTR float64 `yaml:"mttr"`
 
 	// CFR Change Failure Rate
-	CFR float64
+	CFR float64 `yaml:"cfr"`
 }
 
 // TODO: break into its own go file for use in
 // other types
 type Metadata struct {
 	// Label's allow blueprints to be associated
-	Labels []string `json:"labels"`
+	Labels []string `yaml:"labels"`
 
 	// Tags catagorize blocks for search
-	Tags []string `json:"tags"`
+	Tags []string `yaml:"tags"`
 
 	// Information about block author and support
-	Information BlockInformation `json:"information"`
+	Information BlockInformation `yaml:"information"`
 }
 
 type BlockInformation struct {
 	// Description a paragraph or  two about this block
-	Description string `json:"description"`
+	Description string `yaml:"description"`
 
 	// Title a single line description
-	Title string `json:"title"`
+	Title string `yaml:"title"`
 
 	// Contact information for suport
-	Contact Contact `json:"contact"`
+	Contact Contact `yaml:"contact"`
 }
 
 // Contact information for this block
 type Contact struct {
 	// Author of block
-	Author string `json:"author"`
+	Author string `yaml:"author"`
 
 	// Organization who built this block
-	Organization string `json:"organization"`
+	Organization string `yaml:"organization"`
 
 	// Email address for support
-	Email string `json:"email"`
+	Email string `yaml:"email"`
 
 	// Website for more information
-	Website string `json:"website"`
+	Website string `yaml:"website"`
 
 	// Support channel like slack URL
-	Support string `json:"support"`
+	Support string `yaml:"support"`
 }
 
 // loadBlock populate a block given its ID
 // and a set of lables
 func (b *Block) loadBlock(ID string, labels []string) (block *Block, err error) {
+	var u *url.URL
+
+	if u, err = url.Parse(ID); err != nil {
+		log.Fatalf("Failed to parse ID (%s) error (%v)\n", ID, err)
+	}
+
+	switch u.Scheme {
+	case "cache":
+		return b.loadBlockFromCache(u, labels)
+	case "http", "https":
+		return b.loadBlockFromNetwork(ID, labels)
+	}
 
 	// TODO: fix this hack
 	switch ID {
@@ -209,6 +235,152 @@ func (b *Block) loadBlock(ID string, labels []string) (block *Block, err error) 
 	return b, nil
 }
 
+func (b *Block) loadBlockFromCache(u *url.URL, labels []string) (block *Block, err error) {
+	tc, te := NewBlueprintCache()
+	if te.errno != tcSuccess {
+		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", te)
+	}
+
+	fn := tc.location.Location() + "/" + u.Host + u.Path
+
+	// If it is a directory, use default.yaml as the file
+	fileInfo, err := os.Stat(fn)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return b, err
+	}
+	if fileInfo.IsDir() {
+		fn = checkDefault(fn)
+	}
+
+	df, err := os.Open(fn)
+	if err != nil {
+		fmt.Println("failed to open:", fn, ", error:", err)
+	}
+	defer df.Close()
+
+	byteValue, e := ioutil.ReadAll(df)
+	if e != nil {
+		fmt.Println("read failed for ", df)
+		os.Exit(-1)
+	}
+
+	err = yaml.Unmarshal([]byte(byteValue), b)
+	if err != nil {
+		fmt.Printf("Unmarshal faild for %v with %v", u.String(), err)
+		return b, err
+	}
+
+	for i, sb := range b.ImportedBlocks {
+		su, _ := url.Parse(sb.ID)
+		nb, _ := sb.loadBlockFromCache(su, sb.Metadata.Labels)
+		b.ImportedBlocks[i] = *nb
+
+	}
+
+	return b, nil
+}
+
+// checkDefault if you yaml file is specified look for
+// default.yaml in the directory given
+func checkDefault(s string) string {
+	if s[len(s)-4:len(s)] == "yaml" && s[len(s)-3:len(s)] == "yml" {
+		return s
+	}
+	return s + "/default.yaml"
+}
+
+// loadBlockFromNetwork
+func (b *Block) loadBlockFromNetwork(ID string, labels []string) (block *Block, err error) {
+	return b, nil
+}
+
+// getImports
 func (b *Block) getImports() []string {
 	return b.Imports
+}
+
+// GenerateBlock
+func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
+	var tplResult strings.Builder
+
+	switch b.Kind {
+	case "SkaffoldBlock":
+		for _, sb := range b.TemplateMap {
+			fn := filepath.Join(b.BaseDirectory, sb.FileName)
+
+			t, e := loadTemplate(fn, sb.FileName, sb.TemplateFunction)
+			if e != nil {
+				nw := bpError{Type: ErrorGeneric, Err: e}
+				return "", nw.WrappedError()
+			}
+
+			if e := t.ExecuteTemplate(&tplResult, sb.FileName, def); e != nil {
+				nw := bpError{Type: ErrorGeneric, Err: err}
+				return "", nw.WrappedError()
+			}
+			if e := b.saveResults([]byte(tplResult.String())); e != nil {
+				return "", e
+			}
+		}
+	}
+	// Process all imported blocks
+	for _, sb := range b.ImportedBlocks {
+		if _, err := sb.GenerateBlock(def); err != nil {
+			nw := bpError{Type: ErrorGeneric, Err: err}
+			return "", nw.WrappedError()
+		}
+	}
+	return "", nil
+}
+
+// saveResults writes generated output to the directory
+// and file specified in the blocks creating directories as
+// needed
+func (b *Block) saveResults(buf []byte) (err error) {
+	if b.HomeDirectory == "" || b.HomeFilename == "" {
+		e := errors.New("Home directory and filename are required")
+		nw := bpError{Type: ErrorGeneric, Err: e}
+		return nw.WrappedError()
+	}
+
+	if _, err := os.Stat(b.HomeDirectory); os.IsNotExist(err) {
+		err := os.MkdirAll(b.HomeDirectory, 0750)
+		if err != nil {
+			//e := errors.New("Home directory and filename are required")
+			nw := bpError{Type: ErrorGeneric,
+				Err: fmt.Errorf("Failed to make directory: %v", b.HomeDirectory)}
+			return nw.WrappedError()
+		}
+	}
+
+	file, err := os.OpenFile(
+		filepath.Join(b.HomeDirectory, b.HomeFilename),
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, DefaultFileMode)
+	if err != nil {
+		log.Fatal(err,
+			filepath.Join(b.HomeDirectory, b.HomeFilename))
+	}
+
+	bw := bufio.NewWriter(file)
+
+	if _, err := bw.Write(buf); err != nil {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Write failed: %v", b.HomeFilename)}
+		return ne.WrappedError()
+	}
+
+	if err := bw.Flush(); err != nil {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Flush failed: %v", b.HomeFilename)}
+		return ne.WrappedError()
+	}
+
+	if err := file.Close(); err != nil {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Close failed: %v", b.HomeFilename)}
+		return ne.WrappedError()
+	}
+
+	return nil
 }
