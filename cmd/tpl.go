@@ -9,6 +9,16 @@ import (
 	"text/template"
 )
 
+const (
+	TPLOutputFile = iota
+	TPLOutputByteSlice
+)
+
+var tplTypes = map[string]int{
+	"OutputFile":  TPLOutputFile,
+	"OutputBytes": TPLOutputByteSlice,
+}
+
 // TemplateItem information about a Go tpl and its
 // associated requirements.  If the template has been parsed
 // it also contains a pointer too the template for execution
@@ -16,8 +26,18 @@ import (
 type TemplateItem struct {
 
 	// FileName the file name of this template in
-	// the directory
+	// the directory and in the template define
 	FileName string `yaml:"fileName"`
+
+	// OutputFileName for templates that create files
+	OutputFileName string `yaml:"outputFileName"`
+
+	// OutputType controls execution of block processing
+	//   - TPLOutputFile writes this template to the file name
+	//     specified by OutputFileName
+	//   - TPLOutputByteSlice aggregates one or more templates
+	//     for use in a TPLOutputFile
+	OutputType string `yaml:"outputType"`
 
 	// TemplateFunction the name of the function map
 	// required for this template

@@ -21,6 +21,7 @@ bin/
 builds/
 pkg/
 volumes/
+vendor/
 logs/
 .scannerwork/
 .templates/

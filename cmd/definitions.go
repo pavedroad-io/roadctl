@@ -245,10 +245,11 @@ type Core struct {
 }
 
 type bpDef struct {
-	TableList []Tables  `yaml:"tables"`
-	Community Community `yaml:"community"`
-	Info      Info      `yaml:"info"`
-	Project   Project   `yaml:"project"`
+	DefinitionFile string    `yaml:"definitionFile"`
+	TableList      []Tables  `yaml:"tables"`
+	Community      Community `yaml:"community"`
+	Info           Info      `yaml:"info"`
+	Project        Project   `yaml:"project"`
 }
 
 // Define constants for error types

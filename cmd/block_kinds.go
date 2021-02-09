@@ -17,7 +17,7 @@ const (
 	HTMLFileBlock = "WebFileBlock"
 
 	// DockerBlock generates a dockerfile
-	DockerBlock = "DockerBlock"
+	DockerfileBlock = "DockerfileBlock"
 
 	// DockerComposeBlock generates a docker-compose block
 	DockerComposeBlock = "DockerComposeBlock"

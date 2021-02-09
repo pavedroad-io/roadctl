@@ -858,10 +858,8 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 			fmt.Println("Error: ", err)
 		}
 
-		if s, e := nb.GenerateBlock(defs); e != nil {
+		if _, e := nb.GenerateBlock(defs); e != nil {
 			fmt.Println("Error: ", e)
-		} else {
-			fmt.Println("results: ", s)
 		}
 	}
 
@@ -1129,6 +1127,8 @@ func bpReadDefinitions(definitionsStruct *bpDef) error {
 		fmt.Println("Unmarshal faild", err)
 		return err
 	}
+
+	definitionsStruct.DefinitionFile = bpDefFile
 
 	incSpinner()
 	errs := definitionsStruct.Validate()

@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	//log "github.com/pavedroad-io/go-core/logger"
 	"gopkg.in/yaml.v2"
 )
 
@@ -302,10 +303,9 @@ func (b *Block) getImports() []string {
 
 // GenerateBlock
 func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
-	var tplResult strings.Builder
 
 	switch b.Kind {
-	case "SkaffoldBlock":
+	case SkaffoldBlock, DockerfileBlock, KustomizeBlock:
 		for _, sb := range b.TemplateMap {
 			fn := filepath.Join(b.BaseDirectory, sb.FileName)
 
@@ -315,11 +315,15 @@ func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 				return "", nw.WrappedError()
 			}
 
+			rclog.Println("template ", t)
+			var tplResult strings.Builder
 			if e := t.ExecuteTemplate(&tplResult, sb.FileName, def); e != nil {
-				nw := bpError{Type: ErrorGeneric, Err: err}
+				nw := bpError{Type: ErrorGeneric, Err: e}
 				return "", nw.WrappedError()
 			}
-			if e := b.saveResults([]byte(tplResult.String())); e != nil {
+
+			rclog.Println("result ", tplResult.String())
+			if e := b.saveResults([]byte(tplResult.String()), sb); e != nil {
 				return "", e
 			}
 		}
@@ -337,9 +341,9 @@ func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 // saveResults writes generated output to the directory
 // and file specified in the blocks creating directories as
 // needed
-func (b *Block) saveResults(buf []byte) (err error) {
-	if b.HomeDirectory == "" || b.HomeFilename == "" {
-		e := errors.New("Home directory and filename are required")
+func (b *Block) saveResults(buf []byte, ti TemplateItem) (err error) {
+	if b.HomeDirectory == "" {
+		e := errors.New("Home directory is required")
 		nw := bpError{Type: ErrorGeneric, Err: e}
 		return nw.WrappedError()
 	}
@@ -347,38 +351,37 @@ func (b *Block) saveResults(buf []byte) (err error) {
 	if _, err := os.Stat(b.HomeDirectory); os.IsNotExist(err) {
 		err := os.MkdirAll(b.HomeDirectory, 0750)
 		if err != nil {
-			//e := errors.New("Home directory and filename are required")
 			nw := bpError{Type: ErrorGeneric,
-				Err: fmt.Errorf("Failed to make directory: %v", b.HomeDirectory)}
+				Err: fmt.Errorf("Failed to create directory: %v", b.HomeDirectory)}
 			return nw.WrappedError()
 		}
 	}
 
 	file, err := os.OpenFile(
-		filepath.Join(b.HomeDirectory, b.HomeFilename),
+		filepath.Join(b.HomeDirectory, ti.OutputFileName),
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, DefaultFileMode)
 	if err != nil {
 		log.Fatal(err,
-			filepath.Join(b.HomeDirectory, b.HomeFilename))
+			filepath.Join(b.HomeDirectory, ti.OutputFileName))
 	}
 
 	bw := bufio.NewWriter(file)
 
 	if _, err := bw.Write(buf); err != nil {
 		ne := bpError{Type: ErrorGeneric,
-			Err: fmt.Errorf("Write failed: %v", b.HomeFilename)}
+			Err: fmt.Errorf("Write failed: %v", ti.OutputFileName)}
 		return ne.WrappedError()
 	}
 
 	if err := bw.Flush(); err != nil {
 		ne := bpError{Type: ErrorGeneric,
-			Err: fmt.Errorf("Flush failed: %v", b.HomeFilename)}
+			Err: fmt.Errorf("Flush failed: %v", ti.OutputFileName)}
 		return ne.WrappedError()
 	}
 
 	if err := file.Close(); err != nil {
 		ne := bpError{Type: ErrorGeneric,
-			Err: fmt.Errorf("Close failed: %v", b.HomeFilename)}
+			Err: fmt.Errorf("Close failed: %v", ti.OutputFileName)}
 		return ne.WrappedError()
 	}
 
