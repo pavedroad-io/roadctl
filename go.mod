@@ -19,7 +19,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
-	github.com/pavedroad-io/go-core v0.0.0-20200422165138-52692bec8a93
+	github.com/pavedroad-io/go-core v0.0.0-20200422165138-52692bec8a93 // indirect
 	github.com/pavedroad-io/integrations v1.0.0
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect

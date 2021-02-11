@@ -39,6 +39,9 @@ type TemplateItem struct {
 	//     for use in a TPLOutputFile
 	OutputType string `yaml:"outputType"`
 
+	// FilePermissions to set when creating a file
+	ExecutePermissions bool `yaml:"executePermissions"`
+
 	// TemplateFunction the name of the function map
 	// required for this template
 	TemplateFunction interface{} `yaml:"templateFunction"`
@@ -146,6 +149,15 @@ func loadTemplate(location, name string, tplFunc interface{}) (tpl *template.Tem
 
 	// TypeOf will return nil if assertion fails
 	f, ok := tplFunc.(template.FuncMap)
+
+	// Dynamicly loaded blocks need the function map
+	// name mapped to an actual function
+	if !ok {
+		f = lookupFunctionMap(tplFunc.(string))
+		if f != nil {
+			ok = true
+		}
+	}
 	if !ok {
 		tpl, err = template.New(name).ParseFiles(fileList...)
 	} else {

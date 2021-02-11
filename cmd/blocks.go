@@ -305,7 +305,7 @@ func (b *Block) getImports() []string {
 func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 
 	switch b.Kind {
-	case SkaffoldBlock, DockerfileBlock, KustomizeBlock:
+	case SkaffoldBlock, DockerfileBlock, KustomizeBlock, TemplateBlock:
 		for _, sb := range b.TemplateMap {
 			fn := filepath.Join(b.BaseDirectory, sb.FileName)
 
@@ -357,9 +357,15 @@ func (b *Block) saveResults(buf []byte, ti TemplateItem) (err error) {
 		}
 	}
 
+	mode := DefaultFileMode
+
+	if ti.ExecutePermissions {
+		mode = DefaultExecutable
+	}
+
 	file, err := os.OpenFile(
 		filepath.Join(b.HomeDirectory, ti.OutputFileName),
-		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, DefaultFileMode)
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		log.Fatal(err,
 			filepath.Join(b.HomeDirectory, ti.OutputFileName))

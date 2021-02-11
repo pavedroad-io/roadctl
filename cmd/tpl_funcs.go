@@ -23,3 +23,11 @@ func stringFunctionMap() template.FuncMap {
 	}
 	return stringFuncMap
 }
+
+func lookupFunctionMap(name string) template.FuncMap {
+	switch name {
+	case "stringFunctionMap()":
+		return stringFunctionMap()
+	}
+	return nil
+}
