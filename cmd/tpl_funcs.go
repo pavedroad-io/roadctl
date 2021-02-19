@@ -24,10 +24,37 @@ func stringFunctionMap() template.FuncMap {
 	return stringFuncMap
 }
 
-func lookupFunctionMap(name string) template.FuncMap {
+func sonarCloudFunctoinMap(defs bpDef) template.FuncMap {
+
+	//Sonarcloud
+	si := defs.findIntegration("sonarcloud")
+
+	if si.Name != "" {
+		sonarFuncMap := template.FuncMap{
+			"SonarKey": func() string {
+				return si.SonarCloudConfig.Key
+			},
+			"SonarLogin": func() string {
+				return si.SonarCloudConfig.Login
+			},
+			"SonarPrefix": func() string {
+				return SONARPREFIX
+			},
+			"SonarCloudEnabled": func() bool {
+				return si.Enabled
+			},
+		}
+		return sonarFuncMap
+	}
+	return nil
+}
+
+func lookupFunctionMap(name string, defs bpDef) template.FuncMap {
 	switch name {
 	case "stringFunctionMap()":
 		return stringFunctionMap()
+	case "sonarCloudFunctoinMap()":
+		return sonarCloudFunctoinMap(defs)
 	}
 	return nil
 }

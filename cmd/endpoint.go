@@ -73,7 +73,8 @@ func (hc *endpointConfig) GenerateBlock(block Block) (configFragment []byte, err
 			//			fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
 			tplName := block.BaseDirectory + fragement.Template.FileName
 			if fragement.Template.TemplatePtr == nil {
-				if tpl, err := loadTemplate(tplName, block.Family, fragement.Template.TemplateFunction); err != nil {
+				var def bpDef
+				if tpl, err := loadTemplate(tplName, block.Family, def, fragement.Template.TemplateFunction); err != nil {
 					msg := fmt.Errorf("File not found: [%s][%v'\n", tplName, err)
 					return nil, msg
 				} else {

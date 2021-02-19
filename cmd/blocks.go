@@ -309,7 +309,7 @@ func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 		for _, sb := range b.TemplateMap {
 			fn := filepath.Join(b.BaseDirectory, sb.FileName)
 
-			t, e := loadTemplate(fn, sb.FileName, sb.TemplateFunction)
+			t, e := loadTemplate(fn, sb.FileName, def, sb.TemplateFunction)
 			if e != nil {
 				nw := bpError{Type: ErrorGeneric, Err: e}
 				return "", nw.WrappedError()
@@ -323,7 +323,7 @@ func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 			}
 
 			rclog.Println("result ", tplResult.String())
-			if e := b.saveResults([]byte(tplResult.String()), sb); e != nil {
+			if e := b.saveResults([]byte(tplResult.String()), sb, def); e != nil {
 				return "", e
 			}
 		}
@@ -341,15 +341,18 @@ func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 // saveResults writes generated output to the directory
 // and file specified in the blocks creating directories as
 // needed
-func (b *Block) saveResults(buf []byte, ti TemplateItem) (err error) {
+func (b *Block) saveResults(buf []byte, ti TemplateItem, def bpDef) (err error) {
 	if b.HomeDirectory == "" {
 		e := errors.New("Home directory is required")
 		nw := bpError{Type: ErrorGeneric, Err: e}
 		return nw.WrappedError()
 	}
+	var ms macroSubstitutions
+	macroDirName := ms.replaceAll(b.HomeDirectory, def)
 
-	if _, err := os.Stat(b.HomeDirectory); os.IsNotExist(err) {
-		err := os.MkdirAll(b.HomeDirectory, 0750)
+	//	macroDirName := macroSubstition(b.HomeDirectory, , def.Info.Name)
+	if _, err := os.Stat(macroDirName); os.IsNotExist(err) {
+		err := os.MkdirAll(macroDirName, 0750)
 		if err != nil {
 			nw := bpError{Type: ErrorGeneric,
 				Err: fmt.Errorf("Failed to create directory: %v", b.HomeDirectory)}
@@ -363,31 +366,33 @@ func (b *Block) saveResults(buf []byte, ti TemplateItem) (err error) {
 		mode = DefaultExecutable
 	}
 
+	//macroFileName := macroSubstition(ti.OutputFileName, substrings, def.Info.Name)
+	macroFileName := ms.replaceAll(ti.OutputFileName, def)
 	file, err := os.OpenFile(
-		filepath.Join(b.HomeDirectory, ti.OutputFileName),
+		filepath.Join(macroDirName, macroFileName),
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		log.Fatal(err,
-			filepath.Join(b.HomeDirectory, ti.OutputFileName))
+			filepath.Join(macroDirName, macroFileName))
 	}
 
 	bw := bufio.NewWriter(file)
 
 	if _, err := bw.Write(buf); err != nil {
 		ne := bpError{Type: ErrorGeneric,
-			Err: fmt.Errorf("Write failed: %v", ti.OutputFileName)}
+			Err: fmt.Errorf("Write failed: %v", macroFileName)}
 		return ne.WrappedError()
 	}
 
 	if err := bw.Flush(); err != nil {
 		ne := bpError{Type: ErrorGeneric,
-			Err: fmt.Errorf("Flush failed: %v", ti.OutputFileName)}
+			Err: fmt.Errorf("Flush failed: %v", macroFileName)}
 		return ne.WrappedError()
 	}
 
 	if err := file.Close(); err != nil {
 		ne := bpError{Type: ErrorGeneric,
-			Err: fmt.Errorf("Close failed: %v", ti.OutputFileName)}
+			Err: fmt.Errorf("Close failed: %v", macroFileName)}
 		return ne.WrappedError()
 	}
 

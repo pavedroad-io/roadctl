@@ -126,7 +126,7 @@ type tplRouteObject struct {
 //
 // Location is relative to the currently configured blueprints
 // directory, i.e. the default $HOME/.pavedroad/blueprints
-func loadTemplate(location, name string, tplFunc interface{}) (tpl *template.Template, e error) {
+func loadTemplate(location, name string, def bpDef, tplFunc interface{}) (tpl *template.Template, e error) {
 	// read blueprint cache
 	tc, te := NewBlueprintCache()
 	if te.errno != tcSuccess {
@@ -153,7 +153,7 @@ func loadTemplate(location, name string, tplFunc interface{}) (tpl *template.Tem
 	// Dynamicly loaded blocks need the function map
 	// name mapped to an actual function
 	if !ok {
-		f = lookupFunctionMap(tplFunc.(string))
+		f = lookupFunctionMap(tplFunc.(string), def)
 		if f != nil {
 			ok = true
 		}

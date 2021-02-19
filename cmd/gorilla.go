@@ -29,7 +29,8 @@ var GorillaRouteBlocks Block = Block{
 	Language: "go",
 	Imports: []string{
 		`"github.com/gorilla/mux"`,
-		`"_github.com/lib/pq"`},
+		`"github.com/gorilla/handlers"`,
+		`_ "github.com/lib/pq"`},
 	BaseDirectory: "/blocks/go/gorilla/",
 	HTTPMappings: []HTTPMethodTemplateMap{
 		{
@@ -112,7 +113,8 @@ var GorillaMethodBlocks Block = Block{
 	Language: "go",
 	Imports: []string{
 		`"github.com/gorilla/mux"`,
-		`"_github.com/lib/pq"`},
+		`"github.com/gorilla/handlers"`,
+		`_ "github.com/lib/pq"`},
 	UsageRights: UsageRights{
 		TermsOfService: "As is",
 		Licenses:       "Apache 2",

@@ -121,8 +121,8 @@ const (
 	allWithFossa    string = "all: $(PREFLIGHT) $(FOSSATEST) compile check"
 	allWithoutFossa string = "all: $(PREFLIGHT) compile check"
 
-	checkWithSonar    string = "check: dbclean lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
-	checkWithoutSonar string = "check: dbclean lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithSonar    string = "check: lint docker-build sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithoutSonar string = "check: lint docker-build $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 
 	// Fossa has a build section and a lint section
 	fossaSection string = `
@@ -131,7 +131,7 @@ $(FOSSATEST):
 `
 	fossaLint string = `
 	@echo "  >  running FOSSA license scan."
-	@FOSSA_API_KEY=$(FOSSA_API_KEY) fossa analyze
+	$(shell (export GOPATH=$(GOPATH); @FOSSA_API_KEY=$(FOSSA_API_KEY) fossa analyze))
 `
 )
 
@@ -1041,9 +1041,8 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 $ make <CR>`,
 	}
 	reply.Blueprints = append(reply.Blueprints, successReply)
-	return reply
 
-	// TODO: Execute goimport for code formatting
+	return reply
 }
 
 // toInputBlueprintName map a directory path to its name

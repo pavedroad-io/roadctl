@@ -33,8 +33,7 @@ const (
 	// or fragments
 	KustomizeBlock = "KustomizeBlock"
 
-	// TemplateBlock creates a kustomize configuration
-	// or fragments
+	// TemplateBlock creates a tpl fragments
 	TemplateBlock = "TemplateBlock"
 
 	// SkaffoldBlock creates a skaffold configuration
