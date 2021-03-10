@@ -875,6 +875,10 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 
 	bpInputData.GoImports = flattenUniqueStrings(importList)
 
+	if len(defs.TableList) > 0 {
+		SQLToJSONBlock.GenerateBlock(defs)
+	}
+
 	// Given the list returned in inputBlueprintFiles
 	// Create a bpLocation object with the name and path
 	// And a filtered list of blueprint files

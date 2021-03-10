@@ -45,6 +45,8 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 			// TODO: modify to also extract query parameters
 			methodList = append(methodList, m.Method)
 		}
+		// TODO: dev/test cases need to be driven from this configuration
+		// instead of using the microservice name as they can differ
 		newEP := endpointConfig{
 			MicroServiceName: defs.Info.Name,
 			APIVersion:       defs.Info.APIVersion,

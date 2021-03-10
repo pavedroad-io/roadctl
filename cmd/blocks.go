@@ -88,8 +88,12 @@ type Block struct {
 
 	// HTTPMappings templates mapped by HTTP methods
 	HTTPMappings []HTTPMethodTemplateMap `yaml:"httpMappings"`
+
 	// EventMappings templates mapped by events
 	EventMappings []EventMethodTemplateMap `yaml:"eventMappings"`
+
+	// FunctionMap functions that generate code, data, etc
+	FunctionMappings []FunctionItem `yaml:"functionMappings"`
 
 	// TemplateExports variables for templates and the
 	// data source that provides them
@@ -327,8 +331,24 @@ func (b *Block) GenerateBlock(def bpDef) (output string, err error) {
 				return "", e
 			}
 		}
+	case FunctionBlock:
+		var result []byte
+		var err error
+		for _, fb := range b.FunctionMappings {
+			result, err = fb.Function(def, result)
+			//fmt.Printf("results %v for %v\n", string(result), fb.Description)
+			if err != nil {
+				nw := bpError{Type: ErrorGeneric, Err: err}
+				return "", nw.WrappedError()
+			}
+			if e := b.saveFunctionResults(result, fb, def); e != nil {
+				return "", e
+
+			}
+
+		}
 	}
-	// Process all imported blocks
+
 	for _, sb := range b.ImportedBlocks {
 		if _, err := sb.GenerateBlock(def); err != nil {
 			nw := bpError{Type: ErrorGeneric, Err: err}
@@ -347,10 +367,10 @@ func (b *Block) saveResults(buf []byte, ti TemplateItem, def bpDef) (err error) 
 		nw := bpError{Type: ErrorGeneric, Err: e}
 		return nw.WrappedError()
 	}
-	var ms macroSubstitutions
-	macroDirName := ms.replaceAll(b.HomeDirectory, def)
 
-	//	macroDirName := macroSubstition(b.HomeDirectory, , def.Info.Name)
+	var ms macroSubstitutions
+
+	macroDirName := ms.replaceAll(b.HomeDirectory, def)
 	if _, err := os.Stat(macroDirName); os.IsNotExist(err) {
 		err := os.MkdirAll(macroDirName, 0750)
 		if err != nil {
@@ -366,8 +386,67 @@ func (b *Block) saveResults(buf []byte, ti TemplateItem, def bpDef) (err error) 
 		mode = DefaultExecutable
 	}
 
-	//macroFileName := macroSubstition(ti.OutputFileName, substrings, def.Info.Name)
 	macroFileName := ms.replaceAll(ti.OutputFileName, def)
+	file, err := os.OpenFile(
+		filepath.Join(macroDirName, macroFileName),
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
+	if err != nil {
+		log.Fatal(err,
+			filepath.Join(macroDirName, macroFileName))
+	}
+
+	bw := bufio.NewWriter(file)
+
+	if _, err := bw.Write(buf); err != nil {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Write failed: %v", macroFileName)}
+		return ne.WrappedError()
+	}
+
+	if err := bw.Flush(); err != nil {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Flush failed: %v", macroFileName)}
+		return ne.WrappedError()
+	}
+
+	if err := file.Close(); err != nil {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Close failed: %v", macroFileName)}
+		return ne.WrappedError()
+	}
+
+	return nil
+}
+
+// saveFunctionResults writes generated output to the directory
+// and file specified in the blocks creating directories as
+// needed
+func (b *Block) saveFunctionResults(buf []byte, fi FunctionItem, def bpDef) (err error) {
+	if b.HomeDirectory == "" {
+		e := errors.New("Home directory is required")
+		nw := bpError{Type: ErrorGeneric, Err: e}
+		return nw.WrappedError()
+	}
+
+	var ms macroSubstitutions
+
+	macroDirName := ms.replaceAll(b.HomeDirectory, def)
+	if _, err := os.Stat(macroDirName); os.IsNotExist(err) {
+		err := os.MkdirAll(macroDirName, 0750)
+		if err != nil {
+			nw := bpError{Type: ErrorGeneric,
+				Err: fmt.Errorf("Failed to create directory: %v", b.HomeDirectory)}
+			return nw.WrappedError()
+		}
+	}
+
+	mode := DefaultFileMode
+
+	if fi.ExecutePermissions {
+		mode = DefaultExecutable
+	}
+
+	macroFileName := ms.replaceAll(fi.OutputFileName, def)
 	file, err := os.OpenFile(
 		filepath.Join(macroDirName, macroFileName),
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
