@@ -95,6 +95,14 @@ type Block struct {
 	// FunctionMap functions that generate code, data, etc
 	FunctionMappings []FunctionItem `yaml:"functionMappings"`
 
+	/*
+
+		Resources
+		Input: array of types
+		Ouputs: array of types
+
+	*/
+
 	// TemplateExports variables for templates and the
 	// data source that provides them
 	TemplateExports []ExportedItem `yaml:"templateExports"`

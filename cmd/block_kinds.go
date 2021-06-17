@@ -40,3 +40,8 @@ const (
 	// or fragments
 	SkaffoldBlock = "SkaffoldBlock"
 )
+
+type BlockKind struct {
+	BlockType  string
+	APIVersion string
+}

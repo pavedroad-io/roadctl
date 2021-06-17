@@ -11,7 +11,7 @@ import (
 
 var t Tables
 
-// DockerCompose for main docker-file
+// SQLToJSONBlock produce test data for a SQL table
 var SQLToJSONBlock = Block{
 	APIVersion: "v1beta",
 	Kind:       "FunctionBlock",

@@ -29,9 +29,9 @@ var eventsCmd = &cobra.Command{
 	Short: "View events",
 	Long: `View events for one, some, or all resources.
   For example:
-    roadctl events blueprints
-    roadctl events blueprints,environments,builders
-    roadctl events -A
+    roadctl get events blueprints
+    roadctl explain events blueprints,environments,builders
+    roadctl describe events -A
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("events called")

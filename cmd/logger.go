@@ -16,7 +16,10 @@ var PRApplicationLogger Block = Block{
 			"http access",
 			"W3C"},
 		Tags: []string{
-			"pavedroad",
+			"W3C",
+			"protobuf",
+			"text",
+			"JSON",
 			"HTTP access logger"},
 		Information: BlockInformation{
 			Description: "Application debug log",
