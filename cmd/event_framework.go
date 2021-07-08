@@ -1,5 +1,7 @@
 package cmd
 
+import "time"
+
 // LevelType provided to select log level
 type LevelType string
 
@@ -27,7 +29,7 @@ const (
 	RTPolicyCheckFailed ReasonType = "policy-failure"
 )
 
-type CommonEventAttributes struct {
+type EventSummary struct {
 	// FirstSeen time this event was first seen, aka 1 minute ago
 	FirstSeen int
 
@@ -51,4 +53,21 @@ type CommonEventAttributes struct {
 
 	// Message help humans
 	Message string
+}
+
+type EventDetail struct {
+	// Time of event
+	Time time.Time
+
+	Type string
+
+	//Source of event
+	From string
+
+	// SubObjectPath where in this object the event occurred
+	SubObjectPath string
+
+	Reason string
+
+	Massage string
 }

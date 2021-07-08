@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"net/url"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -43,23 +42,20 @@ type BlockResource struct {
 	// Signature for anti-tampering
 	Signature string
 
-	// Mutabilty
-	Mutability bool
-
-	// Created time stamp
-	Created time.Time
+	// Mutable
+	Mutable bool
 
 	// Payload return payload for a resource
-	Payload DataLoader
+	Payload PayloadLoader
 
 	// Events manage an event queue
 	Events EventInteface
 }
 
-// DataLoader
+// PayloadLoader
 //   Loads from either a external ULR or a pointer to the
 //   data
-type DataLoader struct {
+type PayloadLoader struct {
 	// ExternalURL nil if not set
 	//   file:///~./mycode/artifacts/lint.txt
 	externalURL url.URL
@@ -68,7 +64,7 @@ type DataLoader struct {
 }
 
 // Payload returns the contents of a resource
-func (dl *DataLoader) Payload() ([]byte, error) {
+func (dl *PayloadLoader) Payload() ([]byte, error) {
 	if dl.dataPointer != nil {
 		return dl.dataPointer, nil
 	}
