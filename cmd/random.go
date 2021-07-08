@@ -14,7 +14,7 @@ const charset = "abcdefghijklmnopqrstuvwxyz" +
 // RandomString returns a human readable string of length X
 // TODO: Move these to a core lib
 func RandomString(length int) string {
-	var seed *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	var seed *rand.Rand = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 	b := make([]byte, length)
 	for idx := range b {

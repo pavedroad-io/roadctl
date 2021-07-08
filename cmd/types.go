@@ -1,4 +1,5 @@
-// Package cmd from gobra
+// cmd
+
 //   Valid JSON and Go type supported in definitions files
 //   With associated methods
 
@@ -59,9 +60,8 @@ func (t *mappedTypes) randomJSONData(key string) interface{} {
 			if input.quoted {
 				v := fmt.Sprintf("\"%v\"", input.random)
 				return v
-			} else {
-				return input.random
 			}
+			return input.random
 		}
 	}
 	return ""

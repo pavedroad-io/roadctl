@@ -20,6 +20,7 @@ limitations under the License.
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -46,76 +47,94 @@ roadctl create blueprints blueprints-name -f definition.yaml`,
 // runCreate validates and then executes a creation
 // of resources.  For now, it only supports creating
 // one resource at at time
-func runCreate(cmd *cobra.Command, args []string) string {
-	msg := "Failed creating resource"
+func runCreate(cmd *cobra.Command, args []string) bpCreateResponse {
+	var reply bpCreateResponse
 	r := args[0]
 
 	if len(args) != 2 {
-		fmt.Println("Usage: roadctl create blueprints blueprintName -f definition.yaml")
-		fmt.Printf("       blueprintName missing\n")
-		return msg
+		var errorResponse = bpGenericResponseItem{
+			Name: "create usage",
+			Content: `
+			Usage: creating blueprints requires two arguments
+			       a blueprint name and a definitions files specified with -f
+				  
+				   syntax: roadctl create blueprints NAME -f DEFINITIONS.YAML
+			       `,
+		}
+		reply.Blueprints = append(reply.Blueprints, errorResponse)
+		return reply
 	}
 
 	bpFile = args[1]
 
-	if bpDefFile == "" {
-		fmt.Println("Usage: roadctl create blueprints blueprintName -f definition.yaml")
-		fmt.Printf("       -f definitions file  missing\n")
-		return msg
+	if err := isValidResourceType(r); err == nil {
+		reply = bpCreate(r)
 	}
 
-	if err := isValidResourceType(r); err == nil {
-		return createResource(r)
+	if len(reply.Blueprints) > 0 {
+		switch strings.ToLower(fmtFlag) {
+		case "text":
+			reply.RespondWithText()
+			break
+			// Only support text replies for now
+		case "yaml":
+			reply.RespondWithYAML()
+			break
+		case "json":
+			reply.RespondWithJSON()
+			break
+		default:
+			reply.RespondWithText()
+		}
 	}
-	return msg
+
+	return reply
 }
 
-func createResource(rn string) string {
+func createResource(rn string) bpCreateResponse {
+
+	var notImplemented bpCreateResponse
+	var notImplementedItem bpGenericResponseItem = bpGenericResponseItem{
+		Name:    "Resource not implemented",
+		Content: "",
+	}
+	notImplemented.Blueprints = append(notImplemented.Blueprints, notImplementedItem)
 
 	switch rn {
 	case "environments":
 		fmt.Println("no environments found")
-		return ""
+		return notImplemented
 	case "builders":
 		fmt.Println("no builders found")
-		return ""
+		return notImplemented
 	case "taggers":
 		fmt.Println("no taggers found")
-		return ""
+		return notImplemented
 	case "tests":
 		fmt.Println("no tests found")
-		return ""
+		return notImplemented
 	case "blueprints":
-		return bpCreate(rn)
+		createResource(rn)
 	case "integrations":
 		fmt.Println("no integrations found")
-		return ""
+		return notImplemented
 	case "artifacts":
 		fmt.Println("no artifacts found")
-		return ""
+		return notImplemented
 	case "providers":
 		fmt.Println("no providers found")
-		return ""
+		return notImplemented
 	case "deployments":
 		fmt.Println("no deployments found")
-		return ""
+		return notImplemented
 	}
 
-	return ""
+	return notImplemented
 }
 
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	//Set up expected command line flags
-
-	//bpfile defined in blueprints.go
-	//Required!
-	// createCmd.Flags().StringVarP(&bpFile, "blueprint", "t",
-	//	"datamgr", "Blueprint file name to use")
-
-	// bpDefFile defined in blueprints.go
-	// Expected YAML originally generated from $roadctl describe blueprints >> myservice.yaml
 	createCmd.Flags().StringVarP(&bpDefFile, "file", "f",
 		"", "Service definition file to use")
 }

@@ -177,12 +177,6 @@ func (t *bpDirectory) initialize() error {
 		home = home + "/" + prHome + "/" + defaultBlueprintDir
 
 		t.location = home
-		// TODO: remove this hack once defaultBlueprintDir is removed
-		// For now, avoid duplicating the location string
-		if home != defaultBlueprintDir {
-			defaultBlueprintDir = home
-		}
-
 		t.locationFrom = "default"
 	}
 
@@ -209,7 +203,10 @@ func (tc *bpCache) CreateCache(method, branch string) error {
 	log.Println("Cloning with method: ", method)
 	switch method {
 	case gitclone:
-		tc.Clone(branch)
+		if err := tc.Clone(branch); err != nil {
+			fmt.Errorf("Blueprint clone failed error = %v\n", err)
+			return err
+		}
 	case githubAPI:
 		//tc.API()
 	default:
@@ -296,7 +293,7 @@ func (tc *bpCache) writeCache(dir string) error {
 		cfn = tc.location.Location() + "/" + bpCacheFileName
 	}
 
-	err = ioutil.WriteFile(cfn, fileData, 0644)
+	err = ioutil.WriteFile(cfn, fileData, 0600)
 	if err != nil {
 		log.Fatal(err, cfn)
 		return err
