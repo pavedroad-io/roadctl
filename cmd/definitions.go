@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var StaticDefinitionFileVersion = "v0.9.0"
+
 // Tables structure for user defined tables that need
 // to be generated
 type Tables struct {
@@ -245,11 +247,12 @@ type Core struct {
 }
 
 type bpDef struct {
-	DefinitionFile string    `yaml:"definitionFile"`
-	TableList      []Tables  `yaml:"tables"`
-	Community      Community `yaml:"community"`
-	Info           Info      `yaml:"info"`
-	Project        Project   `yaml:"project"`
+	DefinitionFileVersion string
+	DefinitionFile        string    `yaml:"definitionFile"`
+	TableList             []Tables  `yaml:"tables"`
+	Community             Community `yaml:"community"`
+	Info                  Info      `yaml:"info"`
+	Project               Project   `yaml:"project"`
 }
 
 // Define constants for error types
@@ -316,6 +319,9 @@ type bpTableItem struct {
 	// Children: a list of table items containing
 	//           child tables
 	Children []*bpTableItem
+
+	// IsList means this is a []Type talbe
+	IsList bool
 }
 
 // devineOrder: Determine primary table and its
@@ -324,6 +330,8 @@ type bpTableItem struct {
 // TODO: The above logic needs to be specific to
 //       the type of service build built
 func (d *bpDef) devineOrder() bpTableItem {
+	// ptName "" means this table does not have
+	//   a parent
 	ptName := ""
 
 	// Get primary table and make sure it is the only primary
@@ -339,6 +347,7 @@ func (d *bpDef) devineOrder() bpTableItem {
 		ptName = pt.Name
 	}
 
+	//fmt.Println(d.TableList)
 	d.addChildren(&x[0])
 	//d.walkOrder(x[0])
 
@@ -371,11 +380,12 @@ func (d *bpDef) addChildren(parent *bpTableItem) {
 	}
 
 	for _, v := range c {
-		parent.Children = append(parent.Children, &v)
-		d.addChildren(&v)
+		nc := v
+		parent.Children = append(parent.Children, &nc)
+		d.addChildren(&nc)
 	}
-	return
 
+	return
 }
 
 // findTables: Find primary parent table, or
@@ -391,7 +401,11 @@ func (d *bpDef) findTables(parent string) []bpTableItem {
 			if parent == "" {
 				isRoot = true
 			}
-			newrec := bpTableItem{t.TableName, isRoot, c}
+			var isList = false
+			if strings.ToLower(t.TableType) == "list" {
+				isList = true
+			}
+			newrec := bpTableItem{t.TableName, isRoot, c, isList}
 			rlist = append(rlist, newrec)
 		}
 	}
@@ -497,7 +511,7 @@ func (d *bpDef) Validate() (errCount int) {
 // Table name length
 func (d *bpDef) validateTableMetaData(t Tables) (errCount int) {
 
-	var validTypes = []string{"JSONB"}
+	var validTypes = []string{"JSONB", "OBJECT", "LIST"}
 	const maxLen = 60
 
 	// Make sure table name is set

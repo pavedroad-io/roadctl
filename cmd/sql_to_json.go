@@ -97,13 +97,19 @@ func createPostData(opt ...interface{}) (result []byte, err error) {
 }
 
 // createPut read a table for a given definitions file
-// and create sample test data in JSON format
+// and creates sample test data in JSON format
 // example, json, err := createPut(defs bpDef, postData []byte)
 func createPutData(opt ...interface{}) (result []byte, err error) {
 
 	if len(opt) != 2 {
 		ne := bpError{Type: ErrorGeneric,
 			Err: fmt.Errorf("Usage: (bpDef, JSON( are required")}
+		return nil, ne.WrappedError()
+	}
+	def, ok := opt[0].(bpDef)
+	if !ok {
+		ne := bpError{Type: ErrorGeneric,
+			Err: fmt.Errorf("Cast to bpDef for JSON failed: %v", ok)}
 		return nil, ne.WrappedError()
 	}
 
@@ -129,7 +135,10 @@ func createPutData(opt ...interface{}) (result []byte, err error) {
 			fmt.Println(err)
 		}
 
-		b := strings.Replace(string(putData), put["filmsuuid"].(string), post["filmsuuid"].(string), 1)
+		id := strings.ToLower(def.Info.Name) + "uuid"
+		b := strings.Replace(string(putData),
+			put[id].(string),
+			post[id].(string), 1)
 
 		return []byte(b), nil
 	}
