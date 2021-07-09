@@ -80,6 +80,7 @@ const (
 // for full license information.
 //`
 )
+
 const strcutComment = `
 //
 //
@@ -115,6 +116,7 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 //  type will be the sub-table
 //  No options
 const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
+const structSubstructList = "\t%s []%s\t`%s:\"%s\"`\n"
 
 // Makefile constants
 const (
@@ -365,6 +367,9 @@ func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 		*jsonString = fmt.Sprintf(jsonObjectStart)
 	} else {
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
+		if item.IsList {
+			*jsonString += fmt.Sprintf(jsonListStart)
+		}
 		*jsonString += fmt.Sprintf(jsonObjectStart)
 	}
 
@@ -400,6 +405,9 @@ func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 
 	// Close and append to bpData.SwaggerGeneratedStructs
 	*jsonString += jsonObjectEnd
+	if item.IsList {
+		*jsonString += fmt.Sprintf(jsonListEnd)
+	}
 
 	return
 }
@@ -452,7 +460,12 @@ func bpAddStruct(item bpTableItem, defs bpDef, output *bpData) {
 			bpAddStruct(*child, defs, output)
 
 			// Same as structField except type with be the suitable
-			tableString += fmt.Sprintf(structSubstruct,
+			str := structSubstruct
+			if child.IsList {
+				str = structSubstructList
+			}
+
+			tableString += fmt.Sprintf(str,
 				strcase.ToCamel(child.Name),
 				strings.ToLower(child.Name),
 				"json",
@@ -824,7 +837,7 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 	var newEndPoint endpointConfig
 	if epList, err := newEndPoint.loadFromDefinitions(defs); err != nil {
 		msg := fmt.Errorf("Endpoints warning: [%v]'\n", err)
-		fmt.Println(msg)
+		log.Println(msg)
 	} else {
 		for _, ep := range epList {
 			// TODO: future support for other request routers
@@ -855,11 +868,11 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 			projectBlocks.Metadata.Labels)
 
 		if err != nil {
-			fmt.Println("Error: ", err)
+			log.Println("Error: ", err)
 		}
 
 		if _, e := nb.GenerateBlock(defs); e != nil {
-			fmt.Println("Error: ", e)
+			log.Println("Error: ", e)
 		}
 	}
 
@@ -869,7 +882,7 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 	// required imports
 	if loggerImports, err = b.getLoggerImports(defs); err != nil {
 		msg := fmt.Errorf("Failed loading import: [%s]\n", err)
-		fmt.Println(msg)
+		log.Println(msg)
 	}
 	importList = append(importList, loggerImports...)
 
@@ -1132,6 +1145,7 @@ func bpReadDefinitions(definitionsStruct *bpDef) error {
 	}
 
 	definitionsStruct.DefinitionFile = bpDefFile
+	definitionsStruct.DefinitionFileVersion = StaticDefinitionFileVersion
 
 	incSpinner()
 	errs := definitionsStruct.Validate()
@@ -1218,47 +1232,6 @@ func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	return response
 }
 
-/* TODO: remove dead code
-// bpReadCodeFragment given a list of modules return a list of filesystem
-//   locations to read
-func bpReadCodeFragment(modules []string) (moduleTemplates []bpLocation, err error) {
-	// read/check blueprint cache
-	tc, te := NewBlueprintCache()
-	if te.errno != tcSuccess {
-		log.Fatalf("Failed to read blueprint cache, Got (%v)\n", te)
-	}
-
-	for _, m := range modules {
-		// Test the directory location
-		readPath := tc.location.Location() + "/" + m
-		if _, err := os.Stat(readPath); os.IsNotExist(err) {
-		}
-
-		f, err := os.Open(readPath)
-		if err != nil {
-			msg := fmt.Errorf("Failed to read templates: [%s]\n", readPath)
-			return nil, msg
-		}
-
-		list, err := f.Readdir(-1)
-		f.Close()
-
-		if err != nil {
-			msg := fmt.Errorf("Failed to read templates contents: [%s]\n", readPath)
-			return nil, msg
-		}
-
-		for _, fn := range list {
-			i := bpLocation{
-				Name:         fn.Name(),
-				RelativePath: readPath}
-			moduleTemplates = append(moduleTemplates, i)
-		}
-	}
-
-	return moduleTemplates, nil
-}
-*/
 // bpRead(name)
 //   read all files for the named blueprint
 //   return a slice of paths with file names
