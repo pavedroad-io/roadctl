@@ -473,7 +473,7 @@ func bpAddStruct(item bpTableItem, defs bpDef, output *bpData) {
 				str = structSubstructList
 			}
 
-			// TODO: thing about this
+			// TODO: think about this
 			tableString += fmt.Sprintf(str,
 				strcase.ToCamel(child.Name),
 				child.Name,
