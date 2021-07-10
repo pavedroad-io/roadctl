@@ -22,17 +22,27 @@ type mappedTypes struct {
 //
 var builtInTypes = []mappedTypes{
 	{"string", "string", RandomString(15), true},
+	{"[]string", "[]string", RandomString(15), true},
 	{"boolean", "bool", RandomBool(), false},
 	{"number", "int", RandomInteger(0, 254), false},
+	{"[]number", "[]int", RandomInteger(0, 254), false},
 	{"int", "int", RandomInteger(0, 254), false},
 	{"uint", "uint", RandomInteger(0, 254), false},
+	{"[]uint", "[]uint", RandomInteger(0, 254), false},
 	{"byte", "byte", RandomString(1), true},
+	{"[]byte", "[]byte", RandomString(1), true},
 	{"rune", "byte", RandomString(1), true},
+	{"[]rune", "[]byte", RandomString(1), true},
 	{"float", "float64", RandomFloat(), false},
+	{"[]float", "[]float64", RandomFloat(), false},
 	{"float64", "float64", RandomFloat(), false},
+	{"[]float64", "[]float64", RandomFloat(), false},
 	{"float32", "float32", RandomFloat(), false},
+	{"[]float32", "[]float32", RandomFloat(), false},
 	{"uuid", "string", RandomUUID(), true},
+	{"[]uuid", "[]string", RandomUUID(), true},
 	{"time", "time.Time", time.Now().Format(time.RFC3339), true},
+	{"[]time", "[]time.Time", time.Now().Format(time.RFC3339), true},
 }
 
 func (t *mappedTypes) validInputType(key string) bool {
