@@ -142,6 +142,8 @@ var blueprints *template.Template
 type bpData struct {
 	// Information about company and project
 	Organization        string // Name of Organization
+	GitHubOrg           string // Orginization name in GitHub
+	SonarCloudOrg       string // Orginization name in SonarCloud
 	OrgSQLSafe          string // Mapped to a safe name for using in SQL
 	OrganazationInfo    string // Name of Organization
 	OrganizationLicense string // Org license/copyright
@@ -243,6 +245,8 @@ func bpDataMapper(defs bpDef, output *bpData) error {
 	output.DefFile = bpDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+	output.GitHubOrg = defs.Info.GitHubOrg
+	output.SonarCloudOrg = defs.Info.SonarCloudOrg
 	if len(defs.TableList) > 0 {
 		output.PrimaryTableName = defs.TableList[0].TableName
 	}

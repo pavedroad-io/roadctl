@@ -31,7 +31,7 @@ type bpError struct {
 // %w in new in go 1.13
 func (e *bpError) WrappedError() error {
 	_, f, l, _ := runtime.Caller(0)
-	err := fmt.Errorf("%v: %w Error(%w)\n", f, l, e.Err.Error())
+	err := fmt.Errorf("%v: %v Error(%w)\n", f, l, e.Err.Error())
 	return err
 }
 

@@ -89,6 +89,8 @@ type Info struct {
 	ID            string `yaml:"id"`
 	Name          string `yaml:"name"`
 	Organization  string `yaml:"organization"`
+	GitHubOrg     string `yaml:"githuborg"`
+	SonarCloudOrg string `yaml:"sonarcloudorg"`
 	ReleaseStatus string `yaml:"release-status"`
 	Version       string `yaml:"version"`
 }

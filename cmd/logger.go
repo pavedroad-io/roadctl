@@ -164,7 +164,7 @@ func (l *Logger) getLoggerImports(defs bpDef) (imports []string, err error) {
 
 		nb := &Block{}
 		if nb, err = b.loadBlock(l.ID, l.Metadata.Labels); err != nil {
-			msg := fmt.Errorf("Loading block failed for ID[%s]: [%v]'\n", l.ID)
+			msg := fmt.Errorf("Loading block failed for ID[%s]: [%v]'\n", l.ID, err)
 			fmt.Println(msg)
 		}
 
