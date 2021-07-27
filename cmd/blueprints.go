@@ -54,7 +54,7 @@ var defaultBlueprintDir = "blueprints"
 var repoType = "GitHub"
 
 // From CLI
-var bpFile string    // Blueprint name to sue
+var bpFile string    // Blueprint name to use
 var bpDefFile string // Definition file to use form -f option
 
 // The directory we found this blueprint in
@@ -80,6 +80,7 @@ const (
 // for full license information.
 //`
 )
+
 const strcutComment = `
 //
 //
@@ -115,14 +116,15 @@ const structField = "\t%s %s\t`%s:\"%s\"`\n"
 //  type will be the sub-table
 //  No options
 const structSubstruct = "\t%s %s\t`%s:\"%s\"`\n"
+const structSubstructList = "\t%s []%s\t`%s:\"%s\"`\n"
 
 // Makefile constants
 const (
-	allWithFossa    string = "all: $(PREFLIGHT) $(FOSSATEST) compile check"
-	allWithoutFossa string = "all: $(PREFLIGHT) compile check"
+	allWithFossa    string = "all: mod-setup $(PREFLIGHT) $(FOSSATEST) compile check"
+	allWithoutFossa string = "all: mod-setup $(PREFLIGHT) compile check"
 
-	checkWithSonar    string = "check: dbclean lint sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
-	checkWithoutSonar string = "check: dbclean lint $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithSonar    string = "check: lint docker-build sonar-scanner $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
+	checkWithoutSonar string = "check: lint docker-build $(ARTIFACTS) $(LOGS) $(ASSETS) $(DOCS)"
 
 	// Fossa has a build section and a lint section
 	fossaSection string = `
@@ -131,7 +133,7 @@ $(FOSSATEST):
 `
 	fossaLint string = `
 	@echo "  >  running FOSSA license scan."
-	@FOSSA_API_KEY=$(FOSSA_API_KEY) fossa analyze
+	$(shell (export GOPATH=$(GOPATH); @FOSSA_API_KEY=$(FOSSA_API_KEY) fossa analyze))
 `
 )
 
@@ -140,12 +142,15 @@ var blueprints *template.Template
 type bpData struct {
 	// Information about company and project
 	Organization        string // Name of Organization
+	GitHubOrg           string // Orginization name in GitHub
+	SonarCloudOrg       string // Orginization name in SonarCloud
 	OrgSQLSafe          string // Mapped to a safe name for using in SQL
 	OrganazationInfo    string // Name of Organization
 	OrganizationLicense string // Org license/copyright
 	ProjectInfo         string // Project/service description
-	SchedulerName       string // For worker polls specifies the type of
+
 	//   scheduler to create
+	SchedulerName string // For worker polls specifies the type of
 
 	MaintainerName  string
 	MaintainerEmail string
@@ -173,7 +178,10 @@ type bpData struct {
 	// Metrics endpoint name
 	Management string
 
-	// Integrations
+	// Returns API documentation in Swagger syntax
+	Explain string
+
+	// Integration's
 	Badges            string // badges to include docs
 	SonarKey          string
 	SonarLogin        string
@@ -191,17 +199,28 @@ type bpData struct {
 	PavedroadInfo string //PR license/copyright
 
 	//Swagger headers probably turn these into functions
+	// TODO: remove these old swagger doc statements from blueprints
+	//       they are now generated with blocks
 	AllRoutesSwaggerDoc     string
 	GetAllSwaggerDoc        string // swagger for list method
 	GetSwaggerDoc           string // swagger for get method
 	PutSwaggerDoc           string // swagger for put method
 	PostSwaggerDoc          string // swagger for post method
 	DeleteSwaggerDoc        string // swagger for delete method
+	ExplainSwaggerDoc       string // swagger for explain endpoint
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
+	// Endpoints blueprint specific
+	EndpointRoutes   string // Holds gorilla routes to function initialization
+	EndpointHandlers string // Holds methods for each route
+	EndpointHooks    string // Generated pre/post hook functions for selected methods
+
 	PrimaryTableName string // Used as the structure name for
 	// Storing user data
+
+	// Language specific inputs
+	GoImports string // Imports added by digital blocks
 
 	//JSON data
 	PostJSON string // Sample data for a post
@@ -212,7 +231,6 @@ type bpData struct {
 	AllBuildTarget    string //build line for check section
 	FossaBuildSection string //build target for Fossa
 	FossaLintSection  string //lint section for Fossa
-
 }
 
 //  bpDataMapper
@@ -227,6 +245,8 @@ func bpDataMapper(defs bpDef, output *bpData) error {
 	output.DefFile = bpDefFile
 	output.OrganizationLicense = defs.Project.License
 	output.Organization = defs.Info.Organization
+	output.GitHubOrg = defs.Info.GitHubOrg
+	output.SonarCloudOrg = defs.Info.SonarCloudOrg
 	if len(defs.TableList) > 0 {
 		output.PrimaryTableName = defs.TableList[0].TableName
 	}
@@ -288,7 +308,6 @@ func bpDataMapper(defs bpDef, output *bpData) error {
 	}
 
 	si = defs.findIntegration("fossa")
-	//	fmt.Println(si)
 	if si.Name != "" {
 		output.FOSSAEnabled = si.Enabled
 	}
@@ -352,6 +371,9 @@ func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 		*jsonString = fmt.Sprintf(jsonObjectStart)
 	} else {
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
+		if item.IsList {
+			*jsonString += fmt.Sprintf(jsonListStart)
+		}
 		*jsonString += fmt.Sprintf(jsonObjectStart)
 	}
 
@@ -377,16 +399,27 @@ func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 	}
 
 	// See if there are any children
-	if len(item.Children) > 0 {
+	processed := 0
+	toProcess := len(item.Children)
+	if processed > 0 {
 		*jsonString += fmt.Sprintf(jsonSeperator)
 		// Add child tables first
 		for _, child := range item.Children {
 			bpAddJSON(*child, defs, jsonString)
+			processed += 1
 		}
 	}
 
 	// Close and append to bpData.SwaggerGeneratedStructs
 	*jsonString += jsonObjectEnd
+	if item.IsList {
+		*jsonString += fmt.Sprintf(jsonListEnd)
+	}
+
+	// If more objects or list add a comma
+	if toProcess < processed {
+		*jsonString += ","
+	}
 
 	return
 }
@@ -439,9 +472,16 @@ func bpAddStruct(item bpTableItem, defs bpDef, output *bpData) {
 			bpAddStruct(*child, defs, output)
 
 			// Same as structField except type with be the suitable
-			tableString += fmt.Sprintf(structSubstruct,
+			str := structSubstruct
+			if child.IsList {
+				str = structSubstructList
+			}
+
+			// TODO: think about this
+			tableString += fmt.Sprintf(str,
 				strcase.ToCamel(child.Name),
-				strings.ToLower(child.Name),
+				child.Name,
+				//strcase.ToCamel(child.Name),
 				"json",
 				strings.ToLower(child.Name))
 		}
@@ -507,6 +547,11 @@ type bpExplainItem struct {
 	Content string // Text for explain document
 }
 
+type bpGenericResponseItem struct {
+	Name    string // Name of resource
+	Content string // Text for explain document
+}
+
 type bpDescribeItem struct {
 	Type    string // Type of blueprint, i.e. serverless
 	Name    string // Name of blueprint == directory name
@@ -515,6 +560,10 @@ type bpDescribeItem struct {
 
 type bpExplainResponse struct {
 	Blueprints []bpExplainItem
+}
+
+type bpCreateResponse struct {
+	Blueprints []bpGenericResponseItem
 }
 
 type bpDescribeResponse struct {
@@ -553,7 +602,26 @@ func (t bpExplainResponse) RespondWithText() string {
 	nl := ""
 	for _, val := range t.Blueprints {
 		nl += fmt.Sprintf("Name: %v\n", val.Name)
-		nl += fmt.Sprintf("%v\n", val.Content)
+		nl += fmt.Sprintf("Content: %v\n", val.Content)
+	}
+	nl += "\n"
+	fmt.Println(nl)
+	return nl
+}
+
+func (t bpCreateResponse) RespondWithYAML() string {
+	return t.RespondWithText() // One in the same for this type
+}
+
+func (t bpCreateResponse) RespondWithJSON() string {
+	return t.RespondWithText() // One in the same for this type
+}
+
+func (t bpCreateResponse) RespondWithText() string {
+	nl := ""
+	for _, val := range t.Blueprints {
+		nl += fmt.Sprintf("Name: %v\n", val.Name)
+		nl += fmt.Sprintf("Content: %v\n", val.Content)
 	}
 	nl += "\n"
 	fmt.Println(nl)
@@ -570,7 +638,10 @@ func (t bpDescribeResponse) RespondWithJSON() string {
 	for _, val := range t.Blueprints {
 		//body := make(map[interface{}]interface{})
 		var body interface{}
-		yaml.Unmarshal([]byte(val.Content), &body)
+		if err := yaml.Unmarshal([]byte(val.Content), &body); err != nil {
+			fmt.Errorf("Marshaling JSON response failed %v\n", err)
+			return err.Error()
+		}
 
 		body = convert(body)
 		jb, err := json.Marshal(body)
@@ -691,9 +762,12 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 		dstr, _ := base64.StdEncoding.DecodeString(*fileContent.Content)
 		fp := outdir + "/" + *fileContent.Path
 		if _, err := os.Stat(fp); os.IsNotExist(err) {
-			os.Create(fp)
+			if _, err := os.Create(fp); err != nil {
+				msg := fmt.Errorf("Creating file %s failed with error %s\n", fp, err)
+				return msg
+			}
 		}
-		err = ioutil.WriteFile(fp, dstr, 0644)
+		err = ioutil.WriteFile(fp, dstr, 0600)
 		if err != nil {
 			log.Printf("ioutil.WriteFile error %v\n", err.Error())
 		}
@@ -705,7 +779,11 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 			if *item.Type == "dir" {
 				dn := outdir + "/" + *item.Path
 				if _, err := os.Stat(dn); os.IsNotExist(err) {
-					os.MkdirAll(dn, os.ModePerm)
+					if err := os.MkdirAll(dn, os.ModePerm); err != nil {
+						fmt.Errorf("Failed creating directory %s with error %s\n",
+							dn, err)
+						return err
+					}
 					fmt.Println("Blueprint directory created: ", dn)
 				}
 				_ = bpPull(pullOptions, org, repo, *item.Path, outdir, client)
@@ -742,15 +820,14 @@ func bpPull(pullOptions, org, repo, path, outdir string,
 //   Last, run goimport to check for missing or unused import
 //   statements and clean up any code formatting issues
 //
-func bpCreate(rn string) string {
+//func bpCreate(rn string)  bpCreateResponse {
+func bpCreate(rn string) (reply bpCreateResponse) {
 	var filelist []bpLocation
+	var importList []string
 
 	// Returns a list of all files in the blueprint directory
 	// including there path, .datamgr/Makefile ....
 	inputBlueprintFiles, err := bpRead(bpFile)
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	// Read the definition file
 	defs := bpDef{}
@@ -758,15 +835,81 @@ func bpCreate(rn string) string {
 	//TODO: should be a method not a function
 	err = bpReadDefinitions(&defs)
 	if err != nil {
-		return (err.Error())
+		var errorReply bpGenericResponseItem = bpGenericResponseItem{
+			Name:    rn,
+			Content: "Failed reading defintions file",
+		}
+
+		reply.Blueprints = append(reply.Blueprints, errorReply)
+		return (reply)
 	}
 
+	lb := startBlocksSpinner("Loading blocks")
 	bpInputData := bpData{}
 	err = bpDataMapper(defs, &bpInputData)
+
+	var newEndPoint endpointConfig
+	if epList, err := newEndPoint.loadFromDefinitions(defs); err != nil {
+		msg := fmt.Errorf("Endpoints warning: [%v]'\n", err)
+		log.Println(msg)
+	} else {
+		for _, ep := range epList {
+			// TODO: future support for other request routers
+			routes, err := ep.GenerateBlock(GorillaRouteBlocks)
+			importList = append(importList, GorillaRouteBlocks.getImports()...)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			methods, err := ep.GenerateBlock(GorillaMethodBlocks)
+			importList = append(importList, GorillaMethodBlocks.getImports()...)
+			incSpinner()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			bpInputData.EndpointRoutes += string(routes)
+			bpInputData.EndpointHandlers += string(methods)
+		}
+	}
+
+	lb.Stop()
+
+	for _, projectBlocks := range defs.Project.Blocks {
+
+		nb, err := projectBlocks.loadBlock(
+			projectBlocks.ID,
+			projectBlocks.Metadata.Labels)
+
+		if err != nil {
+			log.Println("Error: ", err)
+		}
+
+		if _, e := nb.GenerateBlock(defs); e != nil {
+			log.Println("Error: ", e)
+		}
+	}
+
+	b := Logger{}
+	var loggerImports []string
+	// reads a list of logger blocks and returns
+	// required imports
+	if loggerImports, err = b.getLoggerImports(defs); err != nil {
+		msg := fmt.Errorf("Failed loading import: [%s]\n", err)
+		log.Println(msg)
+	}
+	importList = append(importList, loggerImports...)
+
+	bpInputData.GoImports = flattenUniqueStrings(importList)
+
+	if len(defs.TableList) > 0 {
+		SQLToJSONBlock.GenerateBlock(defs)
+	}
 
 	// Given the list returned in inputBlueprintFiles
 	// Create a bpLocation object with the name and path
 	// And a filtered list of blueprint files
+	ebps := startBlocksSpinner("Load and execute blueprint")
 	var filteredBlueprintList []string
 	for _, rec := range inputBlueprintFiles {
 		nm := filepath.Base(rec)
@@ -825,7 +968,7 @@ func bpCreate(rn string) string {
 			}
 			e := skipExistingHookFile(fileWithPath)
 			if e {
-				fmt.Printf("Skipping processing of hook file %v\n", fileWithPath)
+				//fmt.Printf("Skipping processing of hook file %v\n", fileWithPath)
 				continue
 			}
 		}
@@ -862,6 +1005,8 @@ func bpCreate(rn string) string {
 	//blueprints = blueprint.Must(blueprint.ParseFiles(inputBlueprintFiles...))
 	//TODO: turn into a function
 	var fn string
+	incSpinner()
+	//	fmt.Printf("Executing  %s blueprint for new service %s\n", defs.Info.ID, defs.Info.Name)
 	for _, v := range filelist {
 		if v.Name == bpDefinition {
 			continue
@@ -879,7 +1024,7 @@ func bpCreate(rn string) string {
 		// Ensure the path to the file exists
 		if v.RelativePath != "" {
 			if _, err := os.Stat(v.RelativePath); os.IsNotExist(err) {
-				err := os.MkdirAll(v.RelativePath, 0766)
+				err := os.MkdirAll(v.RelativePath, 0750)
 				if err != nil {
 					fmt.Println("Failed to make directory: ", v.RelativePath)
 				}
@@ -900,20 +1045,35 @@ func bpCreate(rn string) string {
 
 		bw := bufio.NewWriter(file)
 
-		fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
+		//fmt.Printf("executing %v writing to %v\n", fn, v.RelativePath+fn)
 		rawDirectoryName := toInputBlueprintName(v.RelativePath, bpInputData.Name)
 		err = blueprints.ExecuteTemplate(bw, rawDirectoryName+v.Name, bpInputData)
 		if err != nil {
 			fmt.Printf("Blueprint execution failed for: %v with error %v", v, err)
 			os.Exit(-1)
 		}
-		bw.Flush()
-		file.Close()
+		if err := bw.Flush(); err != nil {
+			fmt.Errorf("Flush for file %s failed with error %v\n",
+				file.Name(), err)
+			os.Exit(-1)
+		}
+		if err := file.Close(); err != nil {
+			fmt.Errorf("Close for file %s failed with error %v\n",
+				file.Name(), err)
+			os.Exit(-1)
+		}
 	}
 
-	// Execute goimport for code formatting
+	ebps.Stop()
 
-	return ""
+	var successReply bpGenericResponseItem = bpGenericResponseItem{
+		Name: rn,
+		Content: `Create succeeded run make to compile your applications
+$ make <CR>`,
+	}
+	reply.Blueprints = append(reply.Blueprints, successReply)
+
+	return reply
 }
 
 // toInputBlueprintName map a directory path to its name
@@ -977,24 +1137,31 @@ func bpEdit(name string) {
 //
 func bpReadDefinitions(definitionsStruct *bpDef) error {
 
-	fmt.Println("Reading definitions from: ", bpDefFile)
+	msg := fmt.Sprintf("Reading definitions from: %s", bpDefFile)
+	s := startBlocksSpinner(msg)
 	df, err := os.Open(bpDefFile)
 	if err != nil {
 		fmt.Println("failed to open:", bpDefFile, ", error:", err)
 	}
 	defer df.Close()
+	incSpinner()
 	byteValue, e := ioutil.ReadAll(df)
 	if e != nil {
 		fmt.Println("read failed for ", bpDefFile)
 		os.Exit(-1)
 	}
 
+	incSpinner()
 	err = yaml.Unmarshal([]byte(byteValue), definitionsStruct)
 	if err != nil {
 		fmt.Println("Unmarshal faild", err)
 		return err
 	}
 
+	definitionsStruct.DefinitionFile = bpDefFile
+	definitionsStruct.DefinitionFileVersion = StaticDefinitionFileVersion
+
+	incSpinner()
 	errs := definitionsStruct.Validate()
 
 	if errs > 0 {
@@ -1002,8 +1169,11 @@ func bpReadDefinitions(definitionsStruct *bpDef) error {
 		for _, item := range ErrList {
 			fmt.Println(item.Error())
 		}
+		s.Stop()
+
 		os.Exit(-1)
 	}
+	s.Stop()
 	return nil
 }
 
@@ -1070,7 +1240,6 @@ func bpExplain(bpListOption string, rn string) bpExplainResponse {
 	defer tf.Close()
 
 	byteValue, _ := ioutil.ReadAll(tf)
-	fmt.Println(string(fn))
 	nItem := bpExplainItem{bpResourceName, string(byteValue)}
 	response.Blueprints = append(response.Blueprints, nItem)
 
@@ -1099,7 +1268,6 @@ func bpRead(bpName string) ([]string, error) {
 	bpItem := bpRsp.Blueprints[0]
 	td := bpItem.Path + "/" + bpItem.Name
 
-	fmt.Println("Tpl dir", td)
 	bpDirSelected = td
 	err := filepath.Walk(td,
 		func(path string, info os.FileInfo, err error) error {
@@ -1154,7 +1322,7 @@ func bpGet(bpListOption string, rn string) bpListResponse {
 			}
 
 			list, err := f.Readdir(-1)
-			f.Close()
+			defer f.Close()
 
 			if err != nil {
 				continue
@@ -1192,7 +1360,6 @@ func createDirectory(path string) error {
 func skipExistingHookFile(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
-	} else {
-		return true
 	}
+	return true
 }

@@ -19,6 +19,7 @@ limitations under the License.
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -34,8 +35,17 @@ var userName string
 var userPassword string
 var userAccessToken string
 var blueprintDirectoryLocation string
+var rclog *log.Logger
+var rcLogFile *os.File
+var rcLogFileName string = "debug.log"
+
+// GitTag
 var GitTag string
+
+// Version
 var Version string
+
+// Build
 var Build string
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +71,7 @@ func Execute() {
 }
 
 func init() {
+	cobra.OnInitialize(initLogging)
 	cobra.OnInitialize(initConfig)
 	cobra.OnInitialize(initConstants)
 
@@ -131,6 +142,21 @@ func initAuthentication() {
 		userPassword = envPass
 	}
 	return
+}
+
+func initLogging() {
+
+	var rcLogFile, err1 = os.Create(rcLogFileName)
+
+	if err1 != nil {
+		panic(err1)
+	}
+
+	rclog = log.New(rcLogFile, "roadctl: ", log.LstdFlags|log.Lshortfile)
+
+	rclog.SetOutput(rcLogFile)
+	fmt.Println("Logging to " + rcLogFileName)
+
 }
 
 // initConfig reads in config file and ENV variables if set.
