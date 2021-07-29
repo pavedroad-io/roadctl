@@ -369,19 +369,15 @@ func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 	// Start this table
 	if item.Root {
 		*jsonString = fmt.Sprintf(jsonObjectStart)
+		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
+		*jsonString += fmt.Sprintf(jsonValue, RandomUUID())
+		*jsonString += fmt.Sprintf(jsonSeperator)
 	} else {
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
 		if item.IsList {
 			*jsonString += fmt.Sprintf(jsonListStart)
 		}
 		*jsonString += fmt.Sprintf(jsonObjectStart)
-	}
-
-	// Only add the UUID if this is the parent table
-	if item.Root {
-		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
-		*jsonString += fmt.Sprintf(jsonValue, RandomUUID())
-		*jsonString += fmt.Sprintf(jsonSeperator)
 	}
 
 	// Add this tables attributes
@@ -1266,7 +1262,7 @@ func bpRead(bpName string) ([]string, error) {
 	}
 
 	bpItem := bpRsp.Blueprints[0]
-	td := bpItem.Path + "/" + bpItem.Name
+	td := filepath.Join(bpItem.Path, bpItem.Name)
 
 	bpDirSelected = td
 	err := filepath.Walk(td,
