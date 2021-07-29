@@ -47,7 +47,7 @@ type Block struct {
 	Metadata Metadata `yaml:"metadata"`
 
 	// Inverted namespace ID unique to these templates
-	// For example, io.pavedroard.core.loggers.http_access
+	// For example, io.pavedroad.core.loggers.http_access
 	ID string `yaml:"id"`
 
 	// Family friendly name for this grouping of templates
@@ -240,7 +240,7 @@ func (b *Block) loadBlock(ID string, labels []string) (block *Block, err error) 
 
 	// TODO: fix this hack
 	switch ID {
-	case "io.pavedroard.core.loggers.application":
+	case "io.pavedroad.core.loggers.application":
 		b = &PRApplicationLogger
 		break
 	}

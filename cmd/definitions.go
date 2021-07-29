@@ -213,14 +213,33 @@ type queryParm struct {
 }
 
 type httpMethod struct {
-	Method string      `json:"method"`
-	QP     []queryParm `json:"qp"`
+	// Method HTTP method
+	Method string `json:"method"`
+
+	// QP query parameters
+	QP []queryParm `json:"qp"`
+
+	// Headers Method specific headers
+	Headers []HTTPHeader `yaml:"headers"`
 }
 
 // Endpoints
 type endPoint struct {
-	Name    string       `json:"name"`
-	Methods []httpMethod `json:"methods"`
+
+	// Name for this endpoint
+	Name string `yaml:"name"`
+
+	// Methods list of HTTP methods
+	Methods []httpMethod `yaml:"methods"`
+
+	// Headers endpoint specific headers
+	Headers []HTTPHeader `yaml:"headers"`
+}
+
+// HTTPHeader header name and value
+type HTTPHeader struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 // Project information

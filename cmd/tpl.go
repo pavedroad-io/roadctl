@@ -127,11 +127,14 @@ type tplRouteObject struct {
 	// Namespace in Kubernetes cluster
 	Namespace string `yaml:"namespace"`
 
-	// EndPointName name used in URL as a end point
+	// EndPointName name: used in URL as a end point
 	EndPointName string `yaml:"endPointName"`
 
 	// Method the HTTP method to create a route for
 	Method string `yaml:"method"`
+
+	// NameExported the HTTP method to create a route for
+	NameExported string `yaml:"nameExported"`
 }
 
 //

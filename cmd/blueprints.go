@@ -215,6 +215,7 @@ type bpData struct {
 	EndpointRoutes   string // Holds gorilla routes to function initialization
 	EndpointHandlers string // Holds methods for each route
 	EndpointHooks    string // Generated pre/post hook functions for selected methods
+	EndpointHeaders  string // List of additional headers to set on replies
 
 	PrimaryTableName string // Used as the structure name for
 	// Storing user data
@@ -369,19 +370,15 @@ func bpAddJSON(item bpTableItem, defs bpDef, jsonString *string) {
 	// Start this table
 	if item.Root {
 		*jsonString = fmt.Sprintf(jsonObjectStart)
+		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
+		*jsonString += fmt.Sprintf(jsonValue, RandomUUID())
+		*jsonString += fmt.Sprintf(jsonSeperator)
 	} else {
 		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name))
 		if item.IsList {
 			*jsonString += fmt.Sprintf(jsonListStart)
 		}
 		*jsonString += fmt.Sprintf(jsonObjectStart)
-	}
-
-	// Only add the UUID if this is the parent table
-	if item.Root {
-		*jsonString += fmt.Sprintf(jsonField, strings.ToLower(item.Name+"UUID"))
-		*jsonString += fmt.Sprintf(jsonValue, RandomUUID())
-		*jsonString += fmt.Sprintf(jsonSeperator)
 	}
 
 	// Add this tables attributes
@@ -854,22 +851,34 @@ func bpCreate(rn string) (reply bpCreateResponse) {
 		log.Println(msg)
 	} else {
 		for _, ep := range epList {
-			// TODO: future support for other request routers
-			routes, err := ep.GenerateBlock(GorillaRouteBlocks)
+			routes, err := ep.GenerateBlock(GorillaRouteBlocks, bpInputData)
 			importList = append(importList, GorillaRouteBlocks.getImports()...)
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			methods, err := ep.GenerateBlock(GorillaMethodBlocks)
+			methods, err := ep.GenerateBlock(GorillaMethodBlocks, bpInputData)
 			importList = append(importList, GorillaMethodBlocks.getImports()...)
 			incSpinner()
 			if err != nil {
 				fmt.Println(err)
 			}
 
+			hooks, err := ep.GenerateBlock(GorillaMethodHookBlocks, bpInputData)
+			incSpinner()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			headers, err := ep.GenerateHeaders()
+			incSpinner()
+			if err != nil {
+				fmt.Println(err)
+			}
 			bpInputData.EndpointRoutes += string(routes)
 			bpInputData.EndpointHandlers += string(methods)
+			bpInputData.EndpointHooks += string(hooks)
+			bpInputData.EndpointHeaders += string(headers)
 		}
 	}
 
@@ -1266,7 +1275,7 @@ func bpRead(bpName string) ([]string, error) {
 	}
 
 	bpItem := bpRsp.Blueprints[0]
-	td := bpItem.Path + "/" + bpItem.Name
+	td := filepath.Join(bpItem.Path, bpItem.Name)
 
 	bpDirSelected = td
 	err := filepath.Walk(td,

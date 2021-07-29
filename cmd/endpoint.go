@@ -25,6 +25,9 @@ type endpointConfig struct {
 
 	// Method this endpoint supports
 	Methods []string `json:"methods"` // HTTP methods
+
+	// Method this endpoint supports
+	Headers []HTTPHeader `json:"headers"` // additional headers
 }
 
 // loadFromDefinitions given a definitions file, create a list of one
@@ -53,10 +56,20 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 			Namespace:        defs.Project.Kubernetes.Namespace,
 			EndPointName:     ep.Name,
 			Methods:          methodList,
+			Headers:          ep.Headers,
 		}
 		endPoints = append(endPoints, newEP)
 	}
 	return endPoints, nil
+}
+
+func (hc *endpointConfig) GenerateHeaders() (configFragment []byte, err error) {
+	const newHeader = "\tw.Header().Set(\"%v\", \"%v\")\n"
+	var additionalHeaders string
+	for _, h := range hc.Headers {
+		additionalHeaders += fmt.Sprintf(newHeader, h.Name, h.Value)
+	}
+	return []byte(additionalHeaders), nil
 }
 
 // GenerateRoutes given a configFragmenet, load its templates
@@ -66,7 +79,12 @@ func (hc *endpointConfig) loadFromDefinitions(defs bpDef) (endPoints []endpointC
 // Executing a route template requires all data passed in as
 // a single go object, that is the function of the
 // tplRouteObject
-func (hc *endpointConfig) GenerateBlock(block Block) (configFragment []byte, err error) {
+//
+// Passing the bpData needs refactoring.  For now, its required
+// to pass the name of the response object type
+//
+
+func (hc *endpointConfig) GenerateBlock(block Block, bpInput bpData) (configFragment []byte, err error) {
 	var configFragments strings.Builder
 
 	for _, m := range hc.Methods {
@@ -74,6 +92,7 @@ func (hc *endpointConfig) GenerateBlock(block Block) (configFragment []byte, err
 		if found, fragement := findHTTPTemplate(m, block); found {
 			//			fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
 			tplName := block.BaseDirectory + fragement.Template.FileName
+
 			if fragement.Template.TemplatePtr == nil {
 				var def bpDef
 				if tpl, err := loadTemplate(tplName, block.Family, def, fragement.Template.TemplateFunction); err != nil {
@@ -89,6 +108,7 @@ func (hc *endpointConfig) GenerateBlock(block Block) (configFragment []byte, err
 				EndPointName: hc.EndPointName,
 				Namespace:    hc.Namespace,
 				Method:       m,
+				NameExported: bpInput.NameExported,
 			}
 			e := fragement.Template.TemplatePtr.ExecuteTemplate(&b, fragement.Template.FileName, &tplData)
 			if e != nil {
