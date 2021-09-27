@@ -181,6 +181,10 @@ type bpData struct {
 	// Returns API documentation in Swagger syntax
 	Explain string
 
+	// HTTP configuration
+	HTTPHost string
+	HTTPPort string
+
 	// Integration's
 	Badges            string // badges to include docs
 	SonarKey          string
@@ -211,11 +215,15 @@ type bpData struct {
 	SwaggerGeneratedStructs string // swagger doc and go struct
 	DumpStructs             string // Generic dump of given object type
 
-	// Endpoints blueprint specific
+	// Endpoints blueprint specific generated from templates
 	EndpointRoutes   string // Holds gorilla routes to function initialization
 	EndpointHandlers string // Holds methods for each route
 	EndpointHooks    string // Generated pre/post hook functions for selected methods
 	EndpointHeaders  string // List of additional headers to set on replies
+
+	// Simple mapping
+	EndpointPort string // Port to listen on
+	EndpointHost string // Host to listen on
 
 	PrimaryTableName string // Used as the structure name for
 	// Storing user data
@@ -273,6 +281,30 @@ func bpDataMapper(defs bpDef, output *bpData) error {
 	output.Readiness = defs.Project.Kubernetes.Readiness
 	output.Metrics = defs.Project.Kubernetes.Metrics
 	output.Management = defs.Project.Kubernetes.Management
+
+	// TODO: 21/09/14:15:jscharber (refactor) Don't assume an endpoint is defined
+	if len(defs.Project.Endpoints) > 0 {
+		if defs.Project.Endpoints[0].Port != "" {
+			output.EndpointPort = defs.Project.Endpoints[0].Port
+		} else {
+			output.EndpointPort = "8081"
+		}
+		if defs.Project.Endpoints[0].Host != "" {
+			output.EndpointHost = defs.Project.Endpoints[0].Host
+		} else {
+			output.EndpointHost = "0.0.0.0"
+		}
+	}
+
+	output.HTTPHost = "0.0.0.0"
+	output.HTTPPort = "8081"
+	if defs.Project.Config.HTTPHost != "" {
+		output.HTTPHost = defs.Project.Config.HTTPHost
+	}
+
+	if defs.Project.Config.HTTPPort != "" {
+		output.HTTPPort = defs.Project.Config.HTTPPort
+	}
 
 	// CI integrations
 

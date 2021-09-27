@@ -234,6 +234,12 @@ type endPoint struct {
 
 	// Headers endpoint specific headers
 	Headers []HTTPHeader `yaml:"headers"`
+
+	// Port to listen on
+	Port string `yaml:"port"`
+
+	// Host address to listen on
+	Host string `yaml:"host"`
 }
 
 // HTTPHeader header name and value
@@ -256,8 +262,13 @@ type Project struct {
 	Endpoints     []endPoint     `yaml:"endpoints"`
 	Loggers       []Logger       `yaml:"loggers"`
 	Blocks        []Block        `yaml:"blocks"`
+	Config        Config         `yaml:"configuration"`
 }
 
+type Config struct {
+	HTTPHost string `host:"http-host"`
+	HTTPPort string `port:"http-port"`
+}
 type Go struct {
 	DependencyManager string `yaml:"dependency-manager"`
 }
