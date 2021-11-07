@@ -15,7 +15,7 @@ var t Tables
 var SQLToJSONBlock = Block{
 	APIVersion: "v1beta",
 	Kind:       "FunctionBlock",
-	ID:         "http://io.pavedroardr/test/sql/jsonGenerator",
+	ID:         "http://io.pavedroad/test/sql/jsonGenerator",
 	Family:     "pavedroad/test/data/generation",
 	Metadata: Metadata{
 		Labels: []string{
@@ -124,18 +124,19 @@ func createPutData(opt ...interface{}) (result []byte, err error) {
 
 	err = json.Unmarshal(jsonData, &post)
 
-	//	fmt.Println(post)
 	if putData, err := createPostData(opt[0]); err != nil {
 		return nil, err
 	} else {
+		item := def.devineOrder()
 
 		var put map[string]interface{}
 		err = json.Unmarshal(putData, &put)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 
-		id := strings.ToLower(def.Info.Name) + "uuid"
+		id := strings.ToLower(item.Name) + "uuid"
+		// TODO: add test for id before just assumming it is there
 		b := strings.Replace(string(putData),
 			put[id].(string),
 			post[id].(string), 1)

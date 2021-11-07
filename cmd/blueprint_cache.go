@@ -122,7 +122,7 @@ type bpCacheFile struct {
 // Initialize if necessary
 func (t *bpDirectory) Location() string {
 
-	if !t.initialized {
+	if !t.initialized && t.location == "" {
 		err := t.initialize()
 		if err != nil {
 			log.Fatal(err.Error())
@@ -157,17 +157,12 @@ func (t *bpDirectory) initialize() error {
 			os.Exit(-1)
 
 		}
-		t.location = blueprintDirectoryLocation + "/" + defaultBlueprintDir
+		nl := blueprintDirectoryLocation + "/" + defaultBlueprintDir
+		t.location = nl
 		t.locationFrom = "CLI"
-		if defaultBlueprintDir != t.location {
-			defaultBlueprintDir = t.location
-		}
 	} else if env != "" && blueprintDirectoryLocation == "" {
 		t.location = env + "/" + defaultBlueprintDir
 		t.locationFrom = "PR_BLUEPRINT_DIR"
-		if defaultBlueprintDir != t.location {
-			defaultBlueprintDir = t.location
-		}
 	} else {
 
 		home, err := homedir.Dir()
@@ -180,13 +175,14 @@ func (t *bpDirectory) initialize() error {
 		t.locationFrom = "default"
 	}
 
+	// test if directory exists
 	if !t.initialized {
 		if err := createDirectory(t.location); err != nil {
 			log.Fatal(err.Error())
 		}
-		t.initialized = true
 	}
 
+	t.initialized = true
 	return nil
 }
 
@@ -217,23 +213,25 @@ func (tc *bpCache) CreateCache(method, branch string) error {
 
 // NewBlueprintCache read the blueprint directory and it's meta-data
 func NewBlueprintCache() (*bpCache, bpCacheError) {
-	t := &bpDirectory{}
-	tc := &bpCache{location: t}
+	t := bpDirectory{}
+	tc := bpCache{location: &t}
 	te := bpCacheError{errno: tcSuccess}
 
 	if dir := t.Location(); dir == "" {
+		fmt.Println("baddirectory")
 		te.errno = tcBadBlueprintDirectory
 		te.errmsg = fmt.Sprintf(TcBadBlueprintDirectory, dir)
-		return tc, te
+		return &tc, te
 	}
 	err := tc.readCache()
 	if err != nil {
+		fmt.Println("failed read")
 		te.errno = tcNoCacheFile
 		te.errmsg = fmt.Sprintf(TcNoCacheFile, err)
-		return tc, te
+		return &tc, te
 	}
 
-	return tc, te
+	return &tc, te
 }
 
 // Clone Do a git clone if the repository doesn't exist

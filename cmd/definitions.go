@@ -213,14 +213,39 @@ type queryParm struct {
 }
 
 type httpMethod struct {
-	Method string      `json:"method"`
-	QP     []queryParm `json:"qp"`
+	// Method HTTP method
+	Method string `json:"method"`
+
+	// QP query parameters
+	QP []queryParm `json:"qp"`
+
+	// Headers Method specific headers
+	Headers []HTTPHeader `yaml:"headers"`
 }
 
 // Endpoints
 type endPoint struct {
-	Name    string       `json:"name"`
-	Methods []httpMethod `json:"methods"`
+
+	// Name for this endpoint
+	Name string `yaml:"name"`
+
+	// Methods list of HTTP methods
+	Methods []httpMethod `yaml:"methods"`
+
+	// Headers endpoint specific headers
+	Headers []HTTPHeader `yaml:"headers"`
+
+	// Port to listen on
+	Port string `yaml:"port"`
+
+	// Host address to listen on
+	Host string `yaml:"host"`
+}
+
+// HTTPHeader header name and value
+type HTTPHeader struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 // Project information
@@ -237,8 +262,13 @@ type Project struct {
 	Endpoints     []endPoint     `yaml:"endpoints"`
 	Loggers       []Logger       `yaml:"loggers"`
 	Blocks        []Block        `yaml:"blocks"`
+	Config        Config         `yaml:"configuration"`
 }
 
+type Config struct {
+	HTTPHost string `yaml:"http-host"`
+	HTTPPort string `yaml:"http-port"`
+}
 type Go struct {
 	DependencyManager string `yaml:"dependency-manager"`
 }

@@ -7,7 +7,7 @@ import "fmt"
 var PRApplicationLogger Block = Block{
 	APIVersion: "v1beta",
 	Kind:       "CompositeBlock",
-	ID:         "io.pavedroard.core.loggers.application",
+	ID:         "io.pavedroad.core.loggers.application",
 	Family:     "pavedroad/core/logger",
 	Metadata: Metadata{
 		Labels: []string{
@@ -42,7 +42,7 @@ var PRApplicationLogger Block = Block{
 	Imports:  []string{`log "github.com/pavedroad-io/go-core/logger"`},
 	ImportedBlocks: []Block{
 		{
-			ID: "io.pavedroard.core.manifests.kubernetes.kustomize",
+			ID: "io.pavedroad.core.manifests.kubernetes.kustomize",
 			Metadata: Metadata{
 				Labels: []string{
 					"kubernetes",
@@ -55,7 +55,7 @@ var PRApplicationLogger Block = Block{
 			},
 		},
 		{
-			ID: "io.pavedroard.core.manifests.docker.docker-compoase",
+			ID: "io.pavedroad.core.manifests.docker.docker-compoase",
 			Metadata: Metadata{
 				Labels: []string{
 					"docker",
