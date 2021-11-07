@@ -266,8 +266,8 @@ type Project struct {
 }
 
 type Config struct {
-	HTTPHost string `host:"http-host"`
-	HTTPPort string `port:"http-port"`
+	HTTPHost string `yaml:"http-host"`
+	HTTPPort string `yaml:"http-port"`
 }
 type Go struct {
 	DependencyManager string `yaml:"dependency-manager"`

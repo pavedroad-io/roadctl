@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -90,13 +91,13 @@ func (hc *endpointConfig) GenerateBlock(block Block, bpInput bpData) (configFrag
 	for _, m := range hc.Methods {
 
 		if found, fragement := findHTTPTemplate(m, block); found {
-			//			fmt.Printf("Loading block: %s:%s\n", m, fragement.FileName)
 			tplName := block.BaseDirectory + fragement.Template.FileName
 
 			if fragement.Template.TemplatePtr == nil {
 				var def bpDef
 				if tpl, err := loadTemplate(tplName, block.Family, def, fragement.Template.TemplateFunction); err != nil {
 					msg := fmt.Errorf("File not found: [%s][%v'\n", tplName, err)
+					log.Println(msg)
 					return nil, msg
 				} else {
 					fragement.Template.TemplatePtr = tpl
@@ -110,11 +111,14 @@ func (hc *endpointConfig) GenerateBlock(block Block, bpInput bpData) (configFrag
 				Method:       m,
 				NameExported: bpInput.NameExported,
 			}
+
 			e := fragement.Template.TemplatePtr.ExecuteTemplate(&b, fragement.Template.FileName, &tplData)
 			if e != nil {
 				msg := fmt.Errorf("template execution failed : [%s][%v]", tplName, e)
+				log.Println(msg)
 				return nil, msg
 			}
+
 			configFragments.WriteString(b.String())
 		}
 	}

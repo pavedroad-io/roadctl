@@ -46,9 +46,15 @@ var GorillaRouteBlocks Block = Block{
 				TemplateFunction: stringFunctionMap(),
 				TemplatePtr:      nil},
 		}, {
-			HTTPMethods: []string{"POST", "OPTIONS", "TRACE"},
+			HTTPMethods: []string{"POST", "TRACE"},
 			Template: TemplateItem{
 				FileName:         "non_keyed_route.tpl",
+				TemplateFunction: stringFunctionMap(),
+				TemplatePtr:      nil},
+		}, {
+			HTTPMethods: []string{"OPTIONS"},
+			Template: TemplateItem{
+				FileName:         "options_route.tpl",
 				TemplateFunction: stringFunctionMap(),
 				TemplatePtr:      nil},
 		},
